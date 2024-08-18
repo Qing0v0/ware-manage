@@ -2,4 +2,16 @@
     <string name="app_name">My Application</string>
     <string name="bottom_name1">仓库</string>
     <string name="bottom_name2">利润</string>
+
+    <string name="purchase_button">入库</string>
+    <string name="selling_button">出库</string>
+
+    <string name="purchase_order_article_id">货号</string>
+    <string name="purchase_order_article_name">货名</string>
+    <string name="purchase_order_color">颜色</string>
+    <string name="purchase_order_dealer">经销商</string>
+    <string name="purchase_order_price">进价</string>
+    <string name="appwidget_text">EXAMPLE</string>
+    <string name="add_widget">Add widget</string>
+    <string name="app_widget_description">This is an app widget description</string>
 </resources>

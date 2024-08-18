@@ -4,5 +4,5 @@ enum class Color {
     WHITE,
     BLACK,
     GRAY,
-    OTHER,
+    OTHER;
 }

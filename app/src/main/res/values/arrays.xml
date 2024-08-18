@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="color_array">
+        <item>黑色</item>
+        <item>白色</item>
+        <item>灰色</item>
+        <item>其他</item>
+    </array>
+</resources>
