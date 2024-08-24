@@ -1,5 +1,8 @@
 package com.example.myapplication.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import androidx.room.TypeConverters
 import java.math.BigDecimal
 
 data class ShoeInventory(

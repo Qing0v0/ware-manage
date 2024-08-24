@@ -1,5 +1,9 @@
 package com.example.myapplication.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import androidx.room.TypeConverters
+import com.example.myapplication.utils.DataConvertor
 import java.math.BigDecimal
 import java.util.Date
 
@@ -13,8 +17,10 @@ param:
     - dealer: 经销商
     - price: 出库时记录总利润，入库时为单价
  */
+@Entity(tableName = "order")
+@TypeConverters(DataConvertor::class)
 data class OrderBatch(
-    var orderId: Int?,
+    @PrimaryKey(autoGenerate = true) var orderId: Int = 0,
     var articleId: String,
     var articleName: String,
 
