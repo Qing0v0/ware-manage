@@ -24,7 +24,7 @@ public class OrderBatchUtils implements StringUtils{
         this.articleId = articleId;
         this.articleName = articleName;
         this.dealer = dealer;
-        this.color = EnumUtils.matchColor(color);
+        this.color = Color.matchColor(color);
         this.price = price;
         this.orderType = orderType;
     }

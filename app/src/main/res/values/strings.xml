@@ -26,7 +26,6 @@
     <string name="dealer_hint">请输入经销商</string>
     <string name="purchase_price_hint">请输入进价</string>
     <string name="selling_price_hint">请输入售价</string>
-    <string name="appwidget_text">EXAMPLE</string>
-    <string name="add_widget">Add widget</string>
-    <string name="app_widget_description">This is an app widget description</string>
+    <string name="rows_max_num">当前行数已达到上限</string>
+    <string name="choose_color">选择颜色</string>
 </resources>

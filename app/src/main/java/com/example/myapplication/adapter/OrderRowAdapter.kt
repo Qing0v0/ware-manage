@@ -5,19 +5,20 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
 import android.widget.Button
 import android.widget.EditText
-import android.widget.Spinner
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
 import com.example.myapplication.model.OrderRowData
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
 
 /**
  * 入库 / 出库界面表格的适配器，一行对应 [R.layout.order_row]（一种颜色 + 34~44 码的数量）。
  *
  * 加号：purchase_order.xml 中的 btn_add_line，点击后调用 [addRow]
  * 减号：order_row.xml 中的 btn_delete_row，点击后回调 [onDeleteRow]，由外面删除对应行
+ * 颜色：order_row.xml 中的 dropdown_row_color（Material 的 ExposedDropdownMenu，自带下拉箭头），
+ *      点一下展开颜色列表；格子里的文字由代码 setText(.., false) 写入，保证一定回显
  */
 class OrderRowAdapter(
     private val colorNames: Array<String>,
@@ -25,10 +26,13 @@ class OrderRowAdapter(
 ) : RecyclerView.Adapter<OrderRowAdapter.OrderRowViewHolder>() {
 
     private val rows = mutableListOf<OrderRowData>()
-    private val rowsMaxNum = 10
+    private val rowsMaxNum = colorNames.size
 
     /** 加号：末尾新增一行，返回新行的下标 */
     fun addRow(color: String): Int {
+        if (rows.size >= rowsMaxNum) {
+            return -1
+        }
         rows.add(OrderRowData(color))
         val position = rows.size - 1
         notifyItemInserted(position)
@@ -51,6 +55,12 @@ class OrderRowAdapter(
 
     /** 当前所有行的数据，提交时使用 */
     fun getAllRows(): List<OrderRowData> = rows.toList()
+
+    /** 还没用过的颜色里的第一个，给新增的行当默认颜色（一种颜色只应该有一行） */
+    fun firstUnusedColor(): String {
+        val usedColors = rows.map { it.color }
+        return colorNames.firstOrNull { it !in usedColors } ?: colorNames[0]
+    }
 
     /**
      * 把当前显示在屏幕上的行的控件内容同步回数据，点“确定”前调用一次。
@@ -82,7 +92,8 @@ class OrderRowAdapter(
         private val onDeleteRow: (position: Int) -> Unit
     ) : RecyclerView.ViewHolder(itemView) {
 
-        private val colorSpinner: Spinner = itemView.findViewById(R.id.sp_color)
+        private val colorDropdown: MaterialAutoCompleteTextView =
+            itemView.findViewById(R.id.dropdown_row_color)
         private val deleteButton: Button = itemView.findViewById(R.id.btn_delete_row)
         private val sizeEdits: List<EditText> = SIZE_EDIT_IDS.map { itemView.findViewById(it) }
 
@@ -90,24 +101,13 @@ class OrderRowAdapter(
         private var rowData: OrderRowData? = null
 
         init {
-            // 下拉框显示的是哪个颜色，这一行就存哪个颜色。
-            // 这里故意不用“正在绑定”之类的标志位去拦截回调：onItemSelected 报出来的
-            // 永远是下拉框当前真正选中的项，直接写回数据，显示和数据就不会打架。
-            colorSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(
-                    parent: AdapterView<*>?,
-                    view: View?,
-                    position: Int,
-                    id: Long
-                ) {
-                    val data = rowData ?: return
-                    val colorName = colorNameAt(position) ?: return
-                    if (data.color != colorName) {
-                        data.color = colorName
-                    }
-                }
-
-                override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+            // 点颜色格子（或右边的下拉箭头）展开颜色列表，选中后立刻写进数据并显示出来
+            colorDropdown.setSimpleItems(colorNames)
+            colorDropdown.setOnClickListener { colorDropdown.showDropDown() }
+            colorDropdown.setOnItemClickListener { _, _, position, _ ->
+                val data = rowData ?: return@setOnItemClickListener
+                data.color = colorNames[position]
+                showColor(data.color)
             }
 
             sizeEdits.forEachIndexed { index, editText ->
@@ -144,11 +144,14 @@ class OrderRowAdapter(
         fun bind(data: OrderRowData) {
             rowData = data
 
-            // 只有下拉框当前显示的颜色与一行不一致时这才改，避免多余的 setSelection
-            val colorPosition = colorNames.indexOf(data.color)
-            if (colorPosition >= 0 && colorSpinner.selectedItemPosition != colorPosition) {
-                colorSpinner.setSelection(colorPosition)
+            // 颜色由代码直接写进格子里，不会出现选完不回显、或者整格空白的情况
+            if (data.color !in colorNames) {
+                data.color = colorNames[0]
             }
+            showColor(data.color)
+            // 复用这一行的时候，把上一次可能还开着的下拉列表收起来
+            colorDropdown.dismissDropDown()
+
             sizeEdits.forEachIndexed { index, editText ->
                 editText.setText(data.sizes[index])
             }
@@ -161,8 +164,8 @@ class OrderRowAdapter(
         fun syncFromViews() {
             val data = rowData ?: return
 
-            val colorName = colorNameAt(colorSpinner.selectedItemPosition)
-            if (colorName != null && data.color != colorName) {
+            val colorName = colorDropdown.text.toString()
+            if (colorName in colorNames) {
                 data.color = colorName
             }
             sizeEdits.forEachIndexed { index, editText ->
@@ -170,8 +173,13 @@ class OrderRowAdapter(
             }
         }
 
-        private fun colorNameAt(position: Int): String? =
-            if (position in colorNames.indices) colorNames[position] else null
+        /**
+         * 把颜色写进格子。第二个参数 false 表示不要触发 AutoCompleteTextView 的过滤，
+         * 免得只是显示一下就又把下拉列表弹出来。
+         */
+        private fun showColor(colorName: String) {
+            colorDropdown.setText(colorName, false)
+        }
     }
 
     companion object {

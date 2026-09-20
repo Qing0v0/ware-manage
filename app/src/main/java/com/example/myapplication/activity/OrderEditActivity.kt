@@ -22,6 +22,7 @@ import com.example.myapplication.model.OrderType
 import com.example.myapplication.service.OrderBatchDatabase
 import com.example.myapplication.utils.OrderBatchUtils
 import com.example.myapplication.utils.StringUtils
+
 import kotlin.concurrent.thread
 
 /**
@@ -102,10 +103,13 @@ class OrderEditActivity : AppCompatActivity() {
         addOrderRow()
     }
 
-    /** 加号：新增一行（一种颜色 = 一批），颜色默认取 color_array 的第一项，进界面后在行里改 */
+    /** 加号：新增一行（一种颜色 = 一批），默认用还没用过的颜色，进界面后点颜色格子可以改 */
     private fun addOrderRow() {
-        val defaultColor = resources.getStringArray(R.array.color_array)[0]
-        val newPosition = orderRowAdapter.addRow(defaultColor)
+        val newPosition = orderRowAdapter.addRow(orderRowAdapter.firstUnusedColor())
+        if (newPosition == -1) {
+            showTip(getString(R.string.rows_max_num))
+            return
+        }
         orderRowTable.smoothScrollToPosition(newPosition)
     }
 
@@ -142,7 +146,12 @@ class OrderEditActivity : AppCompatActivity() {
             )
             val checkResult = orderBatchUtils.checkInputs()
             if (checkResult != StringUtils.checkOk) {
-                showTip(getString(R.string.order_row_error, index + 1, checkResult))
+                val errorTips = if ((checkResult == StringUtils.sizeTypeError) || (checkResult == StringUtils.sizeArrayEmpty)) {
+                    getString(R.string.order_row_error, index + 1, checkResult)
+                } else {
+                    checkResult
+                }
+                showTip(errorTips)
                 return
             }
             orderBatches.add(orderBatchUtils.buildOrderBatch())
