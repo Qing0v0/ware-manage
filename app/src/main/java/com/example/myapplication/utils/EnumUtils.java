@@ -4,13 +4,11 @@ import com.example.myapplication.model.Color;
 
 public class EnumUtils {
     public static Color matchColor(String color) {
-        if ("黑色".equals(color)) {
-            return Color.BLACK;
-        } else if ("白色".equals(color)) {
-            return Color.WHITE;
-        } else if ("灰色".equals(color)) {
-            return Color.GRAY;
+        switch(color) {
+            case "黑色": return Color.BLACK;
+            case "白色": return Color.WHITE;
+            case "灰色": return Color.GRAY;
+            default: return Color.OTHER;
         }
-        return Color.OTHER;
     }
 }

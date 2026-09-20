@@ -1,248 +1,186 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- 入库 / 出库界面：表头 + 表格（每一行见 order_row.xml） -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/order_edit_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="10dp">
+    android:orientation="vertical">
 
-
-    <TextView
-        android:id="@+id/text_article_id"
-        android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:textSize="20sp"
-        android:gravity="center"
-        android:layout_marginBottom="10dp"
-        android:layout_marginEnd="10dp"
-        android:text="@string/purchase_order_article_id" />
-
-    <EditText
-        android:id="@+id/article_id_fill"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:autofillHints="请输入货号"
-        android:inputType="text"
-        android:layout_toEndOf="@id/text_article_id"
-        android:background="@drawable/edit_border"
-        android:layout_marginBottom="10dp"
-        tools:ignore="LabelFor" />
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="10dp">
 
-    <TextView
-        android:id="@+id/text_article_name"
-        android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:textSize="20sp"
-        android:gravity="center"
-        android:layout_below="@id/text_article_id"
-        android:layout_marginBottom="10dp"
-        android:layout_marginEnd="10dp"
-        android:text="@string/purchase_order_article_name" />
+        <TextView
+            android:id="@+id/text_order_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/order_editor_title_purchase"
+            android:textSize="22sp"
+            android:textStyle="bold" />
 
-    <EditText
-        android:id="@+id/article_name_fill"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:autofillHints="请输入货名"
-        android:inputType="text"
-        android:layout_below="@id/article_id_fill"
-        android:layout_toEndOf="@id/text_article_name"
-        android:background="@drawable/edit_border"
-        android:layout_marginBottom="10dp"
-        tools:ignore="LabelFor" />
+        <!-- 货号 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
-    <TextView
-        android:id="@+id/text_color"
-        android:textSize="20sp"
-        android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:gravity="center"
-        android:layout_below="@id/text_article_name"
-        android:layout_marginBottom="10dp"
-        android:layout_marginEnd="10dp"
-        android:text="@string/purchase_order_color" />
+            <TextView
+                android:id="@+id/text_article_id"
+                android:layout_width="64dp"
+                android:layout_height="50dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginBottom="8dp"
+                android:gravity="center_vertical"
+                android:text="@string/purchase_order_article_id"
+                android:textSize="18sp" />
 
-    <Spinner
-        android:id="@+id/spinner_color"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:scrollbarSize="25dp"
-        android:layout_below="@id/article_name_fill"
-        android:layout_toEndOf="@id/text_color"
-        android:layout_marginBottom="10dp"
-        android:entries="@array/color_array"/>
+            <EditText
+                android:id="@+id/article_id_fill"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginBottom="8dp"
+                android:layout_weight="1"
+                android:autofillHints=""
+                android:background="@drawable/edit_border"
+                android:hint="@string/article_id_hint"
+                android:inputType="text"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                tools:ignore="LabelFor" />
+        </LinearLayout>
 
-    <TextView
-        android:id="@+id/text_dealer"
-        android:textSize="20sp"
-        android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:gravity="center"
-        android:layout_below="@id/text_color"
-        android:layout_marginBottom="10dp"
-        android:layout_marginEnd="10dp"
-        android:text="@string/purchase_order_dealer" />
+        <!-- 货名 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
-    <EditText
-        android:id="@+id/dealer_fill"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:autofillHints="请输入经销商"
-        android:inputType="text"
-        android:layout_below="@id/spinner_color"
-        android:layout_toEndOf="@id/text_dealer"
-        android:layout_marginBottom="10dp"
-        android:background="@drawable/edit_border"
-        tools:ignore="LabelFor" />
+            <TextView
+                android:id="@+id/text_article_name"
+                android:layout_width="64dp"
+                android:layout_height="50dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginBottom="8dp"
+                android:gravity="center_vertical"
+                android:text="@string/purchase_order_article_name"
+                android:textSize="18sp" />
 
-    <TextView
-        android:id="@+id/text_price"
-        android:textSize="20sp"
-        android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:gravity="center"
-        android:layout_below="@id/text_dealer"
-        android:layout_marginBottom="10dp"
-        android:layout_marginEnd="10dp"
-        android:text="@string/purchase_order_price" />
+            <EditText
+                android:id="@+id/article_name_fill"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginBottom="8dp"
+                android:layout_weight="1"
+                android:autofillHints=""
+                android:background="@drawable/edit_border"
+                android:hint="@string/article_name_hint"
+                android:inputType="text"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                tools:ignore="LabelFor" />
+        </LinearLayout>
 
-    <EditText
-        android:id="@+id/price_fill"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:autofillHints="请输入进价"
-        android:inputType="text"
-        android:layout_below="@id/dealer_fill"
-        android:layout_toEndOf="@id/text_price"
-        android:layout_marginBottom="10dp"
-        android:background="@drawable/edit_border"
-        tools:ignore="LabelFor" />
+        <!-- 经销商（出库时隐藏） -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
-    <EditText
-        android:id="@+id/size36_fill"
-        android:layout_centerInParent="true"
-        android:layout_width="100dp"
-        android:layout_height="50dp"
-        android:autofillHints=""
-        android:hint="36"
-        android:inputType="number"
-        android:layout_below="@id/text_price"
-        android:layout_marginBottom="10dp"
-        android:layout_marginStart="30dp"
-        android:layout_marginEnd="30dp"
-        android:background="@drawable/edit_border"
-        tools:ignore="HardcodedText,LabelFor" />
+            <TextView
+                android:id="@+id/text_dealer"
+                android:layout_width="64dp"
+                android:layout_height="50dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginBottom="8dp"
+                android:gravity="center_vertical"
+                android:text="@string/purchase_order_dealer"
+                android:textSize="18sp" />
 
-    <EditText
-        android:id="@+id/size35_fill"
-        android:layout_centerInParent="true"
-        android:layout_width="100dp"
-        android:layout_height="50dp"
-        android:autofillHints=""
-        android:hint="35"
-        android:inputType="number"
-        android:layout_below="@id/text_price"
-        android:layout_toStartOf="@id/size36_fill"
-        android:layout_marginBottom="10dp"
-        android:background="@drawable/edit_border"
-        tools:ignore="HardcodedText,LabelFor" />
+            <EditText
+                android:id="@+id/dealer_fill"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginBottom="8dp"
+                android:layout_weight="1"
+                android:autofillHints=""
+                android:background="@drawable/edit_border"
+                android:hint="@string/dealer_hint"
+                android:inputType="text"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                tools:ignore="LabelFor" />
+        </LinearLayout>
 
-    <EditText
-        android:id="@+id/size37_fill"
-        android:layout_centerInParent="true"
-        android:layout_width="100dp"
-        android:layout_height="50dp"
-        android:autofillHints=""
-        android:hint="37"
-        android:inputType="number"
-        android:layout_below="@id/text_price"
-        android:layout_toEndOf="@id/size36_fill"
-        android:layout_marginBottom="10dp"
-        android:background="@drawable/edit_border"
-        tools:ignore="HardcodedText,LabelFor" />
+        <!-- 价格：入库是进价，出库是售价 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
-    <EditText
-        android:id="@+id/size39_fill"
-        android:layout_centerInParent="true"
-        android:layout_width="100dp"
-        android:layout_height="50dp"
-        android:autofillHints=""
-        android:hint="39"
-        android:inputType="number"
-        android:layout_below="@id/size36_fill"
-        android:layout_marginBottom="10dp"
-        android:layout_marginStart="30dp"
-        android:layout_marginEnd="30dp"
-        android:background="@drawable/edit_border"
-        tools:ignore="HardcodedText,LabelFor" />
+            <TextView
+                android:id="@+id/text_price"
+                android:layout_width="64dp"
+                android:layout_height="50dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginBottom="8dp"
+                android:gravity="center_vertical"
+                android:text="@string/purchase_order_price"
+                android:textSize="18sp" />
 
-    <EditText
-        android:id="@+id/size38_fill"
-        android:layout_centerInParent="true"
-        android:layout_width="100dp"
-        android:layout_height="50dp"
-        android:autofillHints=""
-        android:hint="38"
-        android:inputType="number"
-        android:layout_below="@id/size35_fill"
-        android:layout_toStartOf="@id/size39_fill"
-        android:layout_marginBottom="10dp"
-        android:background="@drawable/edit_border"
-        tools:ignore="HardcodedText,LabelFor" />
+            <EditText
+                android:id="@+id/price_fill"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginBottom="8dp"
+                android:layout_weight="1"
+                android:autofillHints=""
+                android:background="@drawable/edit_border"
+                android:hint="@string/purchase_price_hint"
+                android:inputType="numberDecimal"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                tools:ignore="LabelFor" />
+        </LinearLayout>
 
-    <EditText
-        android:id="@+id/size40_fill"
-        android:layout_centerInParent="true"
-        android:layout_width="100dp"
-        android:layout_height="50dp"
-        android:autofillHints=""
-        android:hint="40"
-        android:inputType="number"
-        android:layout_below="@id/size35_fill"
-        android:layout_toEndOf="@id/size39_fill"
-        android:layout_marginBottom="10dp"
-        android:background="@drawable/edit_border"
-        tools:ignore="HardcodedText,LabelFor" />
+        <!-- 加号：新增一行 -->
+        <Button
+            android:id="@+id/btn_add_line"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/add_order_row" />
 
-    <EditText
-        android:id="@+id/size42_fill"
-        android:layout_centerInParent="true"
-        android:layout_width="100dp"
-        android:layout_height="50dp"
-        android:autofillHints=""
-        android:hint="42"
-        android:inputType="number"
-        android:layout_below="@id/size39_fill"
-        android:layout_marginBottom="10dp"
-        android:layout_marginStart="30dp"
-        android:layout_marginEnd="30dp"
-        android:background="@drawable/edit_border"
-        tools:ignore="HardcodedText,LabelFor" />
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_purchase_table"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="8dp"
+            android:layout_weight="1"
+            tools:listitem="@layout/order_row" />
 
-    <EditText
-        android:id="@+id/size41_fill"
-        android:layout_centerInParent="true"
-        android:layout_width="100dp"
-        android:layout_height="50dp"
-        android:autofillHints=""
-        android:hint="41"
-        android:inputType="number"
-        android:layout_below="@id/size38_fill"
-        android:layout_toStartOf="@id/size42_fill"
-        android:layout_marginBottom="10dp"
-        android:background="@drawable/edit_border"
-        tools:ignore="HardcodedText,LabelFor" />
+        <!-- 取消 / 确定 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="end"
+            android:orientation="horizontal">
 
-    <EditText
-        android:id="@+id/size43_fill"
-        android:layout_centerInParent="true"
-        android:layout_width="100dp"
-        android:layout_height="50dp"
-        android:autofillHints=""
-        android:hint="43"
-        android:inputType="number"
-        android:layout_below="@id/size40_fill"
-        android:layout_toEndOf="@id/size42_fill"
-        android:layout_marginBottom="10dp"
-        android:background="@drawable/edit_border"
-        tools:ignore="HardcodedText,LabelFor" />
-</RelativeLayout>
+            <Button
+                android:id="@+id/btn_cancel_order"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/cancel" />
+
+            <Button
+                android:id="@+id/btn_confirm_order"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="@string/confirm" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

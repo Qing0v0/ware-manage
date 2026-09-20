@@ -25,6 +25,7 @@ data class OrderBatch(
     var articleName: String,
 
     var color: Color,
+    var size34: Int,
     var size35: Int,
     var size36: Int,
     var size37: Int,
@@ -34,6 +35,7 @@ data class OrderBatch(
     var size41: Int,
     var size42: Int,
     var size43: Int,
+    var size44: Int,
 
     var orderType: OrderType,
     var dealer: String,

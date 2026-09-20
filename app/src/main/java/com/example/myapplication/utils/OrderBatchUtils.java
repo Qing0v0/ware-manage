@@ -76,7 +76,7 @@ public class OrderBatchUtils implements StringUtils{
         return checkOk;
     }
 
-    public OrderBatch generateOrderBatch() {
+    public OrderBatch buildOrderBatch() {
         return new OrderBatch(
                 0,
                 articleId,
@@ -85,6 +85,7 @@ public class OrderBatchUtils implements StringUtils{
                 Integer.parseInt(sizeArray[0]), Integer.parseInt(sizeArray[1]), Integer.parseInt(sizeArray[2]),
                 Integer.parseInt(sizeArray[3]), Integer.parseInt(sizeArray[4]), Integer.parseInt(sizeArray[5]),
                 Integer.parseInt(sizeArray[6]), Integer.parseInt(sizeArray[7]), Integer.parseInt(sizeArray[8]),
+                Integer.parseInt(sizeArray[9]), Integer.parseInt(sizeArray[10]),
                 orderType,
                 dealer,
                 new BigDecimal(price),

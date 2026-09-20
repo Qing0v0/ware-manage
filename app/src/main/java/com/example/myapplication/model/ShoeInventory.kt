@@ -6,11 +6,13 @@ import androidx.room.TypeConverters
 import java.math.BigDecimal
 
 data class ShoeInventory(
-    var id: Int,
+    @PrimaryKey(autoGenerate = true) var id: Int = 0,
     var articleId: String,
     var articleName: String,
+    var dealer: String,
 
     var color: Color,
+    var size34: Int,
     var size35: Int,
     var size36: Int,
     var size37: Int,
@@ -20,6 +22,5 @@ data class ShoeInventory(
     var size41: Int,
     var size42: Int,
     var size43: Int,
-
-    var sellingPrice: BigDecimal,
+    var size44: Int,
 )

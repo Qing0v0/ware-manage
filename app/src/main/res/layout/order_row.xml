@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 入库 / 出库表格中的一行：左边是颜色和 34~44 码的数量，右边是减号（删除本行） -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="2dp">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Spinner
+                android:id="@+id/sp_color"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_margin="1dp"
+                android:layout_weight="1"
+                android:entries="@array/color_array" />
+
+            <EditText
+                android:id="@+id/size34_fill"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_margin="1dp"
+                android:layout_weight="1"
+                android:background="@drawable/edit_border"
+                android:gravity="center"
+                android:hint="34"
+                android:inputType="number" />
+
+            <EditText
+                android:id="@+id/size35_fill"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_margin="1dp"
+                android:layout_weight="1"
+                android:background="@drawable/edit_border"
+                android:gravity="center"
+                android:hint="35"
+                android:inputType="number" />
+
+            <EditText
+                android:id="@+id/size36_fill"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_margin="1dp"
+                android:layout_weight="1"
+                android:background="@drawable/edit_border"
+                android:gravity="center"
+                android:hint="36"
+                android:inputType="number" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/size37_fill"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_margin="1dp"
+                android:layout_weight="1"
+                android:background="@drawable/edit_border"
+                android:gravity="center"
+                android:hint="37"
+                android:inputType="number" />
+
+            <EditText
+                android:id="@+id/size38_fill"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_margin="1dp"
+                android:layout_weight="1"
+                android:background="@drawable/edit_border"
+                android:gravity="center"
+                android:hint="38"
+                android:inputType="number" />
+
+            <EditText
+                android:id="@+id/size39_fill"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_margin="1dp"
+                android:layout_weight="1"
+                android:background="@drawable/edit_border"
+                android:gravity="center"
+                android:hint="39"
+                android:inputType="number" />
+
+            <EditText
+                android:id="@+id/size40_fill"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_margin="1dp"
+                android:layout_weight="1"
+                android:background="@drawable/edit_border"
+                android:gravity="center"
+                android:hint="40"
+                android:inputType="number" />
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/size41_fill"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_margin="1dp"
+                android:layout_weight="1"
+                android:background="@drawable/edit_border"
+                android:gravity="center"
+                android:hint="41"
+                android:inputType="number" />
+
+            <EditText
+                android:id="@+id/size42_fill"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_margin="1dp"
+                android:layout_weight="1"
+                android:background="@drawable/edit_border"
+                android:gravity="center"
+                android:hint="42"
+                android:inputType="number" />
+
+            <EditText
+                android:id="@+id/size43_fill"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_margin="1dp"
+                android:layout_weight="1"
+                android:background="@drawable/edit_border"
+                android:gravity="center"
+                android:hint="43"
+                android:inputType="number" />
+
+            <EditText
+                android:id="@+id/size44_fill"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_margin="1dp"
+                android:layout_weight="1"
+                android:background="@drawable/edit_border"
+                android:gravity="center"
+                android:hint="44"
+                android:inputType="number" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- 减号：删除这一行 -->
+    <Button
+        android:id="@+id/btn_delete_row"
+        android:layout_width="44dp"
+        android:layout_height="156dp"
+        android:layout_gravity="center_vertical"
+        android:layout_marginStart="2dp"
+        android:minWidth="0dp"
+        android:minHeight="0dp"
+        android:padding="0dp"
+        android:text="@string/delete_order_row"
+        android:textSize="24sp" />
+</LinearLayout>
