@@ -2,15 +2,15 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "e1a93d6ef5bb61a48d2dfe88878927f6",
+    "identityHash": "69b00777c4d6735c278eac6a6232ffde",
     "entities": [
       {
-        "tableName": "order",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`orderId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `articleId` TEXT NOT NULL, `articleName` TEXT NOT NULL, `color` TEXT NOT NULL, `size34` INTEGER NOT NULL, `size35` INTEGER NOT NULL, `size36` INTEGER NOT NULL, `size37` INTEGER NOT NULL, `size38` INTEGER NOT NULL, `size39` INTEGER NOT NULL, `size40` INTEGER NOT NULL, `size41` INTEGER NOT NULL, `size42` INTEGER NOT NULL, `size43` INTEGER NOT NULL, `size44` INTEGER NOT NULL, `orderType` TEXT NOT NULL, `dealer` TEXT NOT NULL, `price` INTEGER NOT NULL, `date` INTEGER NOT NULL)",
+        "tableName": "inventory",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `articleId` TEXT NOT NULL, `articleName` TEXT NOT NULL, `dealer` TEXT NOT NULL, `color` TEXT NOT NULL, `size34` INTEGER NOT NULL, `size35` INTEGER NOT NULL, `size36` INTEGER NOT NULL, `size37` INTEGER NOT NULL, `size38` INTEGER NOT NULL, `size39` INTEGER NOT NULL, `size40` INTEGER NOT NULL, `size41` INTEGER NOT NULL, `size42` INTEGER NOT NULL, `size43` INTEGER NOT NULL, `size44` INTEGER NOT NULL)",
         "fields": [
           {
-            "fieldPath": "orderId",
-            "columnName": "orderId",
+            "fieldPath": "id",
+            "columnName": "id",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -23,6 +23,12 @@
           {
             "fieldPath": "articleName",
             "columnName": "articleName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dealer",
+            "columnName": "dealer",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -97,46 +103,33 @@
             "columnName": "size44",
             "affinity": "INTEGER",
             "notNull": true
-          },
-          {
-            "fieldPath": "orderType",
-            "columnName": "orderType",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "dealer",
-            "columnName": "dealer",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "price",
-            "columnName": "price",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "date",
-            "columnName": "date",
-            "affinity": "INTEGER",
-            "notNull": true
           }
         ],
         "primaryKey": {
           "autoGenerate": true,
           "columnNames": [
-            "orderId"
+            "id"
           ]
         },
-        "indices": [],
+        "indices": [
+          {
+            "name": "index_inventory_articleId_color",
+            "unique": true,
+            "columnNames": [
+              "articleId",
+              "color"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_inventory_articleId_color` ON `${TABLE_NAME}` (`articleId`, `color`)"
+          }
+        ],
         "foreignKeys": []
       }
     ],
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e1a93d6ef5bb61a48d2dfe88878927f6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '69b00777c4d6735c278eac6a6232ffde')"
     ]
   }
 }

@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.myapplication.model.OrderBatch
+import com.example.myapplication.model.ShoeInventory
 
 @Database(entities = [OrderBatch::class], version = 1)
 abstract class OrderBatchDatabase: RoomDatabase() {
@@ -28,7 +29,7 @@ abstract class OrderBatchDatabase: RoomDatabase() {
     }
 }
 
-@Database(entities = [OrderBatch::class], version = 1)
+@Database(entities = [ShoeInventory::class], version = 1)
 abstract class InventoryDatabase: RoomDatabase() {
     abstract fun shoeInventoryDAO(): ShoeInventoryDAO
 
@@ -41,7 +42,7 @@ abstract class InventoryDatabase: RoomDatabase() {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     InventoryDatabase::class.java,
-                    "app_database"
+                    "inventory_database"
                 ).build()
                 INSTANCE = instance
                 instance

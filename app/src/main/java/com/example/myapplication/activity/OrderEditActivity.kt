@@ -19,6 +19,8 @@ import com.example.myapplication.R
 import com.example.myapplication.adapter.OrderRowAdapter
 import com.example.myapplication.model.OrderBatch
 import com.example.myapplication.model.OrderType
+import com.example.myapplication.service.InventoryDatabase
+import com.example.myapplication.service.InventoryService
 import com.example.myapplication.service.OrderBatchDatabase
 import com.example.myapplication.utils.OrderBatchUtils
 import com.example.myapplication.utils.StringUtils
@@ -161,10 +163,20 @@ class OrderEditActivity : AppCompatActivity() {
     }
 
     private fun saveOrderBatches(orderBatches: List<OrderBatch>) {
-        val database = OrderBatchDatabase.getDatabase(applicationContext)
+        val orderDatabase = OrderBatchDatabase.getDatabase(applicationContext)
+        val inventoryService = InventoryService(InventoryDatabase.getDatabase(applicationContext))
         thread {
-            orderBatches.forEach { database.orderBatchDAO().insert(it) }
-            // TODO 下一步：这里要同步增加（入库）或减少（出库）ShoeInventory 里的存量
+            // 1. 先查存量：出库减完小于 0 会在这里被拦下来，有问题就什么都不写
+            val inventoryErrors = inventoryService.check(orderBatches)
+            if (inventoryErrors.isNotEmpty()) {
+                runOnUiThread { showTip(inventoryErrors.joinToString("\n")) }
+                return@thread
+            }
+
+            // 2. 存量没问题：写订单流水，再加 / 减存量（入库加，出库、破损、退货减）
+            orderBatches.forEach { orderDatabase.orderBatchDAO().insert(it) }
+            inventoryService.apply(orderBatches)
+
             runOnUiThread {
                 Toast.makeText(
                     this,
