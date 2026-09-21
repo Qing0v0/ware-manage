@@ -10,6 +10,8 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -18,10 +20,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
 import com.example.myapplication.adapter.OrderRowAdapter
 import com.example.myapplication.model.OrderBatch
+import com.example.myapplication.model.OrderRowData
 import com.example.myapplication.model.OrderType
 import com.example.myapplication.service.InventoryDatabase
 import com.example.myapplication.service.InventoryService
 import com.example.myapplication.service.OrderBatchDatabase
+import com.example.myapplication.utils.ImageUtils
 import com.example.myapplication.utils.OrderBatchUtils
 import com.example.myapplication.utils.StringUtils
 
@@ -30,7 +34,7 @@ import kotlin.concurrent.thread
 /**
  * 入库 / 出库界面（布局：R.layout.purchase_order）。
  *
- * - 入库：OrderType.ARTICLE_PURCHASE，填写货号、货名、经销商、进价
+ * - 入库：OrderType.ARTICLE_PURCHASE，填写货号、经销商、进价
  * - 出库：OrderType.ARTICLE_SOLD，不需要经销商，价格改成售价
  *
  * 表头是整张单据的公共信息，颜色不在这里选；表格里每一行 = 一种颜色 + 34~44 码的数量（即一批），
@@ -41,12 +45,31 @@ class OrderEditActivity : AppCompatActivity() {
     private lateinit var orderType: OrderType
 
     private lateinit var articleIdFill: EditText
-    private lateinit var articleNameFill: EditText
     private lateinit var dealerFill: EditText
     private lateinit var priceFill: EditText
 
     private lateinit var orderRowTable: RecyclerView
     private lateinit var orderRowAdapter: OrderRowAdapter
+
+    /** 从仓库页面的 ＋ / － 进来时锁定的颜色，为 null 表示货号 / 颜色由用户自己填 */
+    private var fixedColor: String? = null
+
+    /** 从仓库页面带过来的图片路径（出库时只显示不能改） */
+    private var fixedImagePath: String? = null
+
+    /** 正在等哪一行选图片（相册选完回来要用），null 表示没在等 */
+    private var pendingImageRowPosition: Int? = null
+
+    /** 相册选图：选完把图挂到刚才那一行上，点确定时才真正压缩存盘 */
+    private val pickImageLauncher = registerForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        val position = pendingImageRowPosition
+        pendingImageRowPosition = null
+        if (uri != null && position != null) {
+            orderRowAdapter.setRowImage(position, uri)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,7 +93,6 @@ class OrderEditActivity : AppCompatActivity() {
         orderType = readOrderType(intent)
 
         articleIdFill = findViewById(R.id.article_id_fill)
-        articleNameFill = findViewById(R.id.article_name_fill)
         dealerFill = findViewById(R.id.dealer_fill)
         priceFill = findViewById(R.id.price_fill)
 
@@ -89,10 +111,39 @@ class OrderEditActivity : AppCompatActivity() {
             priceFill.setHint(R.string.selling_price_hint)
         }
 
-        // 表格：加号在布局里，减号在每一行里；颜色和 34~44 码的数量都在行里，一行就是一批
-        orderRowAdapter = OrderRowAdapter(resources.getStringArray(R.array.color_array)) { position ->
-            orderRowAdapter.removeRow(position)
+        // 从仓库页面的 ＋ / － 进来时，货号、颜色、经销商都是定死的：灰掉不给改
+        val fixedArticleId = intent.getStringExtra(EXTRA_ARTICLE_ID)
+        fixedColor = intent.getStringExtra(EXTRA_COLOR)
+        if (fixedArticleId != null && fixedColor != null) {
+            articleIdFill.setText(fixedArticleId)
+            articleIdFill.isEnabled = false
+
+            // 经销商也是这一行定死的：出库界面本来会把经销商隐藏，这里改成显示出来但灰掉
+            findViewById<View>(R.id.text_dealer).visibility = View.VISIBLE
+            dealerFill.visibility = View.VISIBLE
+            val fixedDealer = intent.getStringExtra(EXTRA_DEALER)
+            if (!fixedDealer.isNullOrEmpty()) {
+                dealerFill.setText(fixedDealer)
+                dealerFill.isEnabled = false
+            }
+
+            // 图片也从存量带过来：入库可以换，出库只给看
+            fixedImagePath = intent.getStringExtra(EXTRA_IMAGE_PATH)
+
+            // 颜色定死了，加行 / 删行都没有意义
+            findViewById<Button>(R.id.btn_add_line).visibility = View.GONE
+            titleText.text = "${titleText.text} $fixedArticleId $fixedColor"
         }
+
+        // 表格：加号在布局里，减号在每一行里；颜色和 34~44 码的数量都在行里，一行就是一批
+        orderRowAdapter = OrderRowAdapter(
+            resources.getStringArray(R.array.color_array),
+            { position -> orderRowAdapter.removeRow(position) },
+            { position -> pickImage(position) },
+            colorFixed = fixedColor != null,
+            // 入库可以加图片，出库不行
+            imageEditable = orderType == OrderType.ARTICLE_PURCHASE
+        )
         orderRowTable = findViewById(R.id.rv_purchase_table)
         orderRowTable.layoutManager = LinearLayoutManager(this)
         orderRowTable.adapter = orderRowAdapter
@@ -105,9 +156,10 @@ class OrderEditActivity : AppCompatActivity() {
         addOrderRow()
     }
 
-    /** 加号：新增一行（一种颜色 = 一批），默认用还没用过的颜色，进界面后点颜色格子可以改 */
+    /** 加号：新增一行（一种颜色 = 一批）；颜色锁死时只能用锁定的那个颜色 */
     private fun addOrderRow() {
-        val newPosition = orderRowAdapter.addRow(orderRowAdapter.firstUnusedColor())
+        val newPosition =
+            orderRowAdapter.addRow(fixedColor ?: orderRowAdapter.firstUnusedColor(), fixedImagePath)
         if (newPosition == -1) {
             showTip(getString(R.string.rows_max_num))
             return
@@ -115,15 +167,20 @@ class OrderEditActivity : AppCompatActivity() {
         orderRowTable.smoothScrollToPosition(newPosition)
     }
 
+    /** 点行里的图片方框：记下是哪一行，然后调系统相册 */
+    private fun pickImage(position: Int) {
+        pendingImageRowPosition = position
+        pickImageLauncher.launch(
+            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+        )
+    }
+
     /** 确定：先校验表头和每一行，全部通过后再写库 */
     private fun confirmOrder() {
         val articleId = articleIdFill.text.toString().trim()
-        val articleName = articleNameFill.text.toString().trim()
-        val dealer = if (orderType == OrderType.ARTICLE_PURCHASE) {
-            dealerFill.text.toString().trim()
-        } else {
-            ""
-        }
+        // 出库界面本来不填经销商；但锁定模式（从仓库页面的 ＋ / － 进来）经销商会灰着显示出来，
+        // 这种情况就一并记进订单：界面显示什么就存什么
+        val dealer = dealerFill.text.toString().trim()
         val price = priceFill.text.toString().trim()
 
         // 先把手上的内容同步回数据，保证保存的就是屏幕上看到的
@@ -140,7 +197,6 @@ class OrderEditActivity : AppCompatActivity() {
             val orderBatchUtils = OrderBatchUtils(
                 row.sizes.toTypedArray(),
                 articleId,
-                articleName,
                 dealer,
                 row.color,
                 price,
@@ -159,12 +215,13 @@ class OrderEditActivity : AppCompatActivity() {
             orderBatches.add(orderBatchUtils.buildOrderBatch())
         }
 
-        saveOrderBatches(orderBatches)
+        saveOrderBatches(orderBatches, rows)
     }
 
-    private fun saveOrderBatches(orderBatches: List<OrderBatch>) {
+    private fun saveOrderBatches(orderBatches: List<OrderBatch>, rows: List<OrderRowData>) {
         val orderDatabase = OrderBatchDatabase.getDatabase(applicationContext)
         val inventoryService = InventoryService(InventoryDatabase.getDatabase(applicationContext))
+        val imageEditable = orderType == OrderType.ARTICLE_PURCHASE
         thread {
             // 1. 先查存量：出库减完小于 0 会在这里被拦下来，有问题就什么都不写
             val inventoryErrors = inventoryService.check(orderBatches)
@@ -173,9 +230,19 @@ class OrderEditActivity : AppCompatActivity() {
                 return@thread
             }
 
-            // 2. 存量没问题：写订单流水，再加 / 减存量（入库加，出库、破损、退货减）
+            // 2. 图片：入库时新选的图压缩后存到应用私有目录，数据库里只存路径；
+            //    订单库不存图片（省空间），图片只跟着存量走
+            val imagePaths = rows.map { row ->
+                if (imageEditable && row.imageUri != null) {
+                    ImageUtils.saveToAppStorage(applicationContext, row.imageUri!!) ?: row.imagePath
+                } else {
+                    row.imagePath
+                }
+            }
+
+            // 3. 存量没问题：写订单流水，再加 / 减存量（入库加，出库、破损、退货减）
             orderBatches.forEach { orderDatabase.orderBatchDAO().insert(it) }
-            inventoryService.apply(orderBatches)
+            inventoryService.apply(orderBatches, imagePaths)
 
             runOnUiThread {
                 Toast.makeText(
@@ -205,10 +272,31 @@ class OrderEditActivity : AppCompatActivity() {
 
     companion object {
         private const val EXTRA_ORDER_TYPE = "extra_order_type"
+        private const val EXTRA_ARTICLE_ID = "extra_article_id"
+        private const val EXTRA_COLOR = "extra_color"
+        private const val EXTRA_DEALER = "extra_dealer"
+        private const val EXTRA_IMAGE_PATH = "extra_image_path"
 
+        /** 货号自己填：整单入库 / 出库，用来开一个新的货号 */
         fun createIntent(context: Context, orderType: OrderType): Intent {
             return Intent(context, OrderEditActivity::class.java)
                 .putExtra(EXTRA_ORDER_TYPE, orderType.name)
+        }
+
+        /** 从仓库页面的 ＋ / － 进来：货号、颜色、经销商都定死，只能填数量和（入库时）换图片 */
+        fun createIntent(
+            context: Context,
+            orderType: OrderType,
+            articleId: String,
+            colorName: String,
+            dealer: String,
+            imagePath: String?
+        ): Intent {
+            return createIntent(context, orderType)
+                .putExtra(EXTRA_ARTICLE_ID, articleId)
+                .putExtra(EXTRA_COLOR, colorName)
+                .putExtra(EXTRA_DEALER, dealer)
+                .putExtra(EXTRA_IMAGE_PATH, imagePath)
         }
     }
 }

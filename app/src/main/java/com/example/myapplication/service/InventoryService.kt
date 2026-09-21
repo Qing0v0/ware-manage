@@ -75,20 +75,25 @@ class InventoryService(private val inventoryDatabase: InventoryDatabase) {
     /**
      * 把这一批订单应用到存量上，[check] 通过之后再调用。
      * 整批放在一个事务里，中途出错会整批回滚，不会出现改了一半的情况。
+     *
+     * @param imagePaths 和 orderBatches 一一对应的图片路径（入库时新选的图片），
+     *                   出库不会改图片，null 表示这一行不动图片
      */
-    fun apply(orderBatches: List<OrderBatch>) {
+    fun apply(orderBatches: List<OrderBatch>, imagePaths: List<String?> = emptyList()) {
         inventoryDatabase.runInTransaction {
-            orderBatches.forEach { applyOne(it) }
+            orderBatches.forEachIndexed { index, orderBatch ->
+                applyOne(orderBatch, imagePaths.getOrNull(index))
+            }
         }
     }
 
-    private fun applyOne(orderBatch: OrderBatch) {
+    private fun applyOne(orderBatch: OrderBatch, imagePath: String?) {
         val inventory = inventoryDAO.query(orderBatch.articleId, orderBatch.color)
 
         if (inventory == null) {
             // 没有存量：入库就补一条新的；出库这种情况 [check] 已经拦下，这里不再处理
             if (orderBatch.orderType.increaseStock) {
-                inventoryDAO.insert(buildInventory(orderBatch))
+                inventoryDAO.insert(buildInventory(orderBatch, imagePath))
             }
             return
         }
@@ -102,24 +107,25 @@ class InventoryService(private val inventoryDatabase: InventoryDatabase) {
         }
         SizeUtils.applySizes(inventory, sizes)
 
-        // 货名、经销商以最近一次填写的为准（出库不填经销商，就保留原来的）
-        if (orderBatch.articleName.isNotEmpty()) {
-            inventory.articleName = orderBatch.articleName
-        }
+        // 经销商以最近一次填写的为准（出库不填经销商，就保留原来的）
         if (orderBatch.dealer.isNotEmpty()) {
             inventory.dealer = orderBatch.dealer
+        }
+        // 图片只有入库能改（界面上出库那一格是锁住的），换了就覆盖
+        if (orderBatch.orderType.increaseStock && !imagePath.isNullOrEmpty()) {
+            inventory.imagePath = imagePath
         }
 
         inventoryDAO.update(inventory)
     }
 
     /** 用入库单里的数量新建一条存量 */
-    private fun buildInventory(orderBatch: OrderBatch): ShoeInventory {
+    private fun buildInventory(orderBatch: OrderBatch, imagePath: String?): ShoeInventory {
         val inventory = ShoeInventory(
             articleId = orderBatch.articleId,
-            articleName = orderBatch.articleName,
             dealer = orderBatch.dealer,
-            color = orderBatch.color
+            color = orderBatch.color,
+            imagePath = imagePath
         )
         SizeUtils.applySizes(inventory, SizeUtils.sizesOf(orderBatch))
         return inventory

@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "69b00777c4d6735c278eac6a6232ffde",
+    "identityHash": "68e74783028e458016f6bdfe1a2a1a4b",
     "entities": [
       {
         "tableName": "inventory",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `articleId` TEXT NOT NULL, `articleName` TEXT NOT NULL, `dealer` TEXT NOT NULL, `color` TEXT NOT NULL, `size34` INTEGER NOT NULL, `size35` INTEGER NOT NULL, `size36` INTEGER NOT NULL, `size37` INTEGER NOT NULL, `size38` INTEGER NOT NULL, `size39` INTEGER NOT NULL, `size40` INTEGER NOT NULL, `size41` INTEGER NOT NULL, `size42` INTEGER NOT NULL, `size43` INTEGER NOT NULL, `size44` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `articleId` TEXT NOT NULL, `dealer` TEXT NOT NULL, `color` TEXT NOT NULL, `imagePath` TEXT, `size34` INTEGER NOT NULL, `size35` INTEGER NOT NULL, `size36` INTEGER NOT NULL, `size37` INTEGER NOT NULL, `size38` INTEGER NOT NULL, `size39` INTEGER NOT NULL, `size40` INTEGER NOT NULL, `size41` INTEGER NOT NULL, `size42` INTEGER NOT NULL, `size43` INTEGER NOT NULL, `size44` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -21,12 +21,6 @@
             "notNull": true
           },
           {
-            "fieldPath": "articleName",
-            "columnName": "articleName",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
             "fieldPath": "dealer",
             "columnName": "dealer",
             "affinity": "TEXT",
@@ -37,6 +31,12 @@
             "columnName": "color",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "imagePath",
+            "columnName": "imagePath",
+            "affinity": "TEXT",
+            "notNull": false
           },
           {
             "fieldPath": "size34",
@@ -129,7 +129,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '69b00777c4d6735c278eac6a6232ffde')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '68e74783028e458016f6bdfe1a2a1a4b')"
     ]
   }
 }

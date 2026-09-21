@@ -9,8 +9,7 @@ import java.util.Date
 
 /*
 param:
-    - articleId: 货号
-    - articleName: 货名
+    - articleId: 货号（货名和货号是同一个东西，就不单独存了）
     - color: 鞋子颜色
     - size xx: 尺寸为xx码的鞋子数量
     - orderType: 出库还是入库
@@ -22,7 +21,6 @@ param:
 data class OrderBatch(
     @PrimaryKey(autoGenerate = true) var orderId: Int = 0,
     var articleId: String,
-    var articleName: String,
 
     var color: Color,
     var size34: Int,

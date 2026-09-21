@@ -21,7 +21,11 @@ abstract class OrderBatchDatabase: RoomDatabase() {
                     context.applicationContext,
                     OrderBatchDatabase::class.java,
                     "app_database"
-                ).build()
+                )
+                    // 开发期：改了表结构就把版本号 +1，Room 会直接把旧库删掉重建（测试数据不要紧）
+                    // TODO 上线前要换成真正的 Migration，不然用户升级会丢数据
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }
@@ -43,7 +47,10 @@ abstract class InventoryDatabase: RoomDatabase() {
                     context.applicationContext,
                     InventoryDatabase::class.java,
                     "inventory_database"
-                ).build()
+                )
+                    // 同上：开发期允许直接重建库
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }

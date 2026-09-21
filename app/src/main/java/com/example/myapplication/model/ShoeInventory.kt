@@ -17,10 +17,11 @@ import androidx.room.PrimaryKey
 data class ShoeInventory(
     @PrimaryKey(autoGenerate = true) var id: Int = 0,
     var articleId: String,
-    var articleName: String,
     var dealer: String,
 
     var color: Color,
+    /** 图片存在本地文件的路径（filesDir/inventory_images/xxx.jpg），没图就是 null；只存在存量库，订单库不存 */
+    var imagePath: String? = null,
     var size34: Int = 0,
     var size35: Int = 0,
     var size36: Int = 0,

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 仓库页面表头的格子：米色底 + 细边框 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/table_head_bg" />
+            <stroke
+                android:width="0.5px"
+                android:color="#505050" />
+        </shape>
+    </item>
+</layer-list>

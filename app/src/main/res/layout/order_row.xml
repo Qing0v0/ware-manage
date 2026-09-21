@@ -175,6 +175,33 @@
                 android:inputType="number" />
         </LinearLayout>
 
+        <!-- 图片：虚线方框 + ＋，点一下去相册选；出库时这一格不能改 -->
+        <FrameLayout
+            android:id="@+id/row_picture_box"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_margin="1dp"
+            android:background="@drawable/dashed_add_border"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:id="@+id/image_row_picture"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@string/row_picture_hint"
+                android:scaleType="centerCrop"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/text_row_picture_add"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="@string/row_picture_add"
+                android:textColor="@color/black"
+                android:textSize="22sp" />
+        </FrameLayout>
     </LinearLayout>
 
     <!-- 减号：删除这一行 -->

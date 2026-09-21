@@ -10,19 +10,17 @@ import java.util.Date;
 public class OrderBatchUtils implements StringUtils{
     public String[] sizeArray;
     public String articleId;
-    public String articleName;
     public String price;
     public Color color;
     public String dealer;
     public OrderType orderType;
 
     public OrderBatchUtils(
-            String[] sizeArray, String articleId, String articleName, String dealer,
+            String[] sizeArray, String articleId, String dealer,
             String color, String price, OrderType orderType
     ) {
         this.sizeArray = sizeArray;
         this.articleId = articleId;
-        this.articleName = articleName;
         this.dealer = dealer;
         this.color = Color.matchColor(color);
         this.price = price;
@@ -33,11 +31,6 @@ public class OrderBatchUtils implements StringUtils{
         // check articleId
         if ("".equals(articleId)) {
             return articleIdEmpty;
-        }
-
-        // check articleName
-        if ("".equals(articleName)) {
-            return articleNameEmpty;
         }
 
         //check dealer
@@ -80,7 +73,6 @@ public class OrderBatchUtils implements StringUtils{
         return new OrderBatch(
                 0,
                 articleId,
-                articleName,
                 color,
                 Integer.parseInt(sizeArray[0]), Integer.parseInt(sizeArray[1]), Integer.parseInt(sizeArray[2]),
                 Integer.parseInt(sizeArray[3]), Integer.parseInt(sizeArray[4]), Integer.parseInt(sizeArray[5]),

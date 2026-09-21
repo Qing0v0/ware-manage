@@ -16,12 +16,14 @@ class DataConvertor {
     }
 
     @TypeConverter
-    fun stringToBig(intDecimal: Int): BigDecimal {
-        return BigDecimal(intDecimal)
+    fun stringToBig(decimalText: String): BigDecimal {
+        return BigDecimal(decimalText)
     }
 
     @TypeConverter
-    fun bigToString(bigDecimal: BigDecimal): Int {
-        return bigDecimal.toInt()
+    fun bigToString(bigDecimal: BigDecimal): String {
+        // 用文本存价格（比如 "40.5"），既不丢小数也不会像 Double 那样有精度问题。
+        // 老版本这里存的是 Int，小数会被截掉，所以两个数据库都升到了版本 2
+        return bigDecimal.toPlainString()
     }
 }

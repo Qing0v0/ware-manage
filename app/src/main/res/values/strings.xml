@@ -7,7 +7,6 @@
     <string name="selling_button">出库</string>
 
     <string name="purchase_order_article_id">货号</string>
-    <string name="purchase_order_article_name">货名</string>
     <string name="purchase_order_color">颜色</string>
     <string name="purchase_order_dealer">经销商</string>
     <string name="purchase_order_price">进价</string>
@@ -22,10 +21,21 @@
     <string name="order_row_error">第 %1$d 行：%2$s</string>
     <string name="order_saved">已保存 %1$d 条记录</string>
     <string name="article_id_hint">请输入货号</string>
-    <string name="article_name_hint">请输入货名</string>
     <string name="dealer_hint">请输入经销商</string>
     <string name="purchase_price_hint">请输入进价</string>
     <string name="selling_price_hint">请输入售价</string>
     <string name="rows_max_num">当前行数已达到上限</string>
     <string name="choose_color">选择颜色</string>
+
+    <!-- 仓库页面（存量表） -->
+    <string name="inventory_picture">图片</string>
+    <string name="inventory_price">价格</string>
+    <string name="inventory_amount">数量</string>
+    <string name="inventory_subtotal">小计</string>
+    <string name="inventory_empty">还没有存量，点右上角的「入库」开始记吧</string>
+    <string name="inventory_no_price">—</string>
+    <string name="stock_add_button">＋</string>
+    <string name="stock_minus_button">－</string>
+    <string name="row_picture_add">＋</string>
+    <string name="row_picture_hint">鞋子图片</string>
 </resources>
