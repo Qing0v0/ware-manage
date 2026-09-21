@@ -17,6 +17,7 @@ import com.example.myapplication.R
 import com.example.myapplication.model.OrderRowData
 import com.example.myapplication.utils.ImageUtils
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
+import com.google.android.material.textfield.TextInputLayout
 
 /**
  * 入库 / 出库界面表格的适配器，一行对应 [R.layout.order_row]（一种颜色 + 34~44 码的数量）。
@@ -124,6 +125,7 @@ class OrderRowAdapter(
         private val pictureCache: LruCache<String, Bitmap>
     ) : RecyclerView.ViewHolder(itemView) {
 
+        private val colorLayout: TextInputLayout = itemView.findViewById(R.id.layout_row_color)
         private val colorDropdown: MaterialAutoCompleteTextView =
             itemView.findViewById(R.id.dropdown_row_color)
         private val deleteButton: Button = itemView.findViewById(R.id.btn_delete_row)
@@ -151,11 +153,21 @@ class OrderRowAdapter(
             }
             // 点颜色格子（或右边的下拉箭头）展开颜色列表，选中后立刻写进数据并显示出来
             colorDropdown.setSimpleItems(colorNames)
-            // 颜色锁死的时候（从仓库页面的 ＋ / － 进来）下拉框灰掉不给改，减号也不显示
+            // 颜色锁死的时候（从仓库页面的 ＋ / － 进来）整格灰掉、点不动，减号也不显示。
+            // 注意：右边的下拉箭头是 TextInputLayout 里的独立 View，只禁用里面的 EditText 没用，
+            // 必须把 TextInputLayout 本身也禁用，箭头才不会响应点击。
+            colorLayout.isEnabled = !colorFixed
             colorDropdown.isEnabled = !colorFixed
             deleteButton.visibility = if (colorFixed) View.GONE else View.VISIBLE
-            colorDropdown.setOnClickListener { colorDropdown.showDropDown() }
+            colorDropdown.setOnClickListener {
+                if (!colorFixed) {
+                    colorDropdown.showDropDown()
+                }
+            }
             colorDropdown.setOnItemClickListener { _, _, position, _ ->
+                if (colorFixed) {
+                    return@setOnItemClickListener
+                }
                 val data = rowData ?: return@setOnItemClickListener
                 data.color = colorNames[position]
                 showColor(data.color)

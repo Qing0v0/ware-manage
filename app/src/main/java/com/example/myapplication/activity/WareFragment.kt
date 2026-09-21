@@ -80,6 +80,14 @@ class WareFragment : Fragment() {
         loadInventory()
     }
 
+    /** 从利润页切回来时也重建一遍，免得界面还是切走前那次测量出来的样子 */
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (!hidden) {
+            loadInventory()
+        }
+    }
+
     private fun loadInventory() {
         val context = requireContext().applicationContext
         thread {
@@ -131,7 +139,12 @@ class WareFragment : Fragment() {
         val quantity = rows.sumOf { inventory -> SizeUtils.sizesOf(inventory).sum() }
         val headCell = ContextCompat.getDrawable(requireContext(), R.drawable.table_head_cell)
 
-        val titleRow = LinearLayout(requireContext()).apply { orientation = LinearLayout.HORIZONTAL }
+        val titleRow = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
         titleRow.addView(
             cell(
                 getString(R.string.purchase_order_article_id), 0, 1f, headCell,
@@ -141,7 +154,12 @@ class WareFragment : Fragment() {
         titleRow.addView(cell(getString(R.string.purchase_order_dealer), dealerCellWidth, 0f, headCell))
         titleRow.addView(cell(getString(R.string.inventory_amount), amountCellWidth, 0f, headCell))
 
-        val valueRow = LinearLayout(requireContext()).apply { orientation = LinearLayout.HORIZONTAL }
+        val valueRow = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
         valueRow.addView(
             cell(
                 articleId, 0, 1f, headCell, bold = true,
@@ -153,6 +171,9 @@ class WareFragment : Fragment() {
 
         return LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                tableWidth(), ViewGroup.LayoutParams.WRAP_CONTENT
+            )
             addView(titleRow)
             addView(valueRow)
         }
@@ -214,6 +235,21 @@ class WareFragment : Fragment() {
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
     /**
+     * 每张表的固定宽度。
+     *
+     * 表格里的「货号格」和「中间尺码栏」用的是 weight，如果承载它们的行没有确定宽度，
+     * weight 就没有参照物，从别的页面切回来重新测量时会算歪（第一行后半截会跑出屏幕）。
+     * 所以这里优先用容器的真实宽度，容器还没测量出来时先用屏幕宽度兜底。
+     */
+    private fun tableWidth(): Int {
+        val innerWidth = tableContainer.width - tableContainer.paddingLeft - tableContainer.paddingRight
+        if (innerWidth > 0) {
+            return innerWidth
+        }
+        return maxOf(dp(280), resources.displayMetrics.widthPixels - dp(20))
+    }
+
+    /**
      * 一个货号下面的颜色表：左栏（图片 + 颜色）和右栏（小计 + ＋ －）固定，
      * 中间的 34 ~ 44 码放在横向滚动里；每行高度一样，所以三栏能对齐。
      */
@@ -223,6 +259,9 @@ class WareFragment : Fragment() {
 
         return LinearLayout(requireContext()).apply {
             orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                tableWidth(), ViewGroup.LayoutParams.WRAP_CONTENT
+            )
             addView(buildLeftColumn(rows, headCell, bodyCell))
             addView(buildSizeScroll(rows, headCell, bodyCell))
             addView(buildRightColumn(articleId, rows, headCell, bodyCell))
