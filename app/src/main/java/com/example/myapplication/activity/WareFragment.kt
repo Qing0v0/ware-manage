@@ -1,8 +1,10 @@
 package com.example.myapplication.activity
 
+import android.app.AlertDialog
 import android.graphics.Bitmap
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.os.Bundle
 import android.text.TextUtils
 import android.util.LruCache
@@ -12,14 +14,20 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.HorizontalScrollView
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import com.example.myapplication.R
 import com.example.myapplication.model.OrderType
 import com.example.myapplication.model.ShoeInventory
+import com.example.myapplication.service.BackupService
 import com.example.myapplication.service.InventoryDatabase
 import com.example.myapplication.utils.ImageUtils
 import com.example.myapplication.utils.SizeUtils
@@ -40,6 +48,25 @@ class WareFragment : Fragment() {
 
     private lateinit var tableContainer: LinearLayout
     private lateinit var emptyText: TextView
+    private lateinit var drawerLayout: DrawerLayout
+
+    /** 导出备份：让用户自己挑保存位置（系统文件选择器，不需要存储权限） */
+    private val exportBackupLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri ->
+        if (uri != null) {
+            exportBackup(uri)
+        }
+    }
+
+    /** 导入备份：让用户挑备份文件 */
+    private val importBackupLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            importBackup(uri)
+        }
+    }
 
     /** 存量缩略图缓存：路径 -> Bitmap，避免每次回到页面都重新解码 */
     private val pictureCache = LruCache<String, Bitmap>(64)
@@ -71,7 +98,96 @@ class WareFragment : Fragment() {
             startActivity(OrderEditActivity.createIntent(requireContext(), OrderType.ARTICLE_SOLD))
         }
 
+        drawerLayout = view.findViewById(R.id.ware_drawer)
+        // 左上角齿轮：打开设置侧边栏
+        view.findViewById<ImageButton>(R.id.button_settings).setOnClickListener {
+            drawerLayout.openDrawer(GravityCompat.START)
+        }
+        // 侧边栏第一行：数据备份 / 恢复
+        view.findViewById<View>(R.id.row_backup).setOnClickListener {
+            drawerLayout.closeDrawer(GravityCompat.START)
+            showBackupDialog()
+        }
+
         return view
+    }
+
+    /** 数据备份 / 恢复：让用户选导出还是导入 */
+    private fun showBackupDialog() {
+        val items = arrayOf(
+            getString(R.string.settings_backup_export),
+            getString(R.string.settings_backup_import)
+        )
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.settings_backup)
+            .setItems(items) { _, which ->
+                if (which == 0) {
+                    exportBackupLauncher.launch(BackupService.suggestedFileName())
+                } else {
+                    confirmImport()
+                }
+            }
+            .show()
+    }
+
+    /** 导入会把现在的数据整个覆盖掉，先确认一下 */
+    private fun confirmImport() {
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.settings_backup)
+            .setMessage(R.string.backup_import_confirm)
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.confirm) { _, _ ->
+                importBackupLauncher.launch(
+                    arrayOf("application/zip", "application/octet-stream", "*/*")
+                )
+            }
+            .show()
+    }
+
+    private fun exportBackup(uri: Uri) {
+        val context = requireContext().applicationContext
+        thread {
+            val success = try {
+                context.contentResolver.openOutputStream(uri)?.use { output ->
+                    BackupService(context).exportTo(output)
+                } ?: false
+            } catch (e: Exception) {
+                false
+            }
+            activity?.runOnUiThread {
+                if (!isAdded) {
+                    return@runOnUiThread
+                }
+                val messageRes =
+                    if (success) R.string.backup_export_success else R.string.backup_export_failed
+                Toast.makeText(context, messageRes, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun importBackup(uri: Uri) {
+        val context = requireContext().applicationContext
+        thread {
+            val success = try {
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    BackupService(context).restoreFrom(input)
+                } ?: false
+            } catch (e: Exception) {
+                false
+            }
+            activity?.runOnUiThread {
+                if (!isAdded) {
+                    return@runOnUiThread
+                }
+                val messageRes =
+                    if (success) R.string.backup_import_success else R.string.backup_import_failed
+                Toast.makeText(context, messageRes, Toast.LENGTH_SHORT).show()
+                if (success) {
+                    // 数据库连接已经在恢复时关掉了，这里重新查一遍就是新数据
+                    loadInventory()
+                }
+            }
+        }
     }
 
     /** 每次回到这个页面（包括从出入库界面返回）都重新查一遍存量 */

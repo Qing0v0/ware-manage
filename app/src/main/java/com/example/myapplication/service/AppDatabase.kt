@@ -15,6 +15,14 @@ abstract class OrderBatchDatabase: RoomDatabase() {
         @Volatile
         private var INSTANCE: OrderBatchDatabase? = null
 
+        /** 备份 / 恢复数据前先把连接关掉，之后再用会自动重开 */
+        fun closeDatabase() {
+            synchronized(this) {
+                INSTANCE?.close()
+                INSTANCE = null
+            }
+        }
+
         fun getDatabase(context: Context): OrderBatchDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -40,6 +48,14 @@ abstract class InventoryDatabase: RoomDatabase() {
     companion object {
         @Volatile
         private var INSTANCE: InventoryDatabase? = null
+
+        /** 备份 / 恢复数据前先把连接关掉，之后再用会自动重开 */
+        fun closeDatabase() {
+            synchronized(this) {
+                INSTANCE?.close()
+                INSTANCE = null
+            }
+        }
 
         fun getDatabase(context: Context): InventoryDatabase {
             return INSTANCE ?: synchronized(this) {

@@ -29,7 +29,7 @@ import kotlin.concurrent.thread
 /**
  * 账单页：按日期范围查询历史出入库订单，按时间从新到旧排。
  *
- * 一行一单：单号 | 颜色 | 34~44 码各多少双（中间可横滑）| 总价 | 时间 | 入库 / 出库 标签
+ * 一行一单：货号 | 颜色 | 34~44 码各多少双（中间可横滑）| 总价 | 时间 | 入库 / 出库 标签
  * 最下面那一行不参与滚动，固定显示这段时间的总计利润。
  */
 class BillsFragment : Fragment() {
@@ -47,19 +47,21 @@ class BillsFragment : Fragment() {
     private var startDate: LocalDate = LocalDate.now(zone).minusDays((DEFAULT_DAYS - 1).toLong())
     private var endDate: LocalDate = LocalDate.now(zone)
 
-    private val orderIdCellWidth by lazy { dp(44) }
-    private val colorCellWidth by lazy { dp(46) }
+    private val articleIdCellWidth by lazy { dp(56) }
+    private val colorCellWidth by lazy { dp(44) }
     private val sizeCellWidth by lazy { dp(34) }
-    private val totalPriceCellWidth by lazy { dp(64) }
+    private val totalPriceCellWidth by lazy { dp(58) }
     private val timeCellWidth by lazy { dp(56) }
-    private val typeCellWidth by lazy { dp(46) }
+    private val typeCellWidth by lazy { dp(44) }
     private val rowHeight by lazy { dp(40) }
 
     private val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
-    /** 时间格子分两行显示（省宽度），显示的是北京时间 */
-    private val timeFormatter: DateTimeFormatter =
-        DateTimeFormatter.ofPattern("MM-dd\nHH:mm").withZone(zone)
+    /** 时间列：上排 MM-dd，下排 HH:mm；用两个单行格子拼起来，显示的是北京时间 */
+    private val dateLineFormatter: DateTimeFormatter =
+        DateTimeFormatter.ofPattern("MM-dd").withZone(zone)
+    private val timeLineFormatter: DateTimeFormatter =
+        DateTimeFormatter.ofPattern("HH:mm").withZone(zone)
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -188,7 +190,7 @@ class BillsFragment : Fragment() {
         }
     }
 
-    /** 左栏：单号 + 颜色 */
+    /** 左栏：货号 + 颜色 */
     private fun buildLeftPane(
         orders: List<OrderBatch>,
         headCell: Drawable?,
@@ -197,18 +199,24 @@ class BillsFragment : Fragment() {
         val column = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
             layoutParams = LinearLayout.LayoutParams(
-                orderIdCellWidth + colorCellWidth, ViewGroup.LayoutParams.WRAP_CONTENT
+                articleIdCellWidth + colorCellWidth, ViewGroup.LayoutParams.WRAP_CONTENT
             )
         }
 
         val head = LinearLayout(requireContext()).apply { orientation = LinearLayout.HORIZONTAL }
-        head.addView(cell(getString(R.string.bills_order_id), orderIdCellWidth, headCell, bold = true))
+        head.addView(
+            cell(
+                getString(R.string.purchase_order_article_id), articleIdCellWidth, headCell,
+                bold = true
+            )
+        )
         head.addView(cell(getString(R.string.purchase_order_color), colorCellWidth, headCell, bold = true))
         column.addView(head)
 
         orders.forEach { order ->
             val row = LinearLayout(requireContext()).apply { orientation = LinearLayout.HORIZONTAL }
-            row.addView(cell(order.orderId.toString(), orderIdCellWidth, bodyCell))
+            // 货号一般是 4~5 位字母 + 数字，字号小一点才塞得下
+            row.addView(cell(order.articleId, articleIdCellWidth, bodyCell, textSize = 11f))
             row.addView(cell(order.color.displayName, colorCellWidth, bodyCell))
             column.addView(row)
         }
@@ -272,13 +280,43 @@ class BillsFragment : Fragment() {
         orders.forEach { order ->
             val row = LinearLayout(requireContext()).apply { orientation = LinearLayout.HORIZONTAL }
             row.addView(cell(amountText(totalPriceOf(order)), totalPriceCellWidth, bodyCell))
-            row.addView(
-                cell(timeFormatter.format(order.date.toInstant()), timeCellWidth, bodyCell, textSize = 11f)
-            )
+            row.addView(buildTimeCell(order))
             row.addView(buildTypeCell(order))
             column.addView(row)
         }
         return column
+    }
+
+    /**
+     * 时间格子：上下两个单行格子拼起来（MM-dd / HH:mm）。
+     * 之前是把两行文字塞进一个 TextView，在固定高度的格子里会被排到偏下的位置（看着像整格缩到右下角），
+     * 所以改成两个单行 TextView，位置就和其他格子一样稳了。
+     */
+    private fun buildTimeCell(order: OrderBatch): View {
+        val instant = order.date.toInstant()
+        val container = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(timeCellWidth, rowHeight)
+            background = ContextCompat.getDrawable(requireContext(), R.drawable.edit_border)
+        }
+        container.addView(lineText(dateLineFormatter.format(instant)))
+        container.addView(lineText(timeLineFormatter.format(instant)))
+        return container
+    }
+
+    /** 时间格子里的一行小字 */
+    private fun lineText(text: String): TextView {
+        val line = TextView(requireContext())
+        line.layoutParams = LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, rowHeight / 2
+        )
+        line.text = text
+        line.gravity = Gravity.CENTER
+        line.textSize = 11f
+        line.maxLines = 1
+        line.setIncludeFontPadding(false)
+        line.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
+        return line
     }
 
     /** 最后一栏：浅绿色的「入库」或浅红色的「出库」矩形 */
@@ -343,7 +381,7 @@ class BillsFragment : Fragment() {
         return count.toString()
     }
 
-    /** 表格里的一个格子：宽高统一，三栏才对得齐 */
+    /** 表格里的一个格子：宽高统一、单行居中，三栏才对得齐 */
     private fun cell(
         text: String,
         width: Int,
@@ -356,7 +394,7 @@ class BillsFragment : Fragment() {
         cellView.text = text
         cellView.gravity = Gravity.CENTER
         cellView.textSize = textSize
-        cellView.maxLines = 2
+        cellView.maxLines = 1
         cellView.ellipsize = TextUtils.TruncateAt.END
         cellView.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
         cellView.background = background

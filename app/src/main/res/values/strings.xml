@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">鞋仓管理</string>
     <string name="bottom_warehouse">仓库</string>
     <string name="bottom_bills">账单</string>
 
@@ -43,7 +43,6 @@
     <string name="bills_title">账单历史查询</string>
     <string name="bills_query">查询</string>
     <string name="bills_date_separator">~</string>
-    <string name="bills_order_id">单号</string>
     <string name="bills_total_price">总价</string>
     <string name="bills_time">时间</string>
     <string name="bills_type">类型</string>
@@ -53,4 +52,15 @@
     <string name="bills_hint_before_query">选好日期范围，点「查询」看账单</string>
     <string name="bills_empty">这段时间没有订单</string>
     <string name="bills_date_error">开始日期不能晚于结束日期</string>
+
+    <!-- 设置侧边栏 / 数据备份恢复 -->
+    <string name="settings_title">设置</string>
+    <string name="settings_backup">数据备份 / 恢复</string>
+    <string name="settings_backup_export">导出数据</string>
+    <string name="settings_backup_import">导入数据</string>
+    <string name="backup_export_success">导出成功</string>
+    <string name="backup_export_failed">导出失败，请重试</string>
+    <string name="backup_import_success">导入成功，数据已恢复</string>
+    <string name="backup_import_failed">导入失败：请确认选的是本应用导出的备份文件</string>
+    <string name="backup_import_confirm">导入会覆盖当前所有存量、账单和图片，确定继续吗？</string>
 </resources>
