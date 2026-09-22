@@ -14,7 +14,7 @@ param:
     - size xx: 尺寸为xx码的鞋子数量
     - orderType: 出库还是入库
     - dealer: 经销商
-    - price: 出库时记录总利润，入库时为单价
+    - price: 单价（入库是进价、出库是售价），账单页的「总价」= 单价 × 这一单的总双数
  */
 @Entity(tableName = "order")
 @TypeConverters(DataConvertor::class)

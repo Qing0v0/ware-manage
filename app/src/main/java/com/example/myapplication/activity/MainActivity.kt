@@ -16,7 +16,7 @@ import com.google.android.material.navigation.NavigationBarView
 class MainActivity : AppCompatActivity() {
     private lateinit var navigationView: BottomNavigationView
     private var wareFragment: WareFragment = WareFragment()
-    private var profitFragment: ProfitFragment = ProfitFragment()
+    private var billsFragment: BillsFragment = BillsFragment()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,7 +32,11 @@ class MainActivity : AppCompatActivity() {
         navigationView.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.warehouse -> selectFragment(0)
-                R.id.profit -> selectFragment(1)
+                R.id.bills -> {
+                    // 每次点账单页都复位一次，免得看到上次查询的旧结果（重复点同一个 tab 也复位）
+                    billsFragment.resetPage()
+                    selectFragment(1)
+                }
             }
             true
         }
@@ -45,7 +49,7 @@ class MainActivity : AppCompatActivity() {
         val fragmentTransaction: FragmentTransaction = supportFragmentManager.beginTransaction()
         when (fragmentId) {
             0 -> {
-                fragmentTransaction.hide(profitFragment)
+                fragmentTransaction.hide(billsFragment)
                 if (!wareFragment.isAdded) {
                     fragmentTransaction.add(R.id.content, wareFragment)
                 }
@@ -54,10 +58,10 @@ class MainActivity : AppCompatActivity() {
 
             1 -> {
                 fragmentTransaction.hide(wareFragment)
-                if (!profitFragment.isAdded) {
-                    fragmentTransaction.add(R.id.content, profitFragment)
+                if (!billsFragment.isAdded) {
+                    fragmentTransaction.add(R.id.content, billsFragment)
                 }
-                fragmentTransaction.show(profitFragment)
+                fragmentTransaction.show(billsFragment)
             }
         }
 

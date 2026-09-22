@@ -80,7 +80,7 @@ class WareFragment : Fragment() {
         loadInventory()
     }
 
-    /** 从利润页切回来时也重建一遍，免得界面还是切走前那次测量出来的样子 */
+    /** 从账单页切回来时也重建一遍，免得界面还是切走前那次测量出来的样子 */
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
         if (!hidden) {

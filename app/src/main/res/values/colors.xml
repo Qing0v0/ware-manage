@@ -3,6 +3,11 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="table_head_bg">#FFF7E8</color>
+    <!-- 账单页出入库标签：浅绿 = 入库，浅红 = 出库 -->
+    <color name="bill_in_bg">#FFD8F2DC</color>
+    <color name="bill_out_bg">#FFF9D9D9</color>
+    <color name="bill_in_text">#FF2E7D32</color>
+    <color name="bill_out_text">#FFC62828</color>
     <color name="light_blue_50">#FFE1F5FE</color>
     <color name="light_blue_200">#FF81D4FA</color>
     <color name="light_blue_600">#FF039BE5</color>

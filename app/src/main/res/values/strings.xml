@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">My Application</string>
-    <string name="bottom_name1">仓库</string>
-    <string name="bottom_name2">利润</string>
+    <string name="bottom_warehouse">仓库</string>
+    <string name="bottom_bills">账单</string>
 
     <string name="purchase_button">入库</string>
     <string name="selling_button">出库</string>
@@ -38,4 +38,19 @@
     <string name="stock_minus_button">－</string>
     <string name="row_picture_add">＋</string>
     <string name="row_picture_hint">鞋子图片</string>
+
+    <!-- 账单页（历史订单查询） -->
+    <string name="bills_title">账单历史查询</string>
+    <string name="bills_query">查询</string>
+    <string name="bills_date_separator">~</string>
+    <string name="bills_order_id">单号</string>
+    <string name="bills_total_price">总价</string>
+    <string name="bills_time">时间</string>
+    <string name="bills_type">类型</string>
+    <string name="bill_type_in">入库</string>
+    <string name="bill_type_out">出库</string>
+    <string name="bills_total_profit">总计利润</string>
+    <string name="bills_hint_before_query">选好日期范围，点「查询」看账单</string>
+    <string name="bills_empty">这段时间没有订单</string>
+    <string name="bills_date_error">开始日期不能晚于结束日期</string>
 </resources>
