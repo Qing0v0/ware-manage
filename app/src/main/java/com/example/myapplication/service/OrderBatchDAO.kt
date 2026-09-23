@@ -15,9 +15,20 @@ interface OrderBatchDAO {
     fun query(): List<OrderBatch>
 
     /**
-     * 按时间范围查订单，新的排在前面（账单页用）。
-     * date 列存的是时间戳（毫秒），所以直接和 Long 比；startTime / endTime 都包含在内。
+     * 账单页查询：时间范围（含首尾）+ 货号 / 经销商模糊匹配 + 类型筛选，新的排在前面。
+     * articleIdLike / dealerLike 传 "%关键词%"；orderTypes 传枚举名列表，不能是空列表
+     * （SQLite 不接受空的 IN ()）。
      */
-    @Query("SELECT * from `order` WHERE date BETWEEN :startTime AND :endTime ORDER BY date DESC")
-    fun queryByDateRange(startTime: Long, endTime: Long): List<OrderBatch>
+    @Query(
+        "SELECT * from `order` WHERE date BETWEEN :startTime AND :endTime " +
+            "AND articleId LIKE :articleIdLike AND dealer LIKE :dealerLike " +
+            "AND orderType IN (:orderTypes) ORDER BY date DESC"
+    )
+    fun queryOrders(
+        startTime: Long,
+        endTime: Long,
+        articleIdLike: String,
+        dealerLike: String,
+        orderTypes: List<String>
+    ): List<OrderBatch>
 }

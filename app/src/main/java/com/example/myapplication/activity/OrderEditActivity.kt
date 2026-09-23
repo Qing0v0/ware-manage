@@ -28,6 +28,7 @@ import com.example.myapplication.service.OrderBatchDatabase
 import com.example.myapplication.utils.ImageUtils
 import com.example.myapplication.utils.OrderBatchUtils
 import com.example.myapplication.utils.StringUtils
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
 
 import kotlin.concurrent.thread
 
@@ -35,7 +36,7 @@ import kotlin.concurrent.thread
  * 入库 / 出库界面（布局：R.layout.purchase_order）。
  *
  * - 入库：OrderType.ARTICLE_PURCHASE，填写货号、经销商、进价
- * - 出库：OrderType.ARTICLE_SOLD，不需要经销商，价格改成售价
+ * - 出库：支付宝 / 微信 / 现金 / 退货（OrderType.soldTypes），不需要经销商，价格是售价
  *
  * 表头是整张单据的公共信息，颜色不在这里选；表格里每一行 = 一种颜色 + 34~44 码的数量（即一批），
  * 点确定时每一行都会生成一条 [OrderBatch]。
@@ -47,6 +48,7 @@ class OrderEditActivity : AppCompatActivity() {
     private lateinit var articleIdFill: EditText
     private lateinit var dealerFill: EditText
     private lateinit var priceFill: EditText
+    private lateinit var payTypeDropdown: MaterialAutoCompleteTextView
 
     private lateinit var orderRowTable: RecyclerView
     private lateinit var orderRowAdapter: OrderRowAdapter
@@ -95,13 +97,16 @@ class OrderEditActivity : AppCompatActivity() {
         articleIdFill = findViewById(R.id.article_id_fill)
         dealerFill = findViewById(R.id.dealer_fill)
         priceFill = findViewById(R.id.price_fill)
+        payTypeDropdown = findViewById(R.id.dropdown_pay_type)
 
         val titleText: TextView = findViewById(R.id.text_order_title)
         val priceLabel: TextView = findViewById(R.id.text_price)
-        if (orderType == OrderType.ARTICLE_PURCHASE) {
+        if (orderType.increaseStock) {
             titleText.setText(R.string.order_editor_title_purchase)
             priceLabel.setText(R.string.purchase_order_price)
             priceFill.setHint(R.string.purchase_price_hint)
+            // 入库没有"支付方式"这一行
+            findViewById<View>(R.id.row_pay_type).visibility = View.GONE
         } else {
             titleText.setText(R.string.order_editor_title_selling)
             // 出库不记录经销商
@@ -110,6 +115,11 @@ class OrderEditActivity : AppCompatActivity() {
             priceLabel.setText(R.string.selling_order_price)
             priceFill.setHint(R.string.selling_price_hint)
         }
+
+        // 支付方式下拉：支付宝 / 微信 / 现金 / 退货（不选的话默认第一项）
+        payTypeDropdown.setSimpleItems(OrderType.soldTypes.map { it.displayName }.toTypedArray())
+        payTypeDropdown.setText(OrderType.soldTypes.first().displayName, false)
+        payTypeDropdown.setOnClickListener { payTypeDropdown.showDropDown() }
 
         // 从仓库页面的 ＋ / － 进来时，货号、颜色、经销商都是定死的：灰掉不给改
         val fixedArticleId = intent.getStringExtra(EXTRA_ARTICLE_ID)
@@ -183,6 +193,14 @@ class OrderEditActivity : AppCompatActivity() {
         val dealer = dealerFill.text.toString().trim()
         val price = priceFill.text.toString().trim()
 
+        // 入库固定是入库；出库按界面上选的支付方式（支付宝 / 微信 / 现金 / 退货）
+        val orderTypeForSave = if (orderType.increaseStock) {
+            OrderType.ARTICLE_PURCHASE
+        } else {
+            OrderType.matchDisplayName(payTypeDropdown.text.toString())
+                ?: OrderType.ARTICLE_SOLD_CASH
+        }
+
         // 先把手上的内容同步回数据，保证保存的就是屏幕上看到的
         orderRowAdapter.syncVisibleRows(orderRowTable)
 
@@ -200,7 +218,7 @@ class OrderEditActivity : AppCompatActivity() {
                 dealer,
                 row.color,
                 price,
-                orderType
+                orderTypeForSave
             )
             val checkResult = orderBatchUtils.checkInputs()
             if (checkResult != StringUtils.checkOk) {
@@ -221,7 +239,7 @@ class OrderEditActivity : AppCompatActivity() {
     private fun saveOrderBatches(orderBatches: List<OrderBatch>, rows: List<OrderRowData>) {
         val orderDatabase = OrderBatchDatabase.getDatabase(applicationContext)
         val inventoryService = InventoryService(InventoryDatabase.getDatabase(applicationContext))
-        val imageEditable = orderType == OrderType.ARTICLE_PURCHASE
+        val imageEditable = orderType.increaseStock
         thread {
             // 1. 先查存量：出库减完小于 0 会在这里被拦下来，有问题就什么都不写
             val inventoryErrors = inventoryService.check(orderBatches)

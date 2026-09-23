@@ -48,6 +48,41 @@
                 android:text="@string/selling_button" />
         </LinearLayout>
 
+        <!-- 搜索：按货号 / 经销商过滤下面的表格（点查询才过滤） -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="4dp">
+
+            <EditText
+                android:id="@+id/search_inventory"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:autofillHints=""
+                android:background="@drawable/edit_border"
+                android:hint="@string/inventory_search_hint"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:singleLine="true"
+                android:textSize="14sp"
+                tools:ignore="LabelFor" />
+
+            <Button
+                android:id="@+id/button_inventory_search"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:minWidth="0dp"
+                android:text="@string/inventory_search_query" />
+        </LinearLayout>
+
         <TextView
             android:id="@+id/inventory_empty"
             android:layout_width="match_parent"

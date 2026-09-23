@@ -46,12 +46,16 @@
     <string name="bills_total_price">总价</string>
     <string name="bills_time">时间</string>
     <string name="bills_type">类型</string>
-    <string name="bill_type_in">入库</string>
-    <string name="bill_type_out">出库</string>
     <string name="bills_total_profit">总计利润</string>
     <string name="bills_hint_before_query">选好日期范围，点「查询」看账单</string>
     <string name="bills_empty">这段时间没有订单</string>
     <string name="bills_date_error">开始日期不能晚于结束日期</string>
+
+    <!-- 搜索 / 支付方式 -->
+    <string name="inventory_search_hint">搜索货号 / 经销商</string>
+    <string name="inventory_search_query">查询</string>
+    <string name="order_pay_type">支付方式</string>
+    <string name="bill_type_all">全部</string>
 
     <!-- 设置侧边栏 / 数据备份恢复 -->
     <string name="settings_title">设置</string>

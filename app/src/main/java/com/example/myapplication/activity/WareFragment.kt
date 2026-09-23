@@ -12,7 +12,9 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import android.widget.Button
+import android.widget.EditText
 import android.widget.HorizontalScrollView
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -49,6 +51,10 @@ class WareFragment : Fragment() {
     private lateinit var tableContainer: LinearLayout
     private lateinit var emptyText: TextView
     private lateinit var drawerLayout: DrawerLayout
+    private lateinit var searchInput: EditText
+
+    /** 数据库里查出来的全部存量（搜索过滤前的原始数据） */
+    private var allInventories: List<ShoeInventory> = emptyList()
 
     /** 导出备份：让用户自己挑保存位置（系统文件选择器，不需要存储权限） */
     private val exportBackupLauncher = registerForActivityResult(
@@ -95,10 +101,25 @@ class WareFragment : Fragment() {
             startActivity(OrderEditActivity.createIntent(requireContext(), OrderType.ARTICLE_PURCHASE))
         }
         view.findViewById<Button>(R.id.selling_button).setOnClickListener {
-            startActivity(OrderEditActivity.createIntent(requireContext(), OrderType.ARTICLE_SOLD))
+            startActivity(
+                OrderEditActivity.createIntent(requireContext(), OrderType.ARTICLE_SOLD_CASH)
+            )
         }
 
         drawerLayout = view.findViewById(R.id.ware_drawer)
+        // 搜索框：输入货号 / 经销商片段，点"查询"（或键盘搜索键）才过滤
+        searchInput = view.findViewById(R.id.search_inventory)
+        view.findViewById<Button>(R.id.button_inventory_search).setOnClickListener {
+            searchInventory()
+        }
+        searchInput.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                searchInventory()
+                true
+            } else {
+                false
+            }
+        }
         // 左上角齿轮：打开设置侧边栏
         view.findViewById<ImageButton>(R.id.button_settings).setOnClickListener {
             drawerLayout.openDrawer(GravityCompat.START)
@@ -222,9 +243,24 @@ class WareFragment : Fragment() {
                 if (!isAdded) {
                     return@runOnUiThread
                 }
-                showInventory(inventories)
+                allInventories = inventories
+                searchInventory()
             }
         }
+    }
+
+    /** 按搜索框里的关键字过滤（货号 / 经销商，忽略大小写），过滤完重新画表格 */
+    private fun searchInventory() {
+        val keyword = searchInput.text.toString().trim()
+        val visible = if (keyword.isEmpty()) {
+            allInventories
+        } else {
+            allInventories.filter { inventory ->
+                inventory.articleId.contains(keyword, ignoreCase = true) ||
+                    inventory.dealer.contains(keyword, ignoreCase = true)
+            }
+        }
+        showInventory(visible)
     }
 
     private fun showInventory(inventories: List<ShoeInventory>) {
@@ -505,7 +541,7 @@ class WareFragment : Fragment() {
         minusButton.setOnClickListener {
             startActivity(
                 OrderEditActivity.createIntent(
-                    requireContext(), OrderType.ARTICLE_SOLD,
+                    requireContext(), OrderType.ARTICLE_SOLD_CASH,
                     articleId, inventory.color.displayName, inventory.dealer, inventory.imagePath
                 )
             )

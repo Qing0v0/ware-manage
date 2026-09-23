@@ -10,6 +10,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -20,6 +21,7 @@ import com.example.myapplication.model.OrderBatch
 import com.example.myapplication.model.OrderType
 import com.example.myapplication.service.OrderBatchDatabase
 import com.example.myapplication.utils.SizeUtils
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.ZoneId
@@ -39,6 +41,12 @@ class BillsFragment : Fragment() {
     private lateinit var startDateText: TextView
     private lateinit var endDateText: TextView
     private lateinit var totalProfitText: TextView
+    private lateinit var articleIdInput: EditText
+    private lateinit var dealerInput: EditText
+    private lateinit var payTypeDropdown: MaterialAutoCompleteTextView
+
+    /** 账单页"支付方式"筛选当前匹配的订单类型名，默认全部 */
+    private var selectedTypeNames: List<String> = OrderType.values().map { it.name }
 
     /** 一律按东八区（北京时间）算日期、显示时间，不跟手机系统时区走 */
     private val zone: ZoneId = ZoneId.of("Asia/Shanghai")
@@ -52,7 +60,7 @@ class BillsFragment : Fragment() {
     private val sizeCellWidth by lazy { dp(34) }
     private val totalPriceCellWidth by lazy { dp(58) }
     private val timeCellWidth by lazy { dp(56) }
-    private val typeCellWidth by lazy { dp(44) }
+    private val typeCellWidth by lazy { dp(52) }
     private val rowHeight by lazy { dp(40) }
 
     private val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -73,6 +81,17 @@ class BillsFragment : Fragment() {
         startDateText = view.findViewById(R.id.text_start_date)
         endDateText = view.findViewById(R.id.text_end_date)
         totalProfitText = view.findViewById(R.id.text_total_profit)
+        articleIdInput = view.findViewById(R.id.bills_article_id)
+        dealerInput = view.findViewById(R.id.bills_dealer)
+        payTypeDropdown = view.findViewById(R.id.bills_pay_type)
+
+        // 支付方式筛选：全部 / 入库 / 出库 / 支付宝 / 微信 / 现金 / 退货
+        payTypeDropdown.setSimpleItems(payTypeFilters().map { it.first }.toTypedArray())
+        payTypeDropdown.setText(getString(R.string.bill_type_all), false)
+        payTypeDropdown.setOnClickListener { payTypeDropdown.showDropDown() }
+        payTypeDropdown.setOnItemClickListener { _, _, position, _ ->
+            selectedTypeNames = payTypeFilters()[position].second
+        }
 
         startDateText.setOnClickListener {
             pickDate(startDate) { picked ->
@@ -104,6 +123,12 @@ class BillsFragment : Fragment() {
         endDate = LocalDate.now(zone)
         showDates()
 
+        // 筛选条件也一起复位
+        articleIdInput.setText("")
+        dealerInput.setText("")
+        selectedTypeNames = OrderType.values().map { it.name }
+        payTypeDropdown.setText(getString(R.string.bill_type_all), false)
+
         tableContainer.removeAllViews()
         hintText.setText(R.string.bills_hint_before_query)
         hintText.visibility = View.VISIBLE
@@ -134,7 +159,27 @@ class BillsFragment : Fragment() {
         ).show()
     }
 
-    /** 查询按钮：按日期范围去订单库查，查完从新到旧显示 */
+    /**
+     * "支付方式"筛选的选项：选项文字 -> 要匹配的订单类型名。
+     * 其中"出库"这一项把三个收款方式 + 退货 + 老版本的"出库"都算上，方便一眼看总出库。
+     */
+    private fun payTypeFilters(): List<Pair<String, List<String>>> {
+        val options = ArrayList<Pair<String, List<String>>>()
+        options.add(getString(R.string.bill_type_all) to OrderType.values().map { it.name })
+        options.add(
+            OrderType.ARTICLE_PURCHASE.displayName to listOf(OrderType.ARTICLE_PURCHASE.name)
+        )
+        options.add(OrderType.ARTICLE_SOLD.displayName to soldTypeNames())
+        OrderType.soldTypes.forEach { options.add(it.displayName to listOf(it.name)) }
+        return options
+    }
+
+    /** 所有"出库"类型的枚举名：支付宝 / 微信 / 现金 / 退货，以及老版本的出库 */
+    private fun soldTypeNames(): List<String> {
+        return OrderType.values().filter { !it.increaseStock }.map { it.name }
+    }
+
+    /** 选择日期范围后点查询，按条件去订单库查 */
     private fun queryOrders() {
         if (startDate.isAfter(endDate)) {
             hintText.setText(R.string.bills_date_error)
@@ -146,10 +191,15 @@ class BillsFragment : Fragment() {
         // 结束那一天也算进来，所以取第二天 0 点再减 1 毫秒
         val endTime = endDate.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
 
+        // 货号 / 经销商做模糊匹配；类型用下拉里选的那一组（不会为空，SQL 的 IN 不接受空列表）
+        val articleIdLike = "%" + articleIdInput.text.toString().trim() + "%"
+        val dealerLike = "%" + dealerInput.text.toString().trim() + "%"
+        val orderTypes = selectedTypeNames
+
         val context = requireContext().applicationContext
         thread {
             val orders = OrderBatchDatabase.getDatabase(context).orderBatchDAO()
-                .queryByDateRange(startTime, endTime)
+                .queryOrders(startTime, endTime, articleIdLike, dealerLike, orderTypes)
             activity?.runOnUiThread {
                 if (!isAdded) {
                     return@runOnUiThread
@@ -319,20 +369,21 @@ class BillsFragment : Fragment() {
         return line
     }
 
-    /** 最后一栏：浅绿色的「入库」或浅红色的「出库」矩形 */
+    /** 最后一栏：按订单类型显示标签（入库=浅绿，支付宝/微信/现金/退货=浅红） */
     private fun buildTypeCell(order: OrderBatch): View {
         val badge = TextView(requireContext())
         badge.layoutParams = LinearLayout.LayoutParams(typeCellWidth - dp(10), rowHeight - dp(12))
         badge.gravity = Gravity.CENTER
-        badge.textSize = 12f
+        // "支付宝"是三个字，字号放小一点才塞得下
+        badge.textSize = 10.5f
         badge.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
-        if (order.orderType.increaseStock) {
-            badge.setText(R.string.bill_type_in)
-            badge.background = ContextCompat.getDrawable(requireContext(), R.drawable.bill_badge_in)
+        badge.text = order.orderType.displayName
+        val backgroundRes = if (order.orderType.increaseStock) {
+            R.drawable.bill_badge_in
         } else {
-            badge.setText(R.string.bill_type_out)
-            badge.background = ContextCompat.getDrawable(requireContext(), R.drawable.bill_badge_out)
+            R.drawable.bill_badge_out
         }
+        badge.background = ContextCompat.getDrawable(requireContext(), backgroundRes)
 
         return LinearLayout(requireContext()).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -347,18 +398,18 @@ class BillsFragment : Fragment() {
         return order.price.multiply(BigDecimal(SizeUtils.sizesOf(order).sum()))
     }
 
-    /** 总计利润 = 这段时间的出库总额 - 入库总额（破损、退货还没有入口，暂时不计入） */
+    /** 总计利润 = 这段时间收到的钱（卖出 / 退货） - 花掉的钱（进货） */
     private fun calculateProfit(orders: List<OrderBatch>): BigDecimal {
-        var soldTotal = BigDecimal.ZERO
-        var purchasedTotal = BigDecimal.ZERO
+        var income = BigDecimal.ZERO
+        var cost = BigDecimal.ZERO
         orders.forEach { order ->
-            when (order.orderType) {
-                OrderType.ARTICLE_SOLD -> soldTotal = soldTotal.add(totalPriceOf(order))
-                OrderType.ARTICLE_PURCHASE -> purchasedTotal = purchasedTotal.add(totalPriceOf(order))
-                else -> Unit
+            if (order.orderType.increaseStock) {
+                cost = cost.add(totalPriceOf(order))
+            } else {
+                income = income.add(totalPriceOf(order))
             }
         }
-        return soldTotal.subtract(purchasedTotal)
+        return income.subtract(cost)
     }
 
     private fun showTotal(profit: BigDecimal) {
