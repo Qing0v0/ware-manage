@@ -13,6 +13,9 @@ enum class Color(val displayName: String) {
     YELLOW("黄色"),
     GREEN("绿色"),
     BLUE("蓝色"),
+    RED("红色"),
+    BROWN("棕色"),
+    COFFEE("咖啡"),
     OTHER("其他");
 
     companion object {

@@ -7,6 +7,9 @@
         <item>黄色</item>
         <item>绿色</item>
         <item>蓝色</item>
+        <item>红色</item>
+        <item>棕色</item>
+        <item>咖啡</item>
         <item>其他</item>
     </array>
 </resources>
