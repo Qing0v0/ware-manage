@@ -53,7 +53,6 @@
 
     <!-- 搜索 / 支付方式 -->
     <string name="inventory_search_hint">搜索货号 / 经销商</string>
-    <string name="inventory_search_query">查询</string>
     <string name="order_pay_type">支付方式</string>
     <string name="bill_type_all">全部</string>
 

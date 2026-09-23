@@ -12,7 +12,6 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
 import android.widget.HorizontalScrollView
@@ -24,6 +23,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
+import androidx.core.widget.doAfterTextChanged
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import com.example.myapplication.R
@@ -107,19 +107,9 @@ class WareFragment : Fragment() {
         }
 
         drawerLayout = view.findViewById(R.id.ware_drawer)
-        // 搜索框：输入货号 / 经销商片段，点"查询"（或键盘搜索键）才过滤
+        // 搜索框：边打字边过滤（货号 / 经销商），删掉关键字马上恢复全部
         searchInput = view.findViewById(R.id.search_inventory)
-        view.findViewById<Button>(R.id.button_inventory_search).setOnClickListener {
-            searchInventory()
-        }
-        searchInput.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                searchInventory()
-                true
-            } else {
-                false
-            }
-        }
+        searchInput.doAfterTextChanged { searchInventory() }
         // 左上角齿轮：打开设置侧边栏
         view.findViewById<ImageButton>(R.id.button_settings).setOnClickListener {
             drawerLayout.openDrawer(GravityCompat.START)
@@ -262,7 +252,6 @@ class WareFragment : Fragment() {
         }
         showInventory(visible)
     }
-
     private fun showInventory(inventories: List<ShoeInventory>) {
         tableContainer.removeAllViews()
 
