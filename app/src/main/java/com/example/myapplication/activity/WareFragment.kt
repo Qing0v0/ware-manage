@@ -307,7 +307,7 @@ class WareFragment : Fragment() {
                 gravity = Gravity.CENTER_VERTICAL or Gravity.START, paddingStart = dp(6)
             )
         )
-        valueRow.addView(cell(dealerText(dealer), dealerCellWidth, 0f, headCell))
+        valueRow.addView(cell(dealer, dealerCellWidth, 0f, headCell))
         valueRow.addView(cell(quantity.toString(), amountCellWidth, 0f, headCell, bold = true))
 
         return LinearLayout(requireContext()).apply {
@@ -318,14 +318,6 @@ class WareFragment : Fragment() {
             addView(titleRow)
             addView(valueRow)
         }
-    }
-
-    /** 经销商没填就显示一个 \ */
-    private fun dealerText(dealer: String): String {
-        if (dealer.isEmpty()) {
-            return "\\"
-        }
-        return dealer
     }
 
     /** 数量为 0 一律显示空白，免得看成一格一格的数字以为有货 */
