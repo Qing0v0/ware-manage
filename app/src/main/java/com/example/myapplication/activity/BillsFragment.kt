@@ -20,6 +20,7 @@ import com.example.myapplication.R
 import com.example.myapplication.model.OrderBatch
 import com.example.myapplication.model.OrderType
 import com.example.myapplication.service.OrderBatchDatabase
+import com.example.myapplication.utils.DrawableUtils
 import com.example.myapplication.utils.SizeUtils
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import java.math.BigDecimal
@@ -383,7 +384,10 @@ class BillsFragment : Fragment() {
         } else {
             R.drawable.bill_badge_out
         }
-        badge.background = ContextCompat.getDrawable(requireContext(), backgroundRes)
+        badge.background =
+            DrawableUtils.ownDrawable(
+                ContextCompat.getDrawable(requireContext(), backgroundRes), resources
+            )
 
         return LinearLayout(requireContext()).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -448,7 +452,8 @@ class BillsFragment : Fragment() {
         cellView.maxLines = 1
         cellView.ellipsize = TextUtils.TruncateAt.END
         cellView.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
-        cellView.background = background
+        // 背景必须给每个格子单独一份：共用一个 Drawable 的话，重绘时会按别的格子留下的 bounds 画
+        cellView.background = DrawableUtils.ownDrawable(background, resources)
         if (bold) {
             cellView.setTypeface(null, Typeface.BOLD)
         }

@@ -31,6 +31,7 @@ import com.example.myapplication.model.OrderType
 import com.example.myapplication.model.ShoeInventory
 import com.example.myapplication.service.BackupService
 import com.example.myapplication.service.InventoryDatabase
+import com.example.myapplication.utils.DrawableUtils
 import com.example.myapplication.utils.ImageUtils
 import com.example.myapplication.utils.SizeUtils
 import kotlin.concurrent.thread
@@ -55,6 +56,12 @@ class WareFragment : Fragment() {
 
     /** 数据库里查出来的全部存量（搜索过滤前的原始数据） */
     private var allInventories: List<ShoeInventory> = emptyList()
+
+    /** 屏幕上这张表画的是哪批行；和刚算出来的一样就说明不用重画（初值 null，保证第一次一定画） */
+    private var renderedInventories: List<ShoeInventory>? = null
+
+    /** 画这张表时用的表格宽度；宽度变了（转屏 / 分屏）才需要按新宽度重画一次 */
+    private var renderedWidth = 0
 
     /** 导出备份：让用户自己挑保存位置（系统文件选择器，不需要存储权限） */
     private val exportBackupLauncher = registerForActivityResult(
@@ -252,25 +259,31 @@ class WareFragment : Fragment() {
         }
         showInventory(visible)
     }
+
     private fun showInventory(inventories: List<ShoeInventory>) {
+        // 11 个尺码全是 0 的颜色不显示，不然会以为这个颜色还有货
+        val visibleRows = inventories.filter { inventory ->
+            SizeUtils.sizesOf(inventory).any { it > 0 }
+        }
+        val width = tableWidth()
+
+        if (visibleRows == renderedInventories && width == renderedWidth) {
+            emptyText.visibility = if (visibleRows.isEmpty()) View.VISIBLE else View.GONE
+            return
+        }
+
         tableContainer.removeAllViews()
 
-        var visibleRowCount = 0
         // 一个货号一张表（queryAll 已经按货号、颜色排好序，分组的先后顺序和查询一致）
-        for ((articleId, rows) in inventories.groupBy { it.articleId }) {
-            // 11 个尺码全是 0 的颜色不显示，不然会以为这个颜色还有货
-            val visibleRows = rows.filter { inventory -> SizeUtils.sizesOf(inventory).any { it > 0 } }
-            if (visibleRows.isEmpty()) {
-                continue
-            }
-
-            visibleRowCount += visibleRows.size
-            tableContainer.addView(buildArticleHeader(visibleRows))
-            tableContainer.addView(buildSizeTable(articleId, visibleRows))
+        for ((articleId, rows) in visibleRows.groupBy { it.articleId }) {
+            tableContainer.addView(buildArticleHeader(rows))
+            tableContainer.addView(buildSizeTable(articleId, rows))
             tableContainer.addView(space(dp(12)))
         }
 
-        emptyText.visibility = if (visibleRowCount == 0) View.VISIBLE else View.GONE
+        renderedInventories = visibleRows
+        renderedWidth = width
+        emptyText.visibility = if (visibleRows.isEmpty()) View.VISIBLE else View.GONE
     }
 
     /** 货号这一块的表头：第一排列名（货号 / 经销商 / 数量），第二排数值 */
@@ -351,7 +364,8 @@ class WareFragment : Fragment() {
         cellView.maxLines = 1
         cellView.ellipsize = TextUtils.TruncateAt.END
         cellView.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
-        cellView.background = background
+        // 背景必须给每个格子单独一份：共用一个 Drawable 的话，重绘时会按别的格子留下的 bounds 画
+        cellView.background = DrawableUtils.ownDrawable(background, resources)
         if (paddingStart > 0) {
             cellView.setPaddingRelative(paddingStart, 0, 0, 0)
         }
@@ -431,7 +445,10 @@ class WareFragment : Fragment() {
         val imageView = ImageView(requireContext())
         imageView.layoutParams = LinearLayout.LayoutParams(pictureCellWidth, rowHeight)
         imageView.scaleType = ImageView.ScaleType.CENTER_CROP
-        imageView.background = ContextCompat.getDrawable(requireContext(), R.drawable.edit_border)
+        imageView.background =
+            DrawableUtils.ownDrawable(
+                ContextCompat.getDrawable(requireContext(), R.drawable.edit_border), resources
+            )
         imageView.setPadding(dp(2), dp(2), dp(2), dp(2))
         imageView.contentDescription = getString(R.string.row_picture_hint)
 
@@ -541,7 +558,10 @@ class WareFragment : Fragment() {
         button.gravity = Gravity.CENTER
         button.textSize = 16f
         button.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
-        button.background = ContextCompat.getDrawable(requireContext(), R.drawable.edit_border)
+        button.background =
+            DrawableUtils.ownDrawable(
+                ContextCompat.getDrawable(requireContext(), R.drawable.edit_border), resources
+            )
         button.isClickable = true
         button.isFocusable = true
         return button
