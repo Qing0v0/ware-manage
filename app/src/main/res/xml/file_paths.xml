@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 更新下载的新版 apk 放在 cacheDir/update 下；安装时要通过 FileProvider 授权给系统安装器 -->
+<paths>
+    <cache-path
+        name="update"
+        path="update/" />
+</paths>

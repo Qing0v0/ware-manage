@@ -66,4 +66,17 @@
     <string name="backup_import_success">导入成功，数据已恢复</string>
     <string name="backup_import_failed">导入失败：请确认选的是本应用导出的备份文件</string>
     <string name="backup_import_confirm">导入会覆盖当前所有存量、账单和图片，确定继续吗？</string>
+
+    <!-- 设置侧边栏 / 版本更新 -->
+    <string name="settings_update">版本更新</string>
+    <string name="update_latest">当前已经是最新版本</string>
+    <string name="update_has_new">是否下载最近版本</string>
+    <string name="update_has_new_version">是否下载最近版本（v%1$s）</string>
+    <string name="update_download">下载</string>
+    <string name="update_downloading">正在下载新版本</string>
+    <string name="update_check_failed">检查更新失败：%1$s</string>
+    <string name="update_check_unknown_reason">未知原因</string>
+    <string name="update_no_apk">这个版本里没有找到安装包</string>
+    <string name="update_download_failed">下载失败，请重试</string>
+    <string name="update_install_failed">没有找到可以安装应用的程序</string>
 </resources>

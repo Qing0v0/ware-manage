@@ -111,7 +111,6 @@
             android:textSize="18sp"
             android:textStyle="bold" />
 
-        <!-- 第一行：数据备份 / 恢复 -->
         <LinearLayout
             android:id="@+id/row_backup"
             android:layout_width="match_parent"
@@ -131,6 +130,26 @@
                 android:textColor="@color/black"
                 android:textSize="16sp" />
         </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/row_update"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_update"
+            android:textColor="@color/black"
+            android:textSize="16sp" />
+    </LinearLayout>
 
         <View
             android:layout_width="match_parent"
