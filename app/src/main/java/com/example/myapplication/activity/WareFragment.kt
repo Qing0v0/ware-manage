@@ -1,16 +1,10 @@
 package com.example.myapplication.activity
 
-import android.app.AlertDialog
-import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageInfo
 import android.graphics.Bitmap
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
-import android.net.Uri
 import android.os.Bundle
 import android.text.TextUtils
-import android.util.Log
 import android.util.LruCache
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -19,36 +13,20 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.HorizontalScrollView
-import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.ProgressBar
 import android.widget.TextView
-import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
-import androidx.core.content.pm.PackageInfoCompat
-import androidx.core.view.GravityCompat
 import androidx.core.widget.doAfterTextChanged
-import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import com.example.myapplication.R
 import com.example.myapplication.model.OrderType
 import com.example.myapplication.model.ShoeInventory
-import com.example.myapplication.service.BackupService
 import com.example.myapplication.service.InventoryDatabase
 import com.example.myapplication.utils.DrawableUtils
 import com.example.myapplication.utils.ImageUtils
 import com.example.myapplication.utils.SizeUtils
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.IOException
-import java.net.HttpURLConnection
-import java.net.URL
 import kotlin.concurrent.thread
-import org.json.JSONObject
 
 /**
  * 仓库页面：按货号分组的存量表。
@@ -60,12 +38,13 @@ import org.json.JSONObject
  * 左栏（图片 + 颜色）和右栏（小计 + ＋ －）固定不动，只有中间的尺码是横向可滑动的，
  * 这样一屏里总能看清是哪个货号、哪个颜色。
  * 行尾的 ＋ / － 会打开 [OrderEditActivity]，货号、颜色、经销商都是锁定的（灰化显示），只能填数量。
+ *
+ * 设置侧边栏（数据备份 / 恢复、版本更新）拆在 [WareDrawerPanel] 里，这里只管存量表格。
  */
 class WareFragment : Fragment() {
 
     private lateinit var tableContainer: LinearLayout
     private lateinit var emptyText: TextView
-    private lateinit var drawerLayout: DrawerLayout
     private lateinit var searchInput: EditText
 
     /** 数据库里查出来的全部存量（搜索过滤前的原始数据） */
@@ -77,23 +56,13 @@ class WareFragment : Fragment() {
     /** 画这张表时用的表格宽度；宽度变了（转屏 / 分屏）才需要按新宽度重画一次 */
     private var renderedWidth = 0
 
-    /** 导出备份：让用户自己挑保存位置（系统文件选择器，不需要存储权限） */
-    private val exportBackupLauncher = registerForActivityResult(
-        ActivityResultContracts.CreateDocument("application/zip")
-    ) { uri ->
-        if (uri != null) {
-            exportBackup(uri)
-        }
-    }
-
-    /** 导入备份：让用户挑备份文件 */
-    private val importBackupLauncher = registerForActivityResult(
-        ActivityResultContracts.OpenDocument()
-    ) { uri ->
-        if (uri != null) {
-            importBackup(uri)
-        }
-    }
+    /**
+     * 设置侧边栏（备份恢复、版本更新都在里面）。
+     *
+     * 必须在这里就 new 出来：里面的 registerForActivityResult 要求在 Fragment
+     * 初始化阶段注册，放到 onCreateView 里就晚了。
+     */
+    private val drawerPanel = WareDrawerPanel(this) { loadInventory() }
 
     /** 存量缩略图缓存：路径 -> Bitmap，避免每次回到页面都重新解码 */
     private val pictureCache = LruCache<String, Bitmap>(64)
@@ -125,461 +94,14 @@ class WareFragment : Fragment() {
             )
         }
 
-        drawerLayout = view.findViewById(R.id.ware_drawer)
         // 搜索框：边打字边过滤（货号 / 经销商），删掉关键字马上恢复全部
         searchInput = view.findViewById(R.id.search_inventory)
         searchInput.doAfterTextChanged { searchInventory() }
 
-        // 设置侧边栏
-        view.findViewById<ImageButton>(R.id.button_settings).setOnClickListener {
-            drawerLayout.openDrawer(GravityCompat.START)
-        }
-        view.findViewById<View>(R.id.row_backup).setOnClickListener {
-            drawerLayout.closeDrawer(GravityCompat.START)
-            showBackupDialog()
-        }
-        view.findViewById<View>(R.id.row_update).setOnClickListener {
-            drawerLayout.closeDrawer(GravityCompat.START)
-            showUpdateDialog()
-        }
+        // 侧边栏
+        drawerPanel.attach(view)
 
         return view
-    }
-
-    /**
-     * 检查更新
-     */
-    private fun showUpdateDialog() {
-        val context = requireContext().applicationContext
-        thread {
-            var reason: String? = null
-            val release = try {
-                fetchLatestRelease()
-            } catch (e: Exception) {
-                Log.w(UPDATE_LOG_TAG, "检查更新失败", e)
-                reason = e.message ?: e.javaClass.simpleName
-                null
-            }
-            activity?.runOnUiThread {
-                if (!isAdded) {
-                    return@runOnUiThread
-                }
-                if (release == null) {
-                    val message = getString(
-                        R.string.update_check_failed,
-                        reason ?: getString(R.string.update_check_unknown_reason)
-                    )
-                    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-                    return@runOnUiThread
-                }
-                val (currentCode, currentName) = currentVersion()
-                if (isUpToDate(currentCode, currentName, release)) {
-                    showLatestVersionDialog()
-                } else {
-                    showNewVersionDialog(release)
-                }
-            }
-        }
-    }
-
-    /** GitHub 上最新 release 的信息 */
-    private data class LatestRelease(
-        val versionCode: Long?,
-        val versionName: String,
-        val apkUrl: String?
-    )
-
-    private fun currentVersion(): Pair<Long, String> {
-        val context = requireContext()
-        val info: PackageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-        return PackageInfoCompat.getLongVersionCode(info) to (info.versionName ?: "")
-    }
-
-    private fun isUpToDate(currentCode: Long, currentName: String, release: LatestRelease): Boolean {
-        val latestCode = release.versionCode
-        if (latestCode != null) {
-            return currentCode >= latestCode
-        }
-        // release 名字里只有 versionName（工作流现在就是这么发的），那就按版本号比
-        return compareVersionName(currentName, release.versionName) >= 0
-    }
-
-    /** 版本号比较：按小数点分段比数字，缺的段按 0 算（1.1.10 > 1.1.2） */
-    private fun compareVersionName(left: String, right: String): Int {
-        val leftParts = left.split(".")
-        val rightParts = right.split(".")
-        for (index in 0 until maxOf(leftParts.size, rightParts.size)) {
-            val leftValue = leftParts.getOrNull(index)?.toIntOrNull() ?: 0
-            val rightValue = rightParts.getOrNull(index)?.toIntOrNull() ?: 0
-            if (leftValue != rightValue) {
-                return leftValue - rightValue
-            }
-        }
-        return 0
-    }
-
-    /** 已经是最新版本：只有一个确认按钮 */
-    private fun showLatestVersionDialog() {
-        AlertDialog.Builder(requireContext())
-            .setMessage(R.string.update_latest)
-            .setPositiveButton(R.string.confirm, null)
-            .show()
-    }
-
-    /** 有新版本：取消 / 下载 */
-    private fun showNewVersionDialog(release: LatestRelease) {
-        val message = if (release.versionName.isBlank()) {
-            getString(R.string.update_has_new)
-        } else {
-            getString(R.string.update_has_new_version, release.versionName)
-        }
-        AlertDialog.Builder(requireContext())
-            .setMessage(message)
-            .setNegativeButton(R.string.cancel, null)
-            .setPositiveButton(R.string.update_download) { _, _ -> downloadAndInstall(release) }
-            .show()
-    }
-
-    /** 问 GitHub 要最新 release。*/
-    private fun fetchLatestRelease(): LatestRelease {
-        var apiError: Exception? = null
-        try {
-            return fetchFromApi()
-        } catch (e: Exception) {
-            Log.w(UPDATE_LOG_TAG, "GitHub API 拿不到，改用网页兜底", e)
-            apiError = e
-        }
-        return try {
-            fetchFromWeb()
-        } catch (e: Exception) {
-            Log.w(UPDATE_LOG_TAG, "网页兜底也失败", e)
-            throw apiError ?: e
-        }
-    }
-
-    /** GitHub API：/repos/{repo}/releases/latest */
-    private fun fetchFromApi(): LatestRelease {
-        val connection = (URL(UPDATE_API_LATEST).openConnection() as HttpURLConnection).apply {
-            requestMethod = "GET"
-            connectTimeout = UPDATE_TIMEOUT_MS
-            readTimeout = UPDATE_TIMEOUT_MS
-            // GitHub API 不带 User-Agent 会被直接拒掉
-            setRequestProperty("User-Agent", UPDATE_USER_AGENT)
-            setRequestProperty("Accept", "application/vnd.github+json")
-        }
-        return try {
-            val code = connection.responseCode
-            if (code != HttpURLConnection.HTTP_OK) {
-                throw IOException(httpErrorText(code))
-            }
-            val body = connection.inputStream.bufferedReader().use { it.readText() }
-            parseLatestRelease(JSONObject(body))
-                ?: throw IOException("release 名字里解析不出版本号")
-        } finally {
-            connection.disconnect()
-        }
-    }
-
-    /** 网页兜底：拿最新 tag，再按工作流的产物名拼下载地址 */
-    private fun fetchFromWeb(): LatestRelease {
-        val tag = latestTagFromWeb()
-            ?: throw IOException("找不到已发布的版本（还没发 release 或仓库不公开）")
-        val (versionCode, versionName) = parseVersion(tag)
-        if (versionCode == null && versionName.isEmpty()) {
-            throw IOException("tag 里解析不出版本号：" + tag)
-        }
-        return LatestRelease(versionCode, versionName, apkUrlOf(tag))
-    }
-
-    /** releases/latest 会跳到 .../releases/tag/<tag>，末尾那段就是 tag */
-    private fun latestTagFromWeb(): String? {
-        val connection = (URL(UPDATE_WEB_LATEST).openConnection() as HttpURLConnection).apply {
-            connectTimeout = UPDATE_TIMEOUT_MS
-            readTimeout = UPDATE_TIMEOUT_MS
-            instanceFollowRedirects = false
-            setRequestProperty("User-Agent", UPDATE_USER_AGENT)
-        }
-        return try {
-            val code = connection.responseCode
-            if (code !in REDIRECT_CODES) {
-                throw IOException(httpErrorText(code))
-            }
-            connection.getHeaderField("Location")
-                ?.trimEnd('/')
-                ?.substringAfterLast('/')
-                ?.ifBlank { null }
-        } finally {
-            connection.disconnect()
-        }
-    }
-
-    /** 按工作流的产物名拼下载地址（app/build/outputs/apk/release/app-release.apk） */
-    private fun apkUrlOf(tag: String): String =
-        "https://github.com/$UPDATE_REPO/releases/download/$tag/$UPDATE_APK_NAME"
-
-    /** 把 HTTP 状态码翻成能看懂的话 */
-    private fun httpErrorText(code: Int): String {
-        return if (code == HttpURLConnection.HTTP_NOT_FOUND) {
-            "GitHub 上还没有发布任何版本（HTTP 404）"
-        } else {
-            "GitHub 返回 HTTP $code"
-        }
-    }
-
-    /** 从 release 名字 / tag 里解析版本号：能拿到 versionCode 就返回它，否则只拿 versionName */
-    private fun parseVersion(title: String): Pair<Long?, String> {
-        // 先试带 versionCode 的写法："Release 4 v1.1.2"
-        val withCode = RELEASE_WITH_CODE.find(title)
-        if (withCode != null) {
-            return withCode.groupValues[1].toLongOrNull() to withCode.groupValues[2]
-        }
-        // 再试只写 versionName 的写法："Release 1.1.2" / tag "v1.1.2"
-        VERSION_NAME_PATTERN.find(title)?.let { return null to it.value }
-        // 最后兜一下纯数字（tag "v4" 这种），当 versionCode 用
-        val digits = title.filter { it.isDigit() }
-        return if (digits.isEmpty()) null to "" else digits.toLongOrNull() to ""
-    }
-
-    /** 解析 API 回来的 release JSON */
-    private fun parseLatestRelease(json: JSONObject): LatestRelease? {
-        // name 是 release 标题，没写就用 tag 兜底
-        val title = json.optString("name").ifBlank { json.optString("tag_name") }
-        val (versionCode, versionName) = parseVersion(title)
-        if (versionCode == null && versionName.isEmpty()) {
-            return null
-        }
-
-        // 安装包：release 里第一个 .apk 资源（工作流传的是 app-release.apk）
-        var apkUrl: String? = null
-        val assets = json.optJSONArray("assets")
-        for (index in 0 until (assets?.length() ?: 0)) {
-            val asset = assets?.optJSONObject(index) ?: continue
-            if (asset.optString("name").endsWith(".apk", ignoreCase = true)) {
-                apkUrl = asset.optString("browser_download_url").ifBlank { null }
-                break
-            }
-        }
-        // API 里没挂 apk 就按 tag 拼一个（工作流固定传 app-release.apk）
-        if (apkUrl == null) {
-            val tag = json.optString("tag_name")
-            if (tag.isNotBlank()) {
-                apkUrl = apkUrlOf(tag)
-            }
-        }
-        return LatestRelease(versionCode, versionName, apkUrl)
-    }
-
-    /** 下载 apk，下完交给系统安装 */
-    private fun downloadAndInstall(release: LatestRelease) {
-        val apkUrl = release.apkUrl
-        if (apkUrl == null) {
-            Toast.makeText(requireContext(), R.string.update_no_apk, Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val progressBar =
-            ProgressBar(requireContext(), null, android.R.attr.progressBarStyleHorizontal)
-        progressBar.max = 100
-        val content = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(24), dp(12), dp(24), 0)
-            addView(
-                progressBar,
-                LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-            )
-        }
-        val dialog = AlertDialog.Builder(requireContext())
-            .setTitle(R.string.update_downloading)
-            .setView(content)
-            .setCancelable(false)
-            .create()
-        dialog.show()
-
-        val context = requireContext().applicationContext
-        thread {
-            val file = try {
-                downloadApk(context, apkUrl, release.versionName) { percent ->
-                    activity?.runOnUiThread { progressBar.progress = percent }
-                }
-            } catch (e: Exception) {
-                null
-            }
-
-            activity?.runOnUiThread {
-                if (dialog.isShowing) {
-                    dialog.dismiss()
-                }
-                if (!isAdded) {
-                    return@runOnUiThread
-                }
-                if (file == null) {
-                    Toast.makeText(context, R.string.update_download_failed, Toast.LENGTH_SHORT)
-                        .show()
-                } else {
-                    installApk(file)
-                }
-            }
-        }
-    }
-
-    /** 把 apk 下到 cacheDir/update 下；服务端给了长度就回报百分比 */
-    private fun downloadApk(
-        context: Context,
-        url: String,
-        versionName: String,
-        onProgress: (Int) -> Unit
-    ): File {
-        val dir = File(context.cacheDir, UPDATE_DIR)
-        if (!dir.exists() && !dir.mkdirs()) {
-            throw IOException("create " + dir.absolutePath + " failed")
-        }
-        val target = File(dir, "ware-manage-" + versionName.ifBlank { "latest" } + ".apk")
-        val connection = (URL(url).openConnection() as HttpURLConnection).apply {
-            connectTimeout = UPDATE_TIMEOUT_MS
-            readTimeout = UPDATE_TIMEOUT_MS
-            setRequestProperty("User-Agent", UPDATE_USER_AGENT)
-        }
-        try {
-            if (connection.responseCode != HttpURLConnection.HTTP_OK) {
-                throw IOException("HTTP " + connection.responseCode)
-            }
-            val total = connection.contentLengthLong
-            connection.inputStream.use { input ->
-                FileOutputStream(target).use { output ->
-                    val buffer = ByteArray(8 * 1024)
-                    var downloaded = 0L
-                    while (true) {
-                        val count = input.read(buffer)
-                        if (count < 0) {
-                            break
-                        }
-                        output.write(buffer, 0, count)
-                        downloaded += count
-                        if (total > 0) {
-                            onProgress(((downloaded * 100) / total).toInt())
-                        }
-                    }
-                }
-            }
-            // 下回来的必须是个 apk（apk 就是 zip，开头是 PK），不然多半是错误页面
-            if (target.length() < UPDATE_MIN_APK_BYTES || !looksLikeApk(target)) {
-                target.delete()
-                throw IOException("not a apk")
-            }
-            return target
-        } finally {
-            connection.disconnect()
-        }
-    }
-
-    /** apk 就是个 zip，开头两个字节是 "PK" */
-    private fun looksLikeApk(file: File): Boolean {
-        return try {
-            FileInputStream(file).use { input ->
-                val head = ByteArray(2)
-                input.read(head) == 2 &&
-                    head[0] == 'P'.code.toByte() && head[1] == 'K'.code.toByte()
-            }
-        } catch (e: Exception) {
-            false
-        }
-    }
-
-    /** 弹出系统安装界面（apk 在应用私有目录里，要用 FileProvider 授权给安装器） */
-    private fun installApk(file: File) {
-        val context = requireContext()
-        val uri = FileProvider.getUriForFile(
-            context, context.packageName + FILE_PROVIDER_SUFFIX, file
-        )
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uri, "application/vnd.android.package-archive")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        try {
-            startActivity(intent)
-        } catch (e: Exception) {
-            Toast.makeText(context, R.string.update_install_failed, Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    /** 数据备份 / 恢复：让用户选导出还是导入 */
-    private fun showBackupDialog() {
-        val items = arrayOf(
-            getString(R.string.settings_backup_export),
-            getString(R.string.settings_backup_import)
-        )
-        AlertDialog.Builder(requireContext())
-            .setTitle(R.string.settings_backup)
-            .setItems(items) { _, which ->
-                if (which == 0) {
-                    exportBackupLauncher.launch(BackupService.suggestedFileName())
-                } else {
-                    confirmImport()
-                }
-            }
-            .show()
-    }
-
-    /** 导入会把现在的数据整个覆盖掉，先确认一下 */
-    private fun confirmImport() {
-        AlertDialog.Builder(requireContext())
-            .setTitle(R.string.settings_backup)
-            .setMessage(R.string.backup_import_confirm)
-            .setNegativeButton(R.string.cancel, null)
-            .setPositiveButton(R.string.confirm) { _, _ ->
-                importBackupLauncher.launch(
-                    arrayOf("application/zip", "application/octet-stream", "*/*")
-                )
-            }
-            .show()
-    }
-
-    private fun exportBackup(uri: Uri) {
-        val context = requireContext().applicationContext
-        thread {
-            val success = try {
-                context.contentResolver.openOutputStream(uri)?.use { output ->
-                    BackupService(context).exportTo(output)
-                } ?: false
-            } catch (e: Exception) {
-                false
-            }
-            activity?.runOnUiThread {
-                if (!isAdded) {
-                    return@runOnUiThread
-                }
-                val messageRes =
-                    if (success) R.string.backup_export_success else R.string.backup_export_failed
-                Toast.makeText(context, messageRes, Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun importBackup(uri: Uri) {
-        val context = requireContext().applicationContext
-        thread {
-            val success = try {
-                context.contentResolver.openInputStream(uri)?.use { input ->
-                    BackupService(context).restoreFrom(input)
-                } ?: false
-            } catch (e: Exception) {
-                false
-            }
-            activity?.runOnUiThread {
-                if (!isAdded) {
-                    return@runOnUiThread
-                }
-                val messageRes =
-                    if (success) R.string.backup_import_success else R.string.backup_import_failed
-                Toast.makeText(context, messageRes, Toast.LENGTH_SHORT).show()
-                if (success) {
-                    // 数据库连接已经在恢复时关掉了，这里重新查一遍就是新数据
-                    loadInventory()
-                }
-            }
-        }
     }
 
     /** 每次回到这个页面（包括从出入库界面返回）都重新查一遍存量 */
@@ -939,33 +461,5 @@ class WareFragment : Fragment() {
         button.isClickable = true
         button.isFocusable = true
         return button
-    }
-
-    companion object {
-        private const val UPDATE_REPO = "Qing0v0/ware-manage"
-        private const val UPDATE_API_LATEST = "https://api.github.com/repos/$UPDATE_REPO/releases/latest"
-        private const val UPDATE_WEB_LATEST = "https://github.com/$UPDATE_REPO/releases/latest"
-        private const val UPDATE_APK_NAME = "app-release.apk"
-        private const val UPDATE_LOG_TAG = "WareUpdate"
-        private val REDIRECT_CODES = intArrayOf(301, 302, 303, 307, 308)
-
-        /** 下载的新版 apk 放在 cacheDir 的这个子目录里（和 res/xml/file_paths.xml 对应） */
-        private const val UPDATE_DIR = "update"
-
-        /** 和 AndroidManifest 里 FileProvider 的 authorities 后缀保持一致 */
-        private const val FILE_PROVIDER_SUFFIX = ".fileprovider"
-
-        private const val UPDATE_TIMEOUT_MS = 15_000
-        private const val UPDATE_MIN_APK_BYTES = 10L * 1024
-        private const val UPDATE_USER_AGENT = "ware-manage-android-update-check"
-
-        /**
-         * release 名字里带 versionCode 的格式："Release 4 v1.1.2"。
-         * versionCode 和版本号之间必须有空格，不然 "Release 1.1.2" 会被拆成 1 和 1.2。
-         */
-        private val RELEASE_WITH_CODE = Regex("""(?i)release\s+(\d+)\s+v?(\d+(?:\.\d+)+)""")
-
-        /** release 名字里只有 versionName 的格式："Release 1.1.2" */
-        private val VERSION_NAME_PATTERN = Regex("""\d+(?:\.\d+)+""")
     }
 }
