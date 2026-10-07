@@ -46,6 +46,8 @@ class WareFragment : Fragment() {
     private lateinit var tableContainer: LinearLayout
     private lateinit var emptyText: TextView
     private lateinit var searchInput: EditText
+    private lateinit var totalQuantityText: TextView
+    private lateinit var totalArticleIdNumText: TextView
 
     /** 数据库里查出来的全部存量（搜索过滤前的原始数据） */
     private var allInventories: List<ShoeInventory> = emptyList()
@@ -83,6 +85,8 @@ class WareFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_ware, container, false)
         tableContainer = view.findViewById(R.id.inventory_table)
         emptyText = view.findViewById(R.id.inventory_empty)
+        totalQuantityText = view.findViewById(R.id.text_total_quantity)
+        totalArticleIdNumText = view.findViewById(R.id.text_total_articleId_num)
 
         // 整单入库 / 出库：货号自己填，用来开一个新的货号
         view.findViewById<Button>(R.id.purchase_button).setOnClickListener {
@@ -171,15 +175,21 @@ class WareFragment : Fragment() {
         tableContainer.removeAllViews()
 
         // 一个货号一张表（queryAll 已经按货号、颜色排好序，分组的先后顺序和查询一致）
+        var totalArticleIdNum = 0
         for ((articleId, rows) in visibleRows.groupBy { it.articleId }) {
             tableContainer.addView(buildArticleHeader(rows))
             tableContainer.addView(buildSizeTable(articleId, rows))
             tableContainer.addView(space(dp(12)))
+            totalArticleIdNum++
         }
 
         renderedInventories = visibleRows
         renderedWidth = width
         emptyText.visibility = if (visibleRows.isEmpty()) View.VISIBLE else View.GONE
+
+        totalArticleIdNumText.text = totalArticleIdNum.toString()
+        val totalQuantity: Int  = visibleRows.sumOf { SizeUtils.sizesOf(it).sum() }
+        totalQuantityText.text = totalQuantity.toString()
     }
 
     /** 货号这一块的表头：第一排列名（货号 / 经销商 / 数量），第二排数值 */

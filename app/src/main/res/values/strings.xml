@@ -38,6 +38,8 @@
     <string name="stock_minus_button">－</string>
     <string name="row_picture_add">＋</string>
     <string name="row_picture_hint">鞋子图片</string>
+    <string name="total_articleId_num">款式总数</string>
+    <string name="total_inventory_quantity">库存总数</string>
 
     <!-- 账单页（历史订单查询） -->
     <string name="bills_title">账单历史查询</string>
