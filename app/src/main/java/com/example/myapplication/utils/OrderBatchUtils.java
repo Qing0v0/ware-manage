@@ -1,5 +1,7 @@
 package com.example.myapplication.utils;
 
+import android.content.Context;
+import com.example.myapplication.R;
 import com.example.myapplication.model.Color;
 import com.example.myapplication.model.OrderBatch;
 import com.example.myapplication.model.OrderType;
@@ -7,7 +9,7 @@ import com.example.myapplication.model.OrderType;
 import java.math.BigDecimal;
 import java.util.Date;
 
-public class OrderBatchUtils implements StringUtils{
+public class OrderBatchUtils {
     public String[] sizeArray;
     public String articleId;
     public String price;
@@ -27,26 +29,28 @@ public class OrderBatchUtils implements StringUtils{
         this.orderType = orderType;
     }
 
-    public String checkInputs() {
+    public String checkInputs(Context context) {
         // check articleId
         if ("".equals(articleId)) {
-            return articleIdEmpty;
+            return context.getString(R.string.article_id_hint);
         }
 
         //check dealer
         if ("".equals(dealer) && orderType == OrderType.ARTICLE_PURCHASE) {
-            return dealerEmpty;
+            return context.getString(R.string.dealer_hint);
         }
 
         // check price
         if ("".equals(price)) {
-            return orderType == OrderType.ARTICLE_PURCHASE ? purchasePriceEmpty : sellingPriceEmpty;
+            return orderType == OrderType.ARTICLE_PURCHASE
+                    ? context.getString(R.string.purchase_price_hint)
+                    : context.getString(R.string.selling_price_hint);
         }
 
         try {
             new BigDecimal(price);
         } catch (NumberFormatException e) {
-            return priceTypeError;
+            return context.getString(R.string.priceTypeError);
         }
 
         // check sizeArray
@@ -59,14 +63,14 @@ public class OrderBatchUtils implements StringUtils{
             try {
                 totalNum += Integer.parseInt(sizeArray[i]);
             } catch (NumberFormatException e) {
-                return sizeTypeError;
+                return context.getString(R.string.sizeTypeError);
             }
         }
         if (totalNum == 0) {
-            return sizeArrayEmpty;
+            return context.getString(R.string.sizeArrayEmpty);
         }
 
-        return checkOk;
+        return context.getString(R.string.checkOk);
     }
 
     public OrderBatch buildOrderBatch() {

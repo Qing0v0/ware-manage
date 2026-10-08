@@ -5,7 +5,10 @@
 
     <string name="purchase_button">入库</string>
     <string name="selling_button">出库</string>
+    <string name="alertTitle">提示</string>
 
+    <!-- 出/入库页面 -->
+    <string name="checkOk">ok</string>
     <string name="purchase_order_article_id">货号</string>
     <string name="purchase_order_color">颜色</string>
     <string name="purchase_order_dealer">经销商</string>
@@ -26,6 +29,11 @@
     <string name="selling_price_hint">请输入售价</string>
     <string name="rows_max_num">当前行数已达到上限</string>
     <string name="choose_color">选择颜色</string>
+    <string name="sizeArrayEmpty">入库鞋子数量为0，请至少填写一个尺寸的入库数量</string>
+    <string name="sizeTypeError">输入入库数量不是数字，请重新填写</string>
+    <string name="priceTypeError">填写价格并非数字，请重新填写</string>
+    <string name="inventoryNotFound">存量里找不到 %1$s（%2$s），不能出库，请先入库</string>
+    <string name="inventoryNotEnough">%1$s（%2$s）的 %3$d 码：存量 %4$d 双，本次需要 %5$d 双，存量不足</string>
 
     <!-- 仓库页面（存量表） -->
     <string name="inventory_picture">图片</string>

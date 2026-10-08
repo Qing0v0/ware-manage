@@ -1,9 +1,10 @@
 package com.example.myapplication.service
 
+import android.content.Context
+import com.example.myapplication.R
 import com.example.myapplication.model.OrderBatch
 import com.example.myapplication.model.ShoeInventory
 import com.example.myapplication.utils.SizeUtils
-import com.example.myapplication.utils.StringUtils
 
 /**
  * 存量（[ShoeInventory]）的加减逻辑，入库和出库都走这里。
@@ -14,7 +15,7 @@ import com.example.myapplication.utils.StringUtils
  * - 出库 / 破损 / 退给经销商：先查存量，某个尺码减完小于 0 就报错；
  * - 一次“确定”提交的整批订单是整体生效的：先 [check] 全部通过，再 [apply] 写库。
  */
-class InventoryService(private val inventoryDatabase: InventoryDatabase) {
+class InventoryService(private val inventoryDatabase: InventoryDatabase, private val context: Context) {
 
     private val inventoryDAO = inventoryDatabase.shoeInventoryDAO()
 
@@ -46,7 +47,7 @@ class InventoryService(private val inventoryDatabase: InventoryDatabase) {
             if (inventory == null) {
                 // 没有存量：只有整批都是“加”的时候才会新增，否则就是库存不足
                 if (deltaSizes.any { it < 0 }) {
-                    errors.add(String.format(StringUtils.inventoryNotFound, articleId, colorName))
+                    errors.add(context.getString(R.string.inventoryNotFound, articleId, colorName))
                 }
                 continue
             }
@@ -56,13 +57,9 @@ class InventoryService(private val inventoryDatabase: InventoryDatabase) {
                 if (stockSizes[index] + deltaSizes[index] < 0) {
                     // 减完小于 0：报错，把存量、需要多少都告诉用户
                     errors.add(
-                        String.format(
-                            StringUtils.inventoryNotEnough,
-                            articleId,
-                            colorName,
-                            SizeUtils.sizeName(index),
-                            stockSizes[index],
-                            -deltaSizes[index]
+                        context.getString(
+                            R.string.inventoryNotEnough, articleId, colorName,
+                            SizeUtils.sizeName(index), stockSizes[index], -deltaSizes[index]
                         )
                     )
                 }

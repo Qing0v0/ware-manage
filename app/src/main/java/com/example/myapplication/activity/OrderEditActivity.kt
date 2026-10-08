@@ -27,7 +27,6 @@ import com.example.myapplication.service.InventoryService
 import com.example.myapplication.service.OrderBatchDatabase
 import com.example.myapplication.utils.ImageUtils
 import com.example.myapplication.utils.OrderBatchUtils
-import com.example.myapplication.utils.StringUtils
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 
 import kotlin.concurrent.thread
@@ -220,9 +219,9 @@ class OrderEditActivity : AppCompatActivity() {
                 price,
                 orderTypeForSave
             )
-            val checkResult = orderBatchUtils.checkInputs()
-            if (checkResult != StringUtils.checkOk) {
-                val errorTips = if ((checkResult == StringUtils.sizeTypeError) || (checkResult == StringUtils.sizeArrayEmpty)) {
+            val checkResult = orderBatchUtils.checkInputs(this)
+            if (checkResult != getString(R.string.checkOk)) {
+                val errorTips = if ((checkResult == getString(R.string.sizeTypeError)) || (checkResult == getString(R.string.sizeArrayEmpty))) {
                     getString(R.string.order_row_error, index + 1, checkResult)
                 } else {
                     checkResult
@@ -238,7 +237,7 @@ class OrderEditActivity : AppCompatActivity() {
 
     private fun saveOrderBatches(orderBatches: List<OrderBatch>, rows: List<OrderRowData>) {
         val orderDatabase = OrderBatchDatabase.getDatabase(applicationContext)
-        val inventoryService = InventoryService(InventoryDatabase.getDatabase(applicationContext))
+        val inventoryService = InventoryService(InventoryDatabase.getDatabase(applicationContext), this)
         val imageEditable = orderType.increaseStock
         thread {
             // 1. 先查存量：出库减完小于 0 会在这里被拦下来，有问题就什么都不写
@@ -276,7 +275,7 @@ class OrderEditActivity : AppCompatActivity() {
 
     private fun showTip(message: String) {
         AlertDialog.Builder(this)
-            .setTitle(StringUtils.alertTitle)
+            .setTitle(getString(R.string.alertTitle))
             .setMessage(message)
             .setPositiveButton(R.string.confirm) { dialog, _ -> dialog.dismiss() }
             .show()
