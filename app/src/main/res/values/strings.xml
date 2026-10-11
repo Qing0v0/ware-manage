@@ -89,4 +89,6 @@
     <string name="update_no_apk">这个版本里没有找到安装包</string>
     <string name="update_download_failed">下载失败，请重试</string>
     <string name="update_install_failed">没有找到可以安装应用的程序</string>
+    <string name="update_download_progress">%1$s / %2$s</string>
+    <string name="update_download_progress_unknown_total">%1$s / ?</string>
 </resources>

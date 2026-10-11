@@ -244,13 +244,13 @@ object UpdateService {
      *
      * 下载前会把这个目录里上一次留下的安装包清掉：一次只留一个，
      * 免得升级几次以后越堆越多（本次要下的这个不删）。
-     * 服务端给了长度就回报百分比。
+     * 每读到一块就回调 [onProgress]：已下载字节数 / 总字节数（服务端没给长度时 total 是 -1）。
      */
     fun downloadApk(
         context: Context,
         url: String,
         versionName: String,
-        onProgress: (Int) -> Unit
+        onProgress: (downloaded: Long, total: Long) -> Unit
     ): File {
         val dir = File(context.cacheDir, UPDATE_DIR)
         if (!dir.exists() && !dir.mkdirs()) {
@@ -286,9 +286,7 @@ object UpdateService {
                         }
                         output.write(buffer, 0, count)
                         downloaded += count
-                        if (total > 0) {
-                            onProgress(((downloaded * 100) / total).toInt())
-                        }
+                        onProgress(downloaded, total)
                     }
                 }
             }

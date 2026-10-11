@@ -2,11 +2,13 @@ package com.example.myapplication.activity
 
 import android.app.AlertDialog
 import android.net.Uri
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.GravityCompat
@@ -16,6 +18,7 @@ import com.example.myapplication.R
 import com.example.myapplication.service.BackupService
 import com.example.myapplication.service.UpdateService
 import java.io.File
+import java.util.Locale
 import kotlin.concurrent.thread
 
 /**
@@ -225,18 +228,31 @@ class WareDrawerPanel(
             return
         }
 
-        // 下载要一会儿，给个进度条，免得被当成卡死
+        // 显示下载进度条和具体进度「已下载 / 总大小」
         val progressBar =
             ProgressBar(fragment.requireContext(), null, android.R.attr.progressBarStyleHorizontal)
         progressBar.max = 100
+        val progressText = TextView(fragment.requireContext()).apply {
+            gravity = Gravity.END
+            textSize = 16f
+            text = fragment.getString(
+                R.string.update_download_progress_unknown_total, formatSize(0)
+            )
+        }
         val content = LinearLayout(fragment.requireContext()).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(24), dp(12), dp(24), 0)
+            setPadding(dp(24), dp(12), dp(24), dp(18))
             addView(
                 progressBar,
                 LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
                 )
+            )
+            addView(
+                progressText,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                ).apply { topMargin = dp(8) }
             )
         }
         val dialog = AlertDialog.Builder(fragment.requireContext())
@@ -249,8 +265,24 @@ class WareDrawerPanel(
         val context = fragment.requireContext().applicationContext
         thread {
             val file = try {
-                UpdateService.downloadApk(context, apkUrl, release.versionName) { percent ->
-                    fragment.activity?.runOnUiThread { progressBar.progress = percent }
+                UpdateService.downloadApk(
+                    context, apkUrl, release.versionName
+                ) { downloaded, total ->
+                    fragment.activity?.runOnUiThread {
+                        if (total > 0) {
+                            progressBar.progress = ((downloaded * 100) / total).toInt()
+                            progressText.text = context.getString(
+                                R.string.update_download_progress,
+                                formatSize(downloaded), formatSize(total)
+                            )
+                        } else {
+                            // 服务端没给总长度：进度条没法算百分比，但下载量照常显示
+                            progressText.text = context.getString(
+                                R.string.update_download_progress_unknown_total,
+                                formatSize(downloaded)
+                            )
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 android.util.Log.w(UpdateService.LOG_TAG, "下载新版本失败", e)
@@ -285,6 +317,16 @@ class WareDrawerPanel(
                 fragment.requireContext(), R.string.update_install_failed, Toast.LENGTH_SHORT
             ).show()
         }
+    }
+
+    /** 字节数换成人看得懂的大小（B / KB / MB / GB），进度条下面那行用 */
+    private fun formatSize(bytes: Long): String {
+        if (bytes < 1024) return "$bytes B"
+        val kb = bytes / 1024.0
+        if (kb < 1024) return String.format(Locale.getDefault(), "%.1f KB", kb)
+        val mb = kb / 1024.0
+        if (mb < 1024) return String.format(Locale.getDefault(), "%.1f MB", mb)
+        return String.format(Locale.getDefault(), "%.1f GB", mb / 1024.0)
     }
 
     private fun dp(value: Int): Int =
