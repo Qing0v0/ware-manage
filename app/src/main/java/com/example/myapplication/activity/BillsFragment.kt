@@ -19,7 +19,7 @@ import androidx.fragment.app.Fragment
 import com.example.myapplication.R
 import com.example.myapplication.model.OrderBatch
 import com.example.myapplication.model.OrderType
-import com.example.myapplication.service.OrderBatchDatabase
+import com.example.myapplication.service.InventoryDatabase
 import com.example.myapplication.utils.DrawableUtils
 import com.example.myapplication.utils.SizeUtils
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
@@ -199,7 +199,7 @@ class BillsFragment : Fragment() {
 
         val context = requireContext().applicationContext
         thread {
-            val orders = OrderBatchDatabase.getDatabase(context).orderBatchDAO()
+            val orders = InventoryDatabase.getDatabase(context).orderBatchDAO()
                 .queryOrders(startTime, endTime, articleIdLike, dealerLike, orderTypes)
             activity?.runOnUiThread {
                 if (!isAdded) {

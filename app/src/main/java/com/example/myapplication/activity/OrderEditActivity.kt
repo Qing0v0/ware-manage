@@ -24,7 +24,6 @@ import com.example.myapplication.model.OrderRowData
 import com.example.myapplication.model.OrderType
 import com.example.myapplication.service.InventoryDatabase
 import com.example.myapplication.service.InventoryService
-import com.example.myapplication.service.OrderBatchDatabase
 import com.example.myapplication.utils.ImageUtils
 import com.example.myapplication.utils.OrderBatchUtils
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
@@ -236,19 +235,10 @@ class OrderEditActivity : AppCompatActivity() {
     }
 
     private fun saveOrderBatches(orderBatches: List<OrderBatch>, rows: List<OrderRowData>) {
-        val orderDatabase = OrderBatchDatabase.getDatabase(applicationContext)
         val inventoryService = InventoryService(InventoryDatabase.getDatabase(applicationContext), this)
         val imageEditable = orderType.increaseStock
         thread {
-            // 1. 先查存量：出库减完小于 0 会在这里被拦下来，有问题就什么都不写
-            val inventoryErrors = inventoryService.check(orderBatches)
-            if (inventoryErrors.isNotEmpty()) {
-                runOnUiThread { showTip(inventoryErrors.joinToString("\n")) }
-                return@thread
-            }
-
-            // 2. 图片：入库时新选的图压缩后存到应用私有目录，数据库里只存路径；
-            //    订单库不存图片（省空间），图片只跟着存量走
+            // 图片只跟着存量走；数据库中的订单和存量由同一个事务提交。
             val imagePaths = rows.map { row ->
                 if (imageEditable && row.imageUri != null) {
                     ImageUtils.saveToAppStorage(applicationContext, row.imageUri!!) ?: row.imagePath
@@ -257,9 +247,16 @@ class OrderEditActivity : AppCompatActivity() {
                 }
             }
 
-            // 3. 存量没问题：写订单流水，再加 / 减存量（入库加，出库、破损、退货减）
-            orderBatches.forEach { orderDatabase.orderBatchDAO().insert(it) }
-            inventoryService.apply(orderBatches, imagePaths)
+            val inventoryErrors = try {
+                inventoryService.apply(orderBatches, imagePaths)
+            } catch (e: Exception) {
+                runOnUiThread { showTip(getString(R.string.order_save_failed)) }
+                return@thread
+            }
+            if (inventoryErrors.isNotEmpty()) {
+                runOnUiThread { showTip(inventoryErrors.joinToString("\n")) }
+                return@thread
+            }
 
             runOnUiThread {
                 Toast.makeText(
@@ -288,6 +285,7 @@ class OrderEditActivity : AppCompatActivity() {
     }
 
     companion object {
+        private const val TAG = "OrderEditActivity"
         private const val EXTRA_ORDER_TYPE = "extra_order_type"
         private const val EXTRA_ARTICLE_ID = "extra_article_id"
         private const val EXTRA_COLOR = "extra_color"

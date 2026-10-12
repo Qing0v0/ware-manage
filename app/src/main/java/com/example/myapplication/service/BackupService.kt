@@ -14,11 +14,12 @@ import java.util.zip.ZipOutputStream
 /**
  * 数据备份 / 恢复。
  *
- * 备份内容：两个数据库（订单库 app_database、存量库 inventory_database）+ 存量的图片目录，
+ * 备份内容：合并后的数据库 inventory_database、旧版订单库 app_database（兼容旧备份）+
+ * 存量的图片目录，
  * 打成一个 zip，结构和手机上的目录对应：
  *     backup_info.txt                 标记文件（格式版本 + 导出时间），用来判断是不是本应用的备份
- *     databases/app_database          订单库（含 -wal / -shm）
- *     databases/inventory_database    存量库
+ *     databases/app_database          旧版订单库（含 -wal / -shm）
+ *     databases/inventory_database    订单和存量共用的数据库
  *     images/img_xxx.jpg              存量图片
  *
  * 导出走系统文件选择器，存到用户自己挑的位置（不需要存储权限）；导入是"整体覆盖"：
@@ -89,7 +90,6 @@ class BackupService(private val context: Context) {
             }
 
             // 2. 关掉数据库连接，清掉旧数据（-wal / -shm 也要删，否则可能被旧的日志污染）
-            OrderBatchDatabase.closeDatabase()
             InventoryDatabase.closeDatabase()
 
             val databaseDir = context.getDatabasePath(DATABASE_NAMES[0]).parentFile
@@ -122,7 +122,6 @@ class BackupService(private val context: Context) {
 
     /** PRAGMA wal_checkpoint(FULL)：把 WAL 里没落盘的数据合并进主库文件 */
     private fun checkpoint() {
-        OrderBatchDatabase.getDatabase(context).query("PRAGMA wal_checkpoint(FULL)", null)?.close()
         InventoryDatabase.getDatabase(context).query("PRAGMA wal_checkpoint(FULL)", null)?.close()
     }
 

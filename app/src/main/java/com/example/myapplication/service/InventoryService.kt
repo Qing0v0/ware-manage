@@ -13,19 +13,34 @@ import com.example.myapplication.utils.SizeUtils
  * - 存量按「货号 + 颜色」区分，一个货号一个颜色的 11 个尺码存在一条记录里；
  * - 入库（OrderType.ARTICLE_PURCHASE）：有存量就在原有数量上累加，没有就新增一条；
  * - 出库 / 破损 / 退给经销商：先查存量，某个尺码减完小于 0 就报错；
- * - 一次“确定”提交的整批订单是整体生效的：先 [check] 全部通过，再 [apply] 写库。
+ * - 订单流水和存量写在同一个数据库事务里；库存校验也在该事务中进行。
  */
 class InventoryService(private val inventoryDatabase: InventoryDatabase, private val context: Context) {
 
     private val inventoryDAO = inventoryDatabase.shoeInventoryDAO()
+    private val orderBatchDAO = inventoryDatabase.orderBatchDAO()
 
     /**
-     * 校验这一批订单能不能入账，返回错误提示（列表为空表示可以入账）。
-     *
-     * 同一批里如果有相同的货号 + 颜色（表格里加了两行），会先合并再和存量比较，
-     * 避免两行各自都没超、加起来却超了的情况。
+     * 校验库存并同时写订单流水和存量。任意写入失败时，整个事务回滚。
+     * 同一批里相同货号 + 颜色的行会先合并校验，避免合计出库超库存。
      */
-    fun check(orderBatches: List<OrderBatch>): List<String> {
+    fun apply(orderBatches: List<OrderBatch>, imagePaths: List<String?> = emptyList()): List<String> {
+        val errors = ArrayList<String>()
+
+        inventoryDatabase.runInTransaction {
+            errors.addAll(check(orderBatches))
+            if (errors.isEmpty()) {
+                orderBatches.forEachIndexed { index, orderBatch ->
+                    orderBatchDAO.insert(orderBatch)
+                    applyOne(orderBatch, imagePaths.getOrNull(index))
+                }
+            }
+        }
+
+        return errors
+    }
+
+    private fun check(orderBatches: List<OrderBatch>): List<String> {
         val errors = ArrayList<String>()
 
         for ((articleColor, batches) in orderBatches.groupBy { it.articleId to it.color }) {
@@ -33,7 +48,6 @@ class InventoryService(private val inventoryDatabase: InventoryDatabase, private
             val color = articleColor.second
             val colorName = color.displayName
 
-            // 先算出这一批对同一个货号 + 颜色的净变化：入库为正，出库为负
             val deltaSizes = IntArray(SizeUtils.SIZE_AMOUNT)
             for (orderBatch in batches) {
                 val sign = if (orderBatch.orderType.increaseStock) 1 else -1
@@ -45,7 +59,6 @@ class InventoryService(private val inventoryDatabase: InventoryDatabase, private
 
             val inventory = inventoryDAO.query(articleId, color)
             if (inventory == null) {
-                // 没有存量：只有整批都是“加”的时候才会新增，否则就是库存不足
                 if (deltaSizes.any { it < 0 }) {
                     errors.add(context.getString(R.string.inventoryNotFound, articleId, colorName))
                 }
@@ -55,7 +68,6 @@ class InventoryService(private val inventoryDatabase: InventoryDatabase, private
             val stockSizes = SizeUtils.sizesOf(inventory)
             for (index in 0 until SizeUtils.SIZE_AMOUNT) {
                 if (stockSizes[index] + deltaSizes[index] < 0) {
-                    // 减完小于 0：报错，把存量、需要多少都告诉用户
                     errors.add(
                         context.getString(
                             R.string.inventoryNotEnough, articleId, colorName,
@@ -67,21 +79,6 @@ class InventoryService(private val inventoryDatabase: InventoryDatabase, private
         }
 
         return errors
-    }
-
-    /**
-     * 把这一批订单应用到存量上，[check] 通过之后再调用。
-     * 整批放在一个事务里，中途出错会整批回滚，不会出现改了一半的情况。
-     *
-     * @param imagePaths 和 orderBatches 一一对应的图片路径（入库时新选的图片），
-     *                   出库不会改图片，null 表示这一行不动图片
-     */
-    fun apply(orderBatches: List<OrderBatch>, imagePaths: List<String?> = emptyList()) {
-        inventoryDatabase.runInTransaction {
-            orderBatches.forEachIndexed { index, orderBatch ->
-                applyOne(orderBatch, imagePaths.getOrNull(index))
-            }
-        }
     }
 
     private fun applyOne(orderBatch: OrderBatch, imagePath: String?) {
