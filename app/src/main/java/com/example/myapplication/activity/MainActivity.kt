@@ -1,54 +1,50 @@
 package com.example.myapplication.activity
 
 import android.os.Bundle
+import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
 import com.example.myapplication.R
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.example.myapplication.ui.MainScreen
 
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var navigationView: BottomNavigationView
     private lateinit var wareFragment: WareFragment
     private lateinit var billsFragment: BillsFragment
 
     /** 当前显示的是哪一页，Activity 重建后用它复原（和底部导航的选中项保持一致） */
-    private var currentTab = TAB_WAREHOUSE
+    private var currentTab by mutableIntStateOf(TAB_WAREHOUSE)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_main)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
 
         wareFragment = supportFragmentManager.findFragmentByTag(TAG_WAREHOUSE) as? WareFragment ?: WareFragment()
         billsFragment = supportFragmentManager.findFragmentByTag(TAG_BILLS) as? BillsFragment ?: BillsFragment()
         removeStaleFragments()
 
-        navigationView = findViewById(R.id.bottom_navigation)
-        navigationView.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.warehouse -> selectFragment(TAB_WAREHOUSE)
-                R.id.bills -> selectFragment(TAB_BILLS)
-                else -> return@setOnItemSelectedListener false
-            }
-            true
+        currentTab = savedInstanceState?.getInt(KEY_TAB, TAB_WAREHOUSE) ?: TAB_WAREHOUSE
+        setContent {
+            MainScreen(
+                selectedItemId = if (currentTab == TAB_BILLS) R.id.bills else R.id.warehouse,
+                onItemSelected = { itemId ->
+                    when (itemId) {
+                        R.id.warehouse -> selectFragment(TAB_WAREHOUSE)
+                        R.id.bills -> selectFragment(TAB_BILLS)
+                    }
+                },
+                onFragmentContainerReady = {
+                    if (!isDestroyed) {
+                        selectFragment(currentTab)
+                    }
+                }
+            )
         }
-
-        // 重建之后接着显示上次那一页，第一次进来默认仓库页
-        selectFragment(savedInstanceState?.getInt(KEY_TAB, TAB_WAREHOUSE) ?: TAB_WAREHOUSE)
-        // 底部导航的高亮：系统有时会恢复、有时不恢复，这里显式对齐一次，保证高亮和显示的页面是同一页
-        navigationView.menu.findItem(
-            if (currentTab == TAB_BILLS) R.id.bills else R.id.warehouse
-        )?.isChecked = true
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -107,4 +103,3 @@ class MainActivity : AppCompatActivity() {
         private const val TAB_BILLS = 1
     }
 }
-
