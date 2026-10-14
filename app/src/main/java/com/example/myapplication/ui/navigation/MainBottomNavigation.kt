@@ -16,7 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -24,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.R
+import com.example.myapplication.ui.theme.AppColors
 
 private data class MainNavigationItem(
     val id: Int,
@@ -36,10 +36,6 @@ private val navigationItems = listOf(
     MainNavigationItem(R.id.bills, R.drawable.bills, R.string.bottom_bills)
 )
 
-private val NavigationGreen = Color(0xFF246B50)
-private val NavigationMuted = Color(0xFF99A29B)
-private val NavigationDivider = Color(0xFFEDF0ED)
-
 @Composable
 internal fun MainBottomNavigation(
     selectedItemId: Int,
@@ -49,10 +45,10 @@ internal fun MainBottomNavigation(
         modifier = Modifier
             .fillMaxWidth()
             .height(64.dp)
-            .background(Color.White)
+            .background(AppColors.White)
             .drawBehind {
                 drawLine(
-                    color = NavigationDivider,
+                    color = AppColors.Divider,
                     start = androidx.compose.ui.geometry.Offset(0f, 0f),
                     end = androidx.compose.ui.geometry.Offset(size.width, 0f),
                     strokeWidth = 1.dp.toPx()
@@ -62,7 +58,8 @@ internal fun MainBottomNavigation(
     ) {
         navigationItems.forEach { item ->
             val selected = item.id == selectedItemId
-            val contentColor = if (selected) NavigationGreen else NavigationMuted
+            val contentColor =
+                if (selected) AppColors.BrandGreen else AppColors.NavigationMuted
 
             Column(
                 modifier = Modifier
