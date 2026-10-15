@@ -1,9 +1,12 @@
 package com.example.myapplication.ui.screens
 
 import android.app.DatePickerDialog
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,12 +15,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
@@ -31,23 +39,23 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.R
+import com.example.myapplication.model.Color as ShoeColor
 import com.example.myapplication.model.OrderBatch
 import com.example.myapplication.model.OrderType
 import com.example.myapplication.service.InventoryDatabase
-import com.example.myapplication.ui.components.tableCellBackground
 import com.example.myapplication.utils.SizeUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -64,36 +72,23 @@ private const val DEFAULT_DAYS = 30
 
 /** 日期范围格子里显示的 yyyy-MM-dd */
 private val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+private val summaryDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MM.dd")
 
-/** 时间列：上排 MM-dd，下排 HH:mm，显示的是北京时间 */
+/** 订单时间显示：日期 MM-dd、时间 HH:mm，统一按北京时间 */
 private val dateLineFormatter: DateTimeFormatter =
     DateTimeFormatter.ofPattern("MM-dd").withZone(zone)
 private val timeLineFormatter: DateTimeFormatter =
     DateTimeFormatter.ofPattern("HH:mm").withZone(zone)
-
-/** 表格列宽（和原布局里的 dp 值一一对应） */
-private val ArticleIdCellWidth = 56.dp
-private val ColorCellWidth = 44.dp
-private val SizeCellWidth = 34.dp
-private val TotalPriceCellWidth = 58.dp
-private val TimeCellWidth = 56.dp
-private val TypeCellWidth = 52.dp
-
-/** 每行高度 */
-private val RowHeight = 40.dp
-
-/** 输入框里没有字时的提示语颜色（EditText 默认 hint 色） */
-private val HintColor = Color(0xFF757575)
 
 /** hintId 用 0 表示「不显示提示」 */
 private const val HIDE_HINT = 0
 
 /**
  * 账单页（Compose 版，对应原来的 res/layout/fragment_bills.xml）：
- * 按日期范围查询历史出入库订单，按时间从新到旧排。
+ * 按日期范围查询历史出入库账单，按时间从新到旧排。
  *
- * 一行一单：货号 | 颜色 | 34~44 码各多少双（中间可横滑）| 总价 | 时间 | 入库 / 出库 标签，
- * 最下面那一行不参与滚动，固定显示这段时间的总计利润。
+ * 账单以卡片显示，每笔账单的 34~44 码数量可横向滑动；
+ * 底部固定显示所选日期范围的总计利润。
  *
  * 页面复位（日期回默认、清空筛选和结果）由 [resetTick] 驱动，
  * BillsFragment 里每次切到账单页 +1，对应原来 resetPage() 的行为。
@@ -117,14 +112,22 @@ fun BillsScreen(
     var orders by remember { mutableStateOf<List<OrderBatch>>(emptyList()) }
     var hintId by remember { mutableIntStateOf(R.string.bills_hint_before_query) }
     var totalProfit by remember { mutableStateOf(BigDecimal.ZERO) }
+    val totalIncome = remember(orders) {
+        orders.filter { !it.orderType.increaseStock }
+            .fold(BigDecimal.ZERO) { total, order -> total.add(totalPriceOf(order)) }
+    }
+    val totalCost = remember(orders) {
+        orders.filter { it.orderType.increaseStock }
+            .fold(BigDecimal.ZERO) { total, order -> total.add(totalPriceOf(order)) }
+    }
 
     /**
-     * "支付方式"筛选的选项：选项文字 -> 要匹配的订单类型名，和原来的 payTypeFilters() 一致：
+     * 账单类型筛选的选项：选项文字 -> 要匹配的账单类型名：
      * 其中「出库」这一项把三个收款方式 + 退货 + 老版本的「出库」都算上，方便一眼看总出库。
      */
-    val payTypeFilters = remember(context) {
+    val orderTypeFilters = remember(context) {
         buildList {
-            add(context.getString(R.string.bill_type_all) to OrderType.values().map { it.name })
+            add(context.getString(R.string.bills_type_all) to OrderType.values().map { it.name })
             add(
                 OrderType.ARTICLE_PURCHASE.displayName to listOf(OrderType.ARTICLE_PURCHASE.name)
             )
@@ -163,7 +166,7 @@ fun BillsScreen(
         ).show()
     }
 
-    /** 选择日期范围后点查询，按条件去订单库查（查库在 IO 线程，结果回主线程） */
+    /** 选择日期范围后点查询，按条件查询账单（查库在 IO 线程，结果回主线程） */
     fun queryOrders() {
         if (startDate.isAfter(endDate)) {
             hintId = R.string.bills_date_error
@@ -177,7 +180,7 @@ fun BillsScreen(
         // 货号 / 经销商做模糊匹配；类型用下拉里选的那一组（不会为空，SQL 的 IN 不接受空列表）
         val articleIdLike = "%${articleId.trim()}%"
         val dealerLike = "%${dealer.trim()}%"
-        val orderTypes = payTypeFilters[payTypeIndex].second
+        val orderTypes = orderTypeFilters[payTypeIndex].second
         val appContext = context.applicationContext
 
         scope.launch {
@@ -198,148 +201,240 @@ fun BillsScreen(
     }
 
     Column(modifier = modifier.fillMaxSize()) {
-        // 第一行：标题
-        Text(
-            text = stringResource(R.string.bills_title),
-            color = Color.Black,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(start = 10.dp, top = 10.dp, end = 10.dp)
-        )
-
-        // 日期范围 + 查询
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(10.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFF5F7F5))
+                .padding(horizontal = 16.dp)
         ) {
-            DateBox(
-                date = startDate,
-                onClick = { pickDate(startDate) { startDate = it } },
-                modifier = Modifier.weight(1f)
-            )
-            Text(
-                text = stringResource(R.string.bills_date_separator),
-                color = Color.Black,
-                fontSize = 16.sp,
-                modifier = Modifier.padding(horizontal = 6.dp)
-            )
-            DateBox(
-                date = endDate,
-                onClick = { pickDate(endDate) { endDate = it } },
-                modifier = Modifier.weight(1f)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Button(onClick = { queryOrders() }) {
-                Text(stringResource(R.string.bills_query))
+            Column(
+                modifier = Modifier.padding(top = 8.dp, bottom = 12.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.bills_transaction_history),
+                    color = Color(0xFF246B50),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.15.sp
+                )
+                Text(
+                    text = stringResource(R.string.bills_title),
+                    color = Color(0xFF19251F),
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = (-0.8).sp,
+                    modifier = Modifier.padding(top = 3.dp)
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, Color(0xFFE9EEEA), RoundedCornerShape(17.dp))
+                    .background(Color.White, RoundedCornerShape(17.dp))
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.bills_query_orders),
+                    color = Color(0xFF77827B),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(start = 2.dp, bottom = 8.dp)
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    FilterInput(
+                        value = articleId,
+                        onValueChange = { articleId = it },
+                        hint = stringResource(R.string.purchase_order_article_id),
+                        modifier = Modifier.weight(1f).height(36.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    FilterInput(
+                        value = dealer,
+                        onValueChange = { dealer = it },
+                        hint = stringResource(R.string.purchase_order_dealer),
+                        modifier = Modifier.weight(1f).height(36.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    OrderTypeDropdown(
+                        selectedLabel = orderTypeFilters[payTypeIndex].first,
+                        options = orderTypeFilters.map { it.first },
+                        onSelect = { payTypeIndex = it },
+                        modifier = Modifier.weight(1f).height(36.dp)
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    DateBox(
+                        date = startDate,
+                        onClick = { pickDate(startDate) { startDate = it } },
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = stringResource(R.string.bills_date_separator),
+                        color = Color(0xFFA4ACA6),
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(horizontal = 5.dp)
+                    )
+                    DateBox(
+                        date = endDate,
+                        onClick = { pickDate(endDate) { endDate = it } },
+                        modifier = Modifier.weight(1f)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = { queryOrders() },
+                        modifier = Modifier.height(39.dp),
+                        shape = RoundedCornerShape(11.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF246B50),
+                            contentColor = Color.White
+                        ),
+                        contentPadding = PaddingValues(
+                            horizontal = 14.dp,
+                            vertical = 0.dp
+                        )
+                    ) {
+                        Text(stringResource(R.string.bills_query))
+                    }
+                }
             }
         }
 
-        // 第二行筛选：货号 / 经销商 / 支付方式
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 10.dp, end = 10.dp, bottom = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            FilterInput(
-                value = articleId,
-                onValueChange = { articleId = it },
-                hint = stringResource(R.string.purchase_order_article_id),
-                modifier = Modifier.weight(1f).height(44.dp)
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            FilterInput(
-                value = dealer,
-                onValueChange = { dealer = it },
-                hint = stringResource(R.string.purchase_order_dealer),
-                modifier = Modifier.weight(1f).height(44.dp)
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            PayTypeDropdown(
-                selectedLabel = payTypeFilters[payTypeIndex].first,
-                options = payTypeFilters.map { it.first },
-                onSelect = { payTypeIndex = it },
-                modifier = Modifier.weight(1.2f).height(44.dp)
-            )
-        }
-
-        // 提示（查询前 / 日期填错 / 没查到订单）
-        if (hintId != HIDE_HINT) {
-            Text(
-                text = stringResource(hintId),
-                color = Color.Black,
-                fontSize = 15.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(24.dp)
-            )
-        }
-
-        // 订单表：可上下滑；查询结果出来前是空的
-        Column(
+        // 账单明细可上下滑，每笔账单的尺码行可独立左右滑
+        LazyColumn(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 4.dp)
+                .padding(horizontal = 12.dp)
         ) {
-            if (orders.isNotEmpty()) {
-                OrdersTable(orders = orders)
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp, bottom = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.bills_order_details),
+                        color = Color(0xFF26352B),
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text(
+                        text = stringResource(R.string.bills_order_count, orders.size),
+                        color = Color(0xFF89938C),
+                        fontSize = 12.sp
+                    )
+                }
+                if (hintId != HIDE_HINT) {
+                    Text(
+                        text = stringResource(hintId),
+                        color = Color(0xFF69756D),
+                        fontSize = 13.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp, bottom = 16.dp)
+                    )
+                }
+            }
+            items(items = orders, key = { it.orderId }) { order ->
+                OrderCard(order = order)
             }
         }
 
         // 固定在最下面：不跟着上面一起滚
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(colorResource(R.color.table_head_bg))
-                .padding(start = 12.dp, top = 10.dp, end = 12.dp, bottom = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .background(Color.White)
         ) {
-            Text(
-                text = stringResource(R.string.bills_total_profit),
-                color = Color.Black,
-                fontSize = 16.sp
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(Color(0xFFE9EEEA))
             )
-            Text(
-                text = amountText(totalProfit),
-                // 亏了显示红色，赚了显示绿色
-                color = colorResource(
-                    if (totalProfit.signum() < 0) R.color.bill_out_text else R.color.bill_in_text
-                ),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.End,
-                modifier = Modifier.weight(1f)
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 18.dp, top = 10.dp, end = 18.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.ic_profit_trend),
+                    contentDescription = null,
+                    modifier = Modifier.size(15.dp)
+                )
+                Text(
+                    text = stringResource(R.string.bills_total_profit),
+                    color = Color(0xFF69756D),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(start = 6.dp)
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = "${startDate.format(summaryDateFormatter)} — ${endDate.format(summaryDateFormatter)}",
+                    color = Color(0xFF939D96),
+                    fontSize = 12.sp
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 18.dp, top = 3.dp, end = 18.dp, bottom = 12.dp),
+                verticalAlignment = Alignment.Bottom
+            ) {
+                Text(
+                    text = "${if (totalProfit.signum() < 0) "-" else "+"}¥ ${amountText(totalProfit.abs())}",
+                    color = colorResource(
+                        if (totalProfit.signum() < 0) R.color.bill_out_text else R.color.bill_in_text
+                    ),
+                    fontSize = 23.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = (-0.7).sp,
+                    maxLines = 1
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 3.dp)
+                ) {
+                    Text(
+                        text = "${stringResource(R.string.selling_button)} ",
+                        color = Color(0xFF909A93),
+                        fontSize = 12.sp
+                    )
+                    Text(
+                        text = "¥${amountText(totalIncome)}",
+                        color = Color(0xFF66736A),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "${stringResource(R.string.purchase_button)} ",
+                        color = Color(0xFF909A93),
+                        fontSize = 12.sp
+                    )
+                    Text(
+                        text = "¥${amountText(totalCost)}",
+                        color = Color(0xFF66736A),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
         }
-    }
-}
-
-/** 表格里的一个格子：宽高统一、单行居中，几栏才对得齐（对应原来的 cell()） */
-@Composable
-private fun BillsCell(
-    text: String,
-    width: Dp,
-    modifier: Modifier = Modifier,
-    head: Boolean = false,
-    bold: Boolean = false,
-    fontSize: TextUnit = 13.sp
-) {
-    Box(
-        modifier = modifier
-            .width(width)
-            .height(RowHeight)
-            .tableCellBackground(head),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            color = Color.Black,
-            fontSize = fontSize,
-            fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
     }
 }
 
@@ -355,18 +450,19 @@ private fun FilterInput(
         value = value,
         onValueChange = onValueChange,
         singleLine = true,
-        textStyle = TextStyle(color = Color.Black, fontSize = 14.sp),
+        textStyle = TextStyle(color = Color(0xFF36443B), fontSize = 12.sp),
         modifier = modifier,
         decorationBox = { innerTextField ->
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .tableCellBackground()
+                    .border(1.dp, Color(0xFFE9EEEA), RoundedCornerShape(10.dp))
+                    .background(Color.White, RoundedCornerShape(10.dp))
                     .padding(horizontal = 8.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
                 if (value.isEmpty()) {
-                    Text(text = hint, color = HintColor, fontSize = 14.sp)
+                    Text(text = hint, color = Color(0xFF8F9992), fontSize = 12.sp)
                 }
                 innerTextField()
             }
@@ -384,17 +480,24 @@ private fun DateBox(
     Box(
         modifier = modifier
             .height(40.dp)
-            .tableCellBackground()
+            .border(1.dp, Color(0xFFE9EEEA), RoundedCornerShape(11.dp))
+            .background(Color.White, RoundedCornerShape(11.dp))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Text(text = date.format(dateFormatter), color = Color.Black, fontSize = 14.sp)
+        Text(
+            text = date.format(dateFormatter),
+            color = Color(0xFF36443B),
+            fontSize = 12.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Clip
+        )
     }
 }
 
-/** 「支付方式」下拉：一个带边框的格子，点开是选项列表 */
+/** 订单类型下拉：一个带边框的格子，点开是选项列表 */
 @Composable
-private fun PayTypeDropdown(
+private fun OrderTypeDropdown(
     selectedLabel: String,
     options: List<String>,
     onSelect: (Int) -> Unit,
@@ -406,8 +509,9 @@ private fun PayTypeDropdown(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .tableCellBackground()
-                .padding(start = 6.dp),
+                .border(1.dp, Color(0xFFE9EEEA), RoundedCornerShape(10.dp))
+                .background(Color.White, RoundedCornerShape(10.dp))
+                .padding(horizontal = 9.dp),
             contentAlignment = Alignment.CenterStart
         ) {
             Text(
@@ -432,159 +536,162 @@ private fun PayTypeDropdown(
     }
 }
 
-/** 订单表：左栏（货号 + 颜色）和右栏（总价 + 时间 + 入/出）固定，中间尺码栏可以横滑 */
 @Composable
-private fun OrdersTable(orders: List<OrderBatch>) {
-    Row(modifier = Modifier.fillMaxWidth()) {
-        // 左栏：货号 + 颜色（固定不动）
-        Column(modifier = Modifier.width(ArticleIdCellWidth + ColorCellWidth)) {
-            Row {
-                BillsCell(
-                    stringResource(R.string.purchase_order_article_id),
-                    ArticleIdCellWidth,
-                    head = true,
-                    bold = true
-                )
-                BillsCell(
-                    stringResource(R.string.purchase_order_color),
-                    ColorCellWidth,
-                    head = true,
-                    bold = true
-                )
-            }
-            orders.forEach { order ->
-                Row {
-                    // 货号一般是 4~5 位字母 + 数字，字号小一点才塞得下
-                    BillsCell(order.articleId, ArticleIdCellWidth, fontSize = 11.sp)
-                    BillsCell(order.color.displayName, ColorCellWidth)
-                }
-            }
-        }
+private fun OrderCard(order: OrderBatch) {
+    val isPurchase = order.orderType.increaseStock
+    val badgeTextColor = colorResource(
+        if (isPurchase) R.color.bill_in_text else R.color.bill_out_text
+    )
+    val badgeBackground = colorResource(
+        if (isPurchase) R.color.bill_in_bg else R.color.bill_out_bg
+    )
+    val instant = order.date.toInstant()
 
-        // 中间：34 ~ 44 码这一单各交易了多少双，横向可滑
-        Column(modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState())) {
-            Row {
-                for (index in 0 until SizeUtils.SIZE_AMOUNT) {
-                    BillsCell(
-                        SizeUtils.sizeName(index).toString(),
-                        SizeCellWidth,
-                        head = true,
-                        bold = true
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 9.dp)
+            .border(1.dp, Color(0xFFE9EEEA), RoundedCornerShape(16.dp))
+            .background(Color.White, RoundedCornerShape(16.dp))
+            .padding(horizontal = 12.dp, vertical = 11.dp)
+    ) {
+        Row(verticalAlignment = Alignment.Top) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(
+                        colorResource(if (isPurchase) R.color.bill_in_bg else R.color.bill_out_bg),
+                        RoundedCornerShape(11.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(
+                        if (isPurchase) R.drawable.ic_bill_in else R.drawable.ic_bill_out
+                    ),
+                    contentDescription = order.orderType.displayName,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = order.articleId,
+                        color = Color(0xFF26352B),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = order.orderType.displayName,
+                        color = badgeTextColor,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .padding(start = 6.dp)
+                            .background(badgeBackground, RoundedCornerShape(6.dp))
+                            .padding(horizontal = 6.dp, vertical = 3.dp)
+                    )
+                }
+                Row(
+                    modifier = Modifier.padding(top = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .background(colorSwatch(order.color), CircleShape)
+                            .border(0.5.dp, Color(0x33000000), CircleShape)
+                    )
+                    Text(
+                        text = "${order.color.displayName} · ${order.dealer}",
+                        color = Color(0xFF7B877F),
+                        fontSize = 11.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(start = 5.dp)
                     )
                 }
             }
-            orders.forEach { order ->
-                val sizes = SizeUtils.sizesOf(order)
-                Row {
-                    for (index in 0 until SizeUtils.SIZE_AMOUNT) {
-                        BillsCell(countText(sizes[index]), SizeCellWidth)
-                    }
-                }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "¥ ${amountText(totalPriceOf(order))}",
+                    color = Color(0xFF26352B),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
+                )
+                Text(
+                    text = "¥${amountText(order.price)} / 双",
+                    color = Color(0xFF8A958D),
+                    fontSize = 10.sp,
+                    modifier = Modifier.padding(top = 3.dp)
+                )
             }
         }
 
-        // 右栏：总价 + 时间 + 入库 / 出库 标签（固定不动）
-        Column(
-            modifier = Modifier.width(TotalPriceCellWidth + TimeCellWidth + TypeCellWidth)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 10.dp, bottom = 9.dp)
+                .background(Color(0xFFF6F8F6), RoundedCornerShape(10.dp))
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 8.dp, vertical = 7.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Row {
-                BillsCell(
-                    stringResource(R.string.bills_total_price),
-                    TotalPriceCellWidth,
-                    head = true,
-                    bold = true
-                )
-                BillsCell(
-                    stringResource(R.string.bills_time),
-                    TimeCellWidth,
-                    head = true,
-                    bold = true
-                )
-                BillsCell(
-                    stringResource(R.string.bills_type),
-                    TypeCellWidth,
-                    head = true,
-                    bold = true
-                )
-            }
-            orders.forEach { order ->
-                Row {
-                    BillsCell(amountText(totalPriceOf(order)), TotalPriceCellWidth)
-                    TimeCell(order)
-                    TypeCell(order)
+            val sizes = SizeUtils.sizesOf(order)
+            for (index in 0 until SizeUtils.SIZE_AMOUNT) {
+                Column(
+                    modifier = Modifier.width(26.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = SizeUtils.sizeName(index).toString(),
+                        color = Color(0xFF919B94),
+                        fontSize = 10.sp
+                    )
+                    Text(
+                        text = if (sizes[index] == 0) "—" else countText(sizes[index]),
+                        color = if (sizes[index] == 0) Color(0xFFC8CFCA) else Color(0xFF34443A),
+                        fontSize = 11.sp,
+                        fontWeight = if (sizes[index] == 0) FontWeight.Normal else FontWeight.Bold,
+                        modifier = Modifier.padding(top = 3.dp)
+                    )
                 }
             }
         }
-    }
-}
 
-/**
- * 时间格子：上下两行（MM-dd / HH:mm）拼在一个带边框的格子里，显示的是北京时间。
- * 拆成两行是因为塞进一个 TextView 时在固定高度的格子里会排到偏下的位置。
- */
-@Composable
-private fun TimeCell(order: OrderBatch) {
-    val instant = order.date.toInstant()
-    Box(
-        modifier = Modifier
-            .width(TimeCellWidth)
-            .height(RowHeight)
-            .tableCellBackground()
-    ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Box(
-                modifier = Modifier.fillMaxWidth().weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = dateLineFormatter.format(instant),
-                    color = Color.Black,
-                    fontSize = 11.sp,
-                    maxLines = 1
-                )
-            }
-            Box(
-                modifier = Modifier.fillMaxWidth().weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = timeLineFormatter.format(instant),
-                    color = Color.Black,
-                    fontSize = 11.sp,
-                    maxLines = 1
-                )
-            }
-        }
-    }
-}
-
-/** 最后一栏：按订单类型显示标签（入库=浅绿，支付宝 / 微信 / 现金 / 退货=浅红） */
-@Composable
-private fun TypeCell(order: OrderBatch) {
-    val backgroundRes =
-        if (order.orderType.increaseStock) R.color.bill_in_bg else R.color.bill_out_bg
-
-    Box(
-        modifier = Modifier.width(TypeCellWidth).height(RowHeight),
-        contentAlignment = Alignment.Center
-    ) {
         Box(
             modifier = Modifier
-                .width(TypeCellWidth - 10.dp)
-                .height(RowHeight - 12.dp)
-                .background(colorResource(backgroundRes), RoundedCornerShape(3.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            // 「支付宝」是三个字，字号放小一点才塞得下
-            Text(
-                text = order.orderType.displayName,
-                color = Color.Black,
-                fontSize = 10.5.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Color(0xFFF0F2F0))
+        )
+        Text(
+            text = "${dateLineFormatter.format(instant)}  ${timeLineFormatter.format(instant)}",
+            color = Color(0xFF89938C),
+            fontSize = 10.sp,
+            textAlign = TextAlign.End,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+        )
     }
+}
+
+private fun colorSwatch(color: ShoeColor): Color = when (color) {
+    ShoeColor.BLACK -> Color(0xFF252525)
+    ShoeColor.WHITE -> Color(0xFFFFFFFF)
+    ShoeColor.GRAY -> Color(0xFF92999B)
+    ShoeColor.YELLOW -> Color(0xFFFFD54F)
+    ShoeColor.GREEN -> Color(0xFF4CAF50)
+    ShoeColor.BLUE -> Color(0xFF4285D4)
+    ShoeColor.RED -> Color(0xFFE55353)
+    ShoeColor.BROWN -> Color(0xFF8D5A3B)
+    ShoeColor.COFFEE -> Color(0xFF6F4E37)
+    ShoeColor.OTHER -> Color(0xFFB7BDB8)
 }
 
 /** 一单的总价 = 单价 × 这一单的总双数 */

@@ -51,15 +51,20 @@
     <string name="total_inventory_quantity">库存总数</string>
 
     <!-- 账单页（历史订单查询） -->
-    <string name="bills_title">账单历史查询</string>
+    <string name="bills_title">账单</string>
+    <string name="bills_transaction_history">TRANSACTION HISTORY</string>
+    <string name="bills_query_orders">查询账单</string>
+    <string name="bills_type_all">账单类型</string>
     <string name="bills_query">查询</string>
-    <string name="bills_date_separator">~</string>
+    <string name="bills_date_separator">至</string>
     <string name="bills_total_price">总价</string>
     <string name="bills_time">时间</string>
     <string name="bills_type">类型</string>
     <string name="bills_total_profit">总计利润</string>
-    <string name="bills_hint_before_query">选好日期范围，点「查询」看账单</string>
-    <string name="bills_empty">这段时间没有订单</string>
+    <string name="bills_order_details">账单明细</string>
+    <string name="bills_order_count">共 %1$d 笔</string>
+    <string name="bills_hint_before_query">请选择条件后，点击查询显示账单明细</string>
+    <string name="bills_empty">这段时间没有账单</string>
     <string name="bills_date_error">开始日期不能晚于结束日期</string>
 
     <!-- 搜索 / 支付方式 -->
