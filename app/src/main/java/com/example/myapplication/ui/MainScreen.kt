@@ -30,7 +30,7 @@ fun MainScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(AppColors.PageBackground)
+            .background(AppColors.GrayF5F7F5)
             .windowInsetsPadding(WindowInsets.systemBars)
     ) {
         AppBrandHeader(

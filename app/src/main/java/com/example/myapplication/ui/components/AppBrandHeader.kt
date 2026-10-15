@@ -34,7 +34,7 @@ fun AppBrandHeader(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .size(40.dp)
                 .clip(RoundedCornerShape(13.dp))
-                .background(AppColors.BrandGreen)
+                .background(AppColors.Green246B50)
                 .padding(9.dp),
             tint = AppColors.White
         )
@@ -42,7 +42,7 @@ fun AppBrandHeader(modifier: Modifier = Modifier) {
         Column {
             Text(
                 text = stringResource(R.string.app_name),
-                color = AppColors.Ink,
+                color = AppColors.Ink19251F,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 0.25.sp
@@ -50,7 +50,7 @@ fun AppBrandHeader(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(3.dp))
             Text(
                 text = "WAREHOUSE · INVENTORY",
-                color = AppColors.Muted,
+                color = AppColors.Gray87918B,
                 fontSize = 10.sp,
                 letterSpacing = 0.2.sp
             )

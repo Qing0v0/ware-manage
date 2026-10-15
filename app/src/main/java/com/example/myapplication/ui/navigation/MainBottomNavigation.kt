@@ -48,7 +48,7 @@ internal fun MainBottomNavigation(
             .background(AppColors.White)
             .drawBehind {
                 drawLine(
-                    color = AppColors.Divider,
+                    color = AppColors.GrayEDF0ED,
                     start = androidx.compose.ui.geometry.Offset(0f, 0f),
                     end = androidx.compose.ui.geometry.Offset(size.width, 0f),
                     strokeWidth = 1.dp.toPx()
@@ -59,7 +59,7 @@ internal fun MainBottomNavigation(
         navigationItems.forEach { item ->
             val selected = item.id == selectedItemId
             val contentColor =
-                if (selected) AppColors.BrandGreen else AppColors.NavigationMuted
+                if (selected) AppColors.Green246B50 else AppColors.Gray99A29B
 
             Column(
                 modifier = Modifier

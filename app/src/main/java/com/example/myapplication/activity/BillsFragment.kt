@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
-import com.example.myapplication.ui.screens.BillsScreen
+import com.example.myapplication.ui.screens.bill.BillsScreen
 
 /**
  * 账单页的宿主 Fragment：界面和查询逻辑都在 [BillsScreen]（Compose）里，
