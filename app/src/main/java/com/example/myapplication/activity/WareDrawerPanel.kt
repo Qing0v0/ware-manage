@@ -3,16 +3,12 @@ package com.example.myapplication.activity
 import android.app.AlertDialog
 import android.net.Uri
 import android.view.Gravity
-import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.view.GravityCompat
-import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import com.example.myapplication.R
 import com.example.myapplication.service.BackupService
@@ -22,11 +18,11 @@ import java.util.Locale
 import kotlin.concurrent.thread
 
 /**
- * 仓库页的「设置侧边栏」：左上角齿轮打开侧栏，侧栏里目前两行——
- * 数据备份 / 恢复、版本更新。
+ * 仓库页的「设置」动作：侧栏 UI 在 [WareScreen]（Compose）里，齿轮一点把
+ * [showBackupDialog] / [showUpdateDialog] 叫出来就行；这里只管动作本身——
+ * 数据备份 / 恢复、版本更新两组对话框，以及下载 / 安装。
  *
- * 从 WareFragment 里拆出来，页面本身只管存量表格；备份恢复完需要重新查一遍存量，
- * 所以通过 [onInventoryRestored] 回调交给页面处理。
+ * 备份恢复完需要重新查一遍存量，所以通过 [onInventoryRestored] 回调交给页面处理。
  *
  * 注意：两个 registerForActivityResult 必须在 Fragment 初始化阶段注册，
  * 所以这个对象要在 WareFragment 的字段里就 new 出来（不能等 onCreateView）。
@@ -36,8 +32,6 @@ class WareDrawerPanel(
     /** 导入备份成功后回调，让页面重新查一遍存量 */
     private val onInventoryRestored: () -> Unit
 ) {
-
-    private var drawerLayout: DrawerLayout? = null
 
     /** 导出备份：让用户自己挑保存位置（系统文件选择器，不需要存储权限） */
     private val exportBackupLauncher = fragment.registerForActivityResult(
@@ -57,27 +51,8 @@ class WareDrawerPanel(
         }
     }
 
-    /** 把侧边栏接上：齿轮按钮 + 两行设置项 */
-    fun attach(view: View) {
-        val drawer = view.findViewById<DrawerLayout>(R.id.ware_drawer)
-        drawerLayout = drawer
-
-        view.findViewById<ImageButton>(R.id.button_settings).setOnClickListener {
-            drawer.openDrawer(GravityCompat.START)
-        }
-        view.findViewById<View>(R.id.row_backup).setOnClickListener {
-            drawer.closeDrawer(GravityCompat.START)
-            showBackupDialog()
-        }
-        view.findViewById<View>(R.id.row_update).setOnClickListener {
-            drawer.closeDrawer(GravityCompat.START)
-            showUpdateDialog()
-        }
-    }
-
     /** 数据备份 / 恢复：让用户选导出还是导入 */
-    private fun showBackupDialog() {
-        drawerLayout?.closeDrawer(GravityCompat.START)
+    fun showBackupDialog() {
         val items = arrayOf(
             fragment.getString(R.string.settings_backup_export),
             fragment.getString(R.string.settings_backup_import)
@@ -161,7 +136,7 @@ class WareDrawerPanel(
      * - 本机 < 线上：提示"是否下载最近版本"（取消 / 下载），下载完直接弹安装
      * - 查不到（没发 release、网络不通等）：提示里带上原因，具体细节看 log
      */
-    private fun showUpdateDialog() {
+    fun showUpdateDialog() {
         val context = fragment.requireContext().applicationContext
         thread {
             var reason: String? = null
