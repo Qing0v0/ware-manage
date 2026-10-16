@@ -17,22 +17,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.R
+import com.example.myapplication.ui.components.DropdownSelector
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.ui.theme.AppTypography
 import java.time.LocalDate
@@ -104,7 +98,7 @@ internal fun BillQueryCard(
                     modifier = Modifier.weight(1f).height(36.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                BillTypeDropdown(
+                DropdownSelector(
                     selectedLabel = orderTypeFilters[selectedTypeIndex].first,
                     options = orderTypeFilters.map { it.first },
                     onSelect = onTypeSelected,
@@ -118,7 +112,7 @@ internal fun BillQueryCard(
                 BillDateBox(
                     date = startDate,
                     onClick = onStartDateClick,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f).height(36.dp)
                 )
                 Text(
                     text = stringResource(R.string.bills_date_separator),
@@ -129,12 +123,12 @@ internal fun BillQueryCard(
                 BillDateBox(
                     date = endDate,
                     onClick = onEndDateClick,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f).height(36.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(
                     onClick = onQuery,
-                    modifier = Modifier.height(39.dp),
+                    modifier = Modifier.height(36.dp),
                     shape = RoundedCornerShape(11.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = AppColors.Green246B50,
@@ -207,44 +201,5 @@ private fun BillDateBox(
             maxLines = 1,
             overflow = TextOverflow.Clip
         )
-    }
-}
-
-@Composable
-private fun BillTypeDropdown(
-    selectedLabel: String,
-    options: List<String>,
-    onSelect: (Int) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var expanded by remember { mutableStateOf(false) }
-    Box(modifier = modifier.clickable { expanded = true }) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .border(1.dp, AppColors.GrayE9EEEA, RoundedCornerShape(10.dp))
-                .background(AppColors.White, RoundedCornerShape(10.dp))
-                .padding(horizontal = 9.dp),
-            contentAlignment = Alignment.CenterStart
-        ) {
-            Text(
-                text = selectedLabel,
-                color = AppColors.Green36443B,
-                style = AppTypography.Body,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            options.forEachIndexed { index, label ->
-                DropdownMenuItem(
-                    text = { Text(label) },
-                    onClick = {
-                        onSelect(index)
-                        expanded = false
-                    }
-                )
-            }
-        }
     }
 }
