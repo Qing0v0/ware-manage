@@ -1,6 +1,5 @@
 package com.example.myapplication.ui.screens.bill
 
-import android.app.DatePickerDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,6 +17,7 @@ import com.example.myapplication.R
 import com.example.myapplication.model.OrderBatch
 import com.example.myapplication.model.OrderType
 import com.example.myapplication.service.InventoryDatabase
+import com.example.myapplication.ui.components.CustomCalendarDialog
 import com.example.myapplication.ui.theme.AppColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -25,6 +25,11 @@ import kotlinx.coroutines.withContext
 import java.time.LocalDate
 
 private const val DEFAULT_BILL_RANGE_DAYS = 30
+
+private enum class BillDateTarget {
+    Start,
+    End
+}
 
 @Composable
 fun BillsScreen(
@@ -44,6 +49,7 @@ fun BillsScreen(
     var selectedTypeIndex by remember { mutableIntStateOf(0) }
     var bills by remember { mutableStateOf<List<OrderBatch>>(emptyList()) }
     var hintId by remember { mutableIntStateOf(R.string.bills_hint_before_query) }
+    var datePickerTarget by remember { mutableStateOf<BillDateTarget?>(null) }
 
     val billTypeFilters = remember(context) {
         buildList {
@@ -68,18 +74,7 @@ fun BillsScreen(
         selectedTypeIndex = 0
         bills = emptyList()
         hintId = R.string.bills_hint_before_query
-    }
-
-    fun pickDate(current: LocalDate, onPicked: (LocalDate) -> Unit) {
-        DatePickerDialog(
-            context,
-            { _, year, month, dayOfMonth ->
-                onPicked(LocalDate.of(year, month + 1, dayOfMonth))
-            },
-            current.year,
-            current.monthValue - 1,
-            current.dayOfMonth
-        ).show()
+        datePickerTarget = null
     }
 
     fun queryBills() {
@@ -120,8 +115,8 @@ fun BillsScreen(
             onArticleIdChange = { articleId = it },
             onDealerChange = { dealer = it },
             onTypeSelected = { selectedTypeIndex = it },
-            onStartDateClick = { pickDate(startDate) { startDate = it } },
-            onEndDateClick = { pickDate(endDate) { endDate = it } },
+            onStartDateClick = { datePickerTarget = BillDateTarget.Start },
+            onEndDateClick = { datePickerTarget = BillDateTarget.End },
             onQuery = { queryBills() }
         )
         BillOrderDetails(
@@ -133,6 +128,20 @@ fun BillsScreen(
             startDate = startDate,
             endDate = endDate,
             bills = bills
+        )
+    }
+
+    datePickerTarget?.let { target ->
+        CustomCalendarDialog(
+            initialDate = if (target == BillDateTarget.Start) startDate else endDate,
+            onDismiss = { datePickerTarget = null },
+            onDateSelected = { selectedDate ->
+                when (target) {
+                    BillDateTarget.Start -> startDate = selectedDate
+                    BillDateTarget.End -> endDate = selectedDate
+                }
+                datePickerTarget = null
+            }
         )
     }
 }

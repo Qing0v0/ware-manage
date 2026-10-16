@@ -43,7 +43,7 @@ internal fun BillOrderDetails(
     LazyColumn(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp)
+            .padding(horizontal = 16.dp)
     ) {
         item {
             Row(
