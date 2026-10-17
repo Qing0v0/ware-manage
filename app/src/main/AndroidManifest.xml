@@ -26,11 +26,6 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".activity.OrderEditActivity"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
-
         <!-- 下载好的新版 apk 放在 cacheDir/update 下，安装时通过 FileProvider 授权给系统安装器 -->
         <provider
             android:name="androidx.core.content.FileProvider"

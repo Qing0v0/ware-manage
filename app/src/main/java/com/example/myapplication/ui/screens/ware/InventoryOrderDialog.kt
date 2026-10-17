@@ -288,25 +288,6 @@ fun InventoryOrderDialog(
                 }
             }
 
-            if (fixedInventory == null) {
-                OrderDialogButton(
-                    text = stringResource(R.string.order_add_color),
-                    primary = false,
-                    enabled = rows.size < colorOptions.size,
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        val usedColors = rows.map { it.color }
-                        val color = colorOptions.firstOrNull { it !in usedColors }
-                        if (color != null) {
-                            rows.add(OrderDraftRow(color))
-                            errorMessage = null
-                        } else {
-                            errorMessage = context.getString(R.string.rows_max_num)
-                        }
-                    }
-                )
-            }
-
             rows.forEach { row ->
                 OrderDraftCard(
                     row = row,
@@ -324,6 +305,25 @@ fun InventoryOrderDialog(
                         imagePicker.launch(
                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                         )
+                    }
+                )
+            }
+
+            if (fixedInventory == null) {
+                OrderDialogButton(
+                    text = stringResource(R.string.order_add_color),
+                    primary = false,
+                    enabled = rows.size < colorOptions.size,
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        val usedColors = rows.map { it.color }
+                        val color = colorOptions.firstOrNull { it !in usedColors }
+                        if (color != null) {
+                            rows.add(OrderDraftRow(color))
+                            errorMessage = null
+                        } else {
+                            errorMessage = context.getString(R.string.rows_max_num)
+                        }
                     }
                 )
             }
