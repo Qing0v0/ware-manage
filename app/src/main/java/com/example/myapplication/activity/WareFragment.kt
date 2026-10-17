@@ -19,7 +19,7 @@ import kotlin.concurrent.thread
 
 /**
  * 仓库页面的宿主 Fragment：界面全部在 [WareScreen]（Compose）里，
- * 这里只负责查存量、后台解码缩略图，以及设置侧边栏（[WareDrawerPanel]）的系统回调注册
+ * 这里只负责查存量、后台解码缩略图，以及备份 / 更新操作（[WareDrawerPanel]）的系统回调注册
  * （两个 registerForActivityResult 必须在 Fragment 初始化阶段注册，所以面板留在这里）。
  *
  * （MainActivity 目前靠 show/hide 切页，见 [MainActivity]；等页面全部 Compose 化后再收掉这些壳。）
@@ -28,13 +28,13 @@ class WareFragment : Fragment() {
 
     /** 数据库里查出来的全部存量（搜索过滤前的原始数据），按关键字过滤交给 WareScreen */
     private val inventories = mutableStateOf<List<ShoeInventory>>(emptyList())
-    private val settingsRequest = mutableIntStateOf(0)
+    private val moreMenuRequest = mutableIntStateOf(0)
 
     /** 存量缩略图缓存：路径 -> Bitmap，避免每次回到页面都重新解码 */
     private val pictureCache = LruCache<String, Bitmap>(64)
 
     /**
-     * 设置侧边栏（备份恢复、版本更新都在里面）。
+     * 备份恢复、版本更新的系统回调。
      * 必须在这里就 new 出来：里面的 registerForActivityResult 要求在 Fragment
      * 初始化阶段注册，放到 onCreateView 里就晚了。
      */
@@ -52,14 +52,16 @@ class WareFragment : Fragment() {
                     onBackupClick = drawerPanel::showBackupDialog,
                     onUpdateClick = drawerPanel::showUpdateDialog,
                     onInventoryChanged = ::loadInventory,
-                    settingsRequest = settingsRequest.intValue
+                    moreMenuRequest = moreMenuRequest.intValue,
+                    dialog = drawerPanel.dialogState.value,
+                    onDialogDismiss = drawerPanel::dismissDialog
                 )
             }
         }
     }
 
-    fun openSettingsDrawer() {
-        settingsRequest.intValue++
+    fun openMoreMenu() {
+        moreMenuRequest.intValue++
     }
 
     /** 每次回到这个页面（包括从出入库界面返回）都重新查一遍存量 */

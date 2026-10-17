@@ -1,26 +1,21 @@
 package com.example.myapplication.activity
 
-import android.app.AlertDialog
 import android.net.Uri
-import android.view.Gravity
-import android.view.ViewGroup
-import android.widget.LinearLayout
-import android.widget.ProgressBar
-import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.mutableStateOf
 import androidx.fragment.app.Fragment
 import com.example.myapplication.R
 import com.example.myapplication.service.BackupService
 import com.example.myapplication.service.UpdateService
+import com.example.myapplication.ui.components.AppDialogOption
+import com.example.myapplication.ui.components.AppDialogSpec
 import java.io.File
 import java.util.Locale
 import kotlin.concurrent.thread
 
 /**
- * 仓库页的「设置」动作：侧栏 UI 在 [WareScreen]（Compose）里，齿轮一点把
- * [showBackupDialog] / [showUpdateDialog] 叫出来就行；这里只管动作本身——
- * 数据备份 / 恢复、版本更新两组对话框，以及下载 / 安装。
+ * 仓库页的备份 / 更新操作：对话框 UI 由 [WareScreen]（Compose）展示，
+ * 这里负责备份 / 恢复、版本检查、下载和安装流程。
  *
  * 备份恢复完需要重新查一遍存量，所以通过 [onInventoryRestored] 回调交给页面处理。
  *
@@ -32,6 +27,11 @@ class WareDrawerPanel(
     /** 导入备份成功后回调，让页面重新查一遍存量 */
     private val onInventoryRestored: () -> Unit
 ) {
+    val dialogState = mutableStateOf<AppDialogSpec?>(null)
+
+    fun dismissDialog() {
+        dialogState.value = null
+    }
 
     /** 导出备份：让用户自己挑保存位置（系统文件选择器，不需要存储权限） */
     private val exportBackupLauncher = fragment.registerForActivityResult(
@@ -53,34 +53,32 @@ class WareDrawerPanel(
 
     /** 数据备份 / 恢复：让用户选导出还是导入 */
     fun showBackupDialog() {
-        val items = arrayOf(
-            fragment.getString(R.string.settings_backup_export),
-            fragment.getString(R.string.settings_backup_import)
-        )
-        AlertDialog.Builder(fragment.requireContext())
-            .setTitle(R.string.settings_backup)
-            .setItems(items) { _, which ->
-                if (which == 0) {
+        dialogState.value = AppDialogSpec(
+            title = fragment.getString(R.string.settings_backup),
+            options = listOf(
+                AppDialogOption(fragment.getString(R.string.settings_backup_export)) {
                     exportBackupLauncher.launch(BackupService.suggestedFileName())
-                } else {
+                },
+                AppDialogOption(fragment.getString(R.string.settings_backup_import)) {
                     confirmImport()
                 }
-            }
-            .show()
+            )
+        )
     }
 
     /** 导入会把现在的数据整个覆盖掉，先确认一下 */
     private fun confirmImport() {
-        AlertDialog.Builder(fragment.requireContext())
-            .setTitle(R.string.settings_backup)
-            .setMessage(R.string.backup_import_confirm)
-            .setNegativeButton(R.string.cancel, null)
-            .setPositiveButton(R.string.confirm) { _, _ ->
+        dialogState.value = AppDialogSpec(
+            title = fragment.getString(R.string.settings_backup),
+            message = fragment.getString(R.string.backup_import_confirm),
+            dismissLabel = fragment.getString(R.string.cancel),
+            confirmLabel = fragment.getString(R.string.confirm),
+            onConfirm = {
                 importBackupLauncher.launch(
                     arrayOf("application/zip", "application/octet-stream", "*/*")
                 )
             }
-            .show()
+        )
     }
 
     private fun exportBackup(uri: Uri) {
@@ -97,9 +95,13 @@ class WareDrawerPanel(
                 if (!fragment.isAdded) {
                     return@runOnUiThread
                 }
-                val messageRes =
-                    if (success) R.string.backup_export_success else R.string.backup_export_failed
-                Toast.makeText(context, messageRes, Toast.LENGTH_SHORT).show()
+                dialogState.value = AppDialogSpec(
+                    title = fragment.getString(R.string.settings_backup),
+                    message = fragment.getString(
+                        if (success) R.string.backup_export_success else R.string.backup_export_failed
+                    ),
+                    confirmLabel = fragment.getString(R.string.confirm)
+                )
             }
         }
     }
@@ -118,9 +120,13 @@ class WareDrawerPanel(
                 if (!fragment.isAdded) {
                     return@runOnUiThread
                 }
-                val messageRes =
-                    if (success) R.string.backup_import_success else R.string.backup_import_failed
-                Toast.makeText(context, messageRes, Toast.LENGTH_SHORT).show()
+                dialogState.value = AppDialogSpec(
+                    title = fragment.getString(R.string.settings_backup),
+                    message = fragment.getString(
+                        if (success) R.string.backup_import_success else R.string.backup_import_failed
+                    ),
+                    confirmLabel = fragment.getString(R.string.confirm)
+                )
                 if (success) {
                     // 数据库连接已经在恢复时关掉了，让页面重新查一遍就是新数据
                     onInventoryRestored()
@@ -137,7 +143,6 @@ class WareDrawerPanel(
      * - 查不到（没发 release、网络不通等）：提示里带上原因，具体细节看 log
      */
     fun showUpdateDialog() {
-        val context = fragment.requireContext().applicationContext
         thread {
             var reason: String? = null
             val release = try {
@@ -157,7 +162,11 @@ class WareDrawerPanel(
                         R.string.update_check_failed,
                         reason ?: fragment.getString(R.string.update_check_unknown_reason)
                     )
-                    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                    dialogState.value = AppDialogSpec(
+                        title = fragment.getString(R.string.settings_update),
+                        message = message,
+                        confirmLabel = fragment.getString(R.string.confirm)
+                    )
                     return@runOnUiThread
                 }
                 val (currentCode, currentName) =
@@ -173,10 +182,11 @@ class WareDrawerPanel(
 
     /** 已经是最新版本：只有一个确认按钮 */
     private fun showLatestVersionDialog() {
-        AlertDialog.Builder(fragment.requireContext())
-            .setMessage(R.string.update_latest)
-            .setPositiveButton(R.string.confirm, null)
-            .show()
+        dialogState.value = AppDialogSpec(
+            title = fragment.getString(R.string.settings_update),
+            message = fragment.getString(R.string.update_latest),
+            confirmLabel = fragment.getString(R.string.confirm)
+        )
     }
 
     /** 有新版本：取消 / 下载 */
@@ -186,56 +196,35 @@ class WareDrawerPanel(
         } else {
             fragment.getString(R.string.update_has_new_version, release.versionName)
         }
-        AlertDialog.Builder(fragment.requireContext())
-            .setMessage(message)
-            .setNegativeButton(R.string.cancel, null)
-            .setPositiveButton(R.string.update_download) { _, _ -> downloadAndInstall(release) }
-            .show()
+        dialogState.value = AppDialogSpec(
+            title = fragment.getString(R.string.settings_update),
+            message = message,
+            dismissLabel = fragment.getString(R.string.cancel),
+            confirmLabel = fragment.getString(R.string.update_download),
+            onConfirm = { downloadAndInstall(release) }
+        )
     }
 
     /** 下载 apk，下完交给系统安装 */
     private fun downloadAndInstall(release: UpdateService.LatestRelease) {
         val apkUrl = release.apkUrl
         if (apkUrl == null) {
-            Toast.makeText(
-                fragment.requireContext(), R.string.update_no_apk, Toast.LENGTH_SHORT
-            ).show()
+            dialogState.value = AppDialogSpec(
+                title = fragment.getString(R.string.settings_update),
+                message = fragment.getString(R.string.update_no_apk),
+                confirmLabel = fragment.getString(R.string.confirm)
+            )
             return
         }
 
-        // 显示下载进度条和具体进度「已下载 / 总大小」
-        val progressBar =
-            ProgressBar(fragment.requireContext(), null, android.R.attr.progressBarStyleHorizontal)
-        progressBar.max = 100
-        val progressText = TextView(fragment.requireContext()).apply {
-            gravity = Gravity.END
-            textSize = 16f
-            text = fragment.getString(
-                R.string.update_download_progress_unknown_total, formatSize(0)
-            )
-        }
-        val content = LinearLayout(fragment.requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(24), dp(12), dp(24), dp(18))
-            addView(
-                progressBar,
-                LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-            )
-            addView(
-                progressText,
-                LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-                ).apply { topMargin = dp(8) }
-            )
-        }
-        val dialog = AlertDialog.Builder(fragment.requireContext())
-            .setTitle(R.string.update_downloading)
-            .setView(content)
-            .setCancelable(false)
-            .create()
-        dialog.show()
+        dialogState.value = AppDialogSpec(
+            title = fragment.getString(R.string.update_downloading),
+            progressMessage = fragment.getString(
+                R.string.update_download_progress_unknown_total,
+                formatSize(0)
+            ),
+            dismissible = false
+        )
 
         val context = fragment.requireContext().applicationContext
         thread {
@@ -244,19 +233,23 @@ class WareDrawerPanel(
                     context, apkUrl, release.versionName
                 ) { downloaded, total ->
                     fragment.activity?.runOnUiThread {
+                        val progressMessage: String
                         if (total > 0) {
-                            progressBar.progress = ((downloaded * 100) / total).toInt()
-                            progressText.text = context.getString(
+                            progressMessage = context.getString(
                                 R.string.update_download_progress,
                                 formatSize(downloaded), formatSize(total)
                             )
                         } else {
                             // 服务端没给总长度：进度条没法算百分比，但下载量照常显示
-                            progressText.text = context.getString(
+                            progressMessage = context.getString(
                                 R.string.update_download_progress_unknown_total,
                                 formatSize(downloaded)
                             )
                         }
+                        dialogState.value = dialogState.value?.copy(
+                            progress = if (total > 0) downloaded.toFloat() / total else null,
+                            progressMessage = progressMessage
+                        )
                     }
                 }
             } catch (e: Exception) {
@@ -265,15 +258,16 @@ class WareDrawerPanel(
             }
 
             fragment.activity?.runOnUiThread {
-                if (dialog.isShowing) {
-                    dialog.dismiss()
-                }
+                dialogState.value = null
                 if (!fragment.isAdded) {
                     return@runOnUiThread
                 }
                 if (file == null) {
-                    Toast.makeText(context, R.string.update_download_failed, Toast.LENGTH_SHORT)
-                        .show()
+                    dialogState.value = AppDialogSpec(
+                        title = fragment.getString(R.string.settings_update),
+                        message = fragment.getString(R.string.update_download_failed),
+                        confirmLabel = fragment.getString(R.string.confirm)
+                    )
                 } else {
                     installApk(file)
                 }
@@ -288,9 +282,11 @@ class WareDrawerPanel(
                 UpdateService.installIntent(fragment.requireContext(), file)
             )
         } catch (e: Exception) {
-            Toast.makeText(
-                fragment.requireContext(), R.string.update_install_failed, Toast.LENGTH_SHORT
-            ).show()
+            dialogState.value = AppDialogSpec(
+                title = fragment.getString(R.string.settings_update),
+                message = fragment.getString(R.string.update_install_failed),
+                confirmLabel = fragment.getString(R.string.confirm)
+            )
         }
     }
 
@@ -304,6 +300,4 @@ class WareDrawerPanel(
         return String.format(Locale.getDefault(), "%.1f GB", mb / 1024.0)
     }
 
-    private fun dp(value: Int): Int =
-        (value * fragment.resources.displayMetrics.density).toInt()
 }

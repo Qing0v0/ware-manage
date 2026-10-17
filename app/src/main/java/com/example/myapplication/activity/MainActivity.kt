@@ -42,7 +42,7 @@ class MainActivity : AppCompatActivity() {
                     if (currentTab != TAB_WAREHOUSE) {
                         selectFragment(TAB_WAREHOUSE)
                     }
-                    wareFragment.openSettingsDrawer()
+                    wareFragment.openMoreMenu()
                 },
                 onFragmentContainerReady = {
                     if (!isDestroyed) {

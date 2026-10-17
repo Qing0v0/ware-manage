@@ -4,16 +4,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
@@ -22,11 +17,13 @@ import androidx.compose.ui.unit.dp
 import com.example.myapplication.R
 import com.example.myapplication.model.OrderType
 import com.example.myapplication.model.ShoeInventory
+import com.example.myapplication.ui.components.AppAlertDialog
+import com.example.myapplication.ui.components.AppBottomSheetMenu
+import com.example.myapplication.ui.components.AppBottomSheetMenuItem
+import com.example.myapplication.ui.components.AppDialogSpec
 import com.example.myapplication.ui.screens.main.PageTitleHeader
-import com.example.myapplication.ui.screens.main.SettingsDrawer
 import com.example.myapplication.utils.SizeUtils
 import java.text.NumberFormat
-import kotlinx.coroutines.launch
 
 /**
  * 仓库页面（Compose 版，对应原来的 res/layout/fragment_ware.xml）：按货号分组的存量表。
@@ -39,8 +36,8 @@ import kotlinx.coroutines.launch
  * 这样一屏里总能看清是哪个货号、哪个颜色。
  * 行尾的 ＋ / － 会在当前页打开出入库弹窗，货号、颜色、经销商都是锁定的，只能填数量。
  *
- * 全局顶部栏的设置入口打开侧边栏（数据备份 / 恢复、版本更新），动作通过
- * [onBackupClick] / [onUpdateClick] 交给 WareFragment 里的 WareDrawerPanel 处理。
+ * 全局顶部栏的更多入口打开底部菜单（数据备份 / 恢复、版本更新），动作通过
+ * [onBackupClick] / [onUpdateClick] 交给 WareFragment 处理。
  */
 
 /**
@@ -58,17 +55,18 @@ fun WareScreen(
     onBackupClick: () -> Unit,
     onUpdateClick: () -> Unit,
     onInventoryChanged: () -> Unit,
-    settingsRequest: Int,
+    moreMenuRequest: Int,
+    dialog: AppDialogSpec?,
+    onDialogDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val scope = rememberCoroutineScope()
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    var showMoreMenu by remember { mutableStateOf(false) }
     var selectedOrderType by remember { mutableStateOf<OrderType?>(null) }
     var selectedInventory by remember { mutableStateOf<ShoeInventory?>(null) }
 
-    LaunchedEffect(settingsRequest) {
-        if (settingsRequest > 0) {
-            drawerState.open()
+    LaunchedEffect(moreMenuRequest) {
+        if (moreMenuRequest > 0) {
+            showMoreMenu = true
         }
     }
 
@@ -85,74 +83,78 @@ fun WareScreen(
         NumberFormat.getIntegerInstance().format(totalQuantity.toLong())
     }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            SettingsDrawer(
-                onBackupClick = {
-                    // 和原来一样：先关侧边栏，再弹对话框
-                    scope.launch { drawerState.close() }
-                    onBackupClick()
-                },
-                onUpdateClick = {
-                    scope.launch { drawerState.close() }
-                    onUpdateClick()
-                }
+    Column(modifier = modifier.fillMaxSize()) {
+        PageTitleHeader(
+            eyebrow = stringResource(R.string.inventory_overview_eyebrow),
+            title = stringResource(R.string.bottom_warehouse),
+            modifier = Modifier.fillMaxWidth().padding(
+                start = 18.dp,
+                top = 4.dp,
+                end = 18.dp,
+                bottom = 12.dp
             )
-        }
-    ) {
-        Column(modifier = modifier.fillMaxSize()) {
-            PageTitleHeader(
-                eyebrow = stringResource(R.string.inventory_overview_eyebrow),
-                title = stringResource(R.string.bottom_warehouse),
-                modifier = Modifier.fillMaxWidth().padding(
-                    start = 18.dp,
-                    top = 4.dp,
-                    end = 18.dp,
-                    bottom = 12.dp
-                )
-            )
+        )
 
-            InventorySummaryCard(
-                totalQuantity = formattedTotalQuantity,
-                styleCount = inventoryGroups.size
-            )
+        InventorySummaryCard(
+            totalQuantity = formattedTotalQuantity,
+            styleCount = inventoryGroups.size
+        )
 
-            WareQuickActions(
-                onPurchase = {
-                    selectedInventory = null
-                    selectedOrderType = OrderType.ARTICLE_PURCHASE
-                },
-                onSelling = {
-                    selectedInventory = null
-                    selectedOrderType = OrderType.ARTICLE_SOLD_CASH
-                }
-            )
-
-            InventoryProductList(
-                inventories = inventories,
-                imageFor = imageFor,
-                modifier = Modifier.weight(1f),
-                onStockAction = { orderType, inventory ->
-                    selectedInventory = inventory
-                    selectedOrderType = orderType
-                }
-            )
-            selectedOrderType?.let { orderType ->
-                InventoryOrderDialog(
-                    orderType = orderType,
-                    fixedInventory = selectedInventory,
-                    onDismiss = {
-                        selectedOrderType = null
-                        selectedInventory = null
-                    },
-                    onSaved = {
-                        selectedOrderType = null
-                        selectedInventory = null
-                        onInventoryChanged()
-                    }
-                )
+        WareQuickActions(
+            onPurchase = {
+                selectedInventory = null
+                selectedOrderType = OrderType.ARTICLE_PURCHASE
+            },
+            onSelling = {
+                selectedInventory = null
+                selectedOrderType = OrderType.ARTICLE_SOLD_CASH
             }
+        )
+
+        InventoryProductList(
+            inventories = inventories,
+            imageFor = imageFor,
+            modifier = Modifier.weight(1f),
+            onStockAction = { orderType, inventory ->
+                selectedInventory = inventory
+                selectedOrderType = orderType
+            }
+        )
+        selectedOrderType?.let { orderType ->
+            InventoryOrderDialog(
+                orderType = orderType,
+                fixedInventory = selectedInventory,
+                onDismiss = {
+                    selectedOrderType = null
+                    selectedInventory = null
+                },
+                onSaved = {
+                    selectedOrderType = null
+                    selectedInventory = null
+                    onInventoryChanged()
+                }
+            )
         }
     }
+
+    AppBottomSheetMenu(
+        visible = showMoreMenu,
+        title = stringResource(R.string.more_options),
+        items = listOf(
+            AppBottomSheetMenuItem(
+                label = stringResource(R.string.settings_backup),
+                onClick = onBackupClick
+            ),
+            AppBottomSheetMenuItem(
+                label = stringResource(R.string.settings_update),
+                onClick = onUpdateClick
+            )
+        ),
+        onDismissRequest = { showMoreMenu = false }
+    )
+
+    AppAlertDialog(
+        dialog = dialog,
+        onDismissRequest = onDialogDismiss
+    )
 }

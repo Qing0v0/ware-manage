@@ -74,8 +74,8 @@ fun AppBrandHeader(
                 .border(1.dp, AppColors.GrayE9EEEA, RoundedCornerShape(13.dp))
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_settings),
-                contentDescription = stringResource(R.string.settings_title),
+                painter = painterResource(R.drawable.ic_more),
+                contentDescription = stringResource(R.string.more_options),
                 modifier = Modifier.size(18.dp),
                 tint = AppColors.Green77827B
             )
