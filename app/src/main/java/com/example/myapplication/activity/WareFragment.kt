@@ -13,7 +13,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import com.example.myapplication.model.ShoeInventory
 import com.example.myapplication.service.InventoryDatabase
-import com.example.myapplication.ui.screens.WareScreen
+import com.example.myapplication.ui.screens.ware.WareScreen
 import com.example.myapplication.utils.ImageUtils
 import kotlin.concurrent.thread
 
@@ -51,6 +51,7 @@ class WareFragment : Fragment() {
                     imageFor = { path -> pictureCache.get(path)?.asImageBitmap() },
                     onBackupClick = drawerPanel::showBackupDialog,
                     onUpdateClick = drawerPanel::showUpdateDialog,
+                    onInventoryChanged = ::loadInventory,
                     settingsRequest = settingsRequest.intValue
                 )
             }

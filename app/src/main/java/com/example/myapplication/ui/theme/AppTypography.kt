@@ -5,6 +5,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 object AppTypography {
+    val Micro = TextStyle(fontSize = 9.sp)
     val Caption = TextStyle(fontSize = 10.sp)
     val CaptionEmphasis = TextStyle(
         fontSize = 10.sp,

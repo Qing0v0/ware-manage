@@ -20,6 +20,9 @@
     <string name="cancel">取消</string>
     <string name="order_editor_title_purchase">入库</string>
     <string name="order_editor_title_selling">出库</string>
+    <string name="order_editor_subtitle">填写商品信息和各尺码数量</string>
+    <string name="order_editor_fixed_subtitle">%1$s · %2$s</string>
+    <string name="order_add_color">＋ 添加颜色</string>
     <string name="order_row_empty">请至少添加一行</string>
     <string name="order_row_error">第 %1$d 行：%2$s</string>
     <string name="order_saved">已保存 %1$d 条记录</string>
