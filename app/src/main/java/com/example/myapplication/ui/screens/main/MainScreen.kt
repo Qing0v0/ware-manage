@@ -1,4 +1,4 @@
-package com.example.myapplication.ui
+package com.example.myapplication.ui.screens.main
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -15,14 +15,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.FragmentContainerView
 import com.example.myapplication.R
-import com.example.myapplication.ui.components.AppBrandHeader
-import com.example.myapplication.ui.navigation.MainBottomNavigation
 import com.example.myapplication.ui.theme.AppColors
 
 @Composable
 fun MainScreen(
     selectedItemId: Int,
     onItemSelected: (Int) -> Unit,
+    onSettingsClick: () -> Unit,
     onFragmentContainerReady: () -> Unit
 ) {
     val context = LocalContext.current
@@ -34,6 +33,7 @@ fun MainScreen(
             .windowInsetsPadding(WindowInsets.systemBars)
     ) {
         AppBrandHeader(
+            onSettingsClick = onSettingsClick,
             modifier = Modifier.padding(start = 18.dp, top = 10.dp, end = 18.dp, bottom = 14.dp)
         )
 

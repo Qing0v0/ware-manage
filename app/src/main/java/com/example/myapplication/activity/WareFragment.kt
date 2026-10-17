@@ -6,6 +6,7 @@ import android.util.LruCache
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.ComposeView
@@ -27,6 +28,7 @@ class WareFragment : Fragment() {
 
     /** 数据库里查出来的全部存量（搜索过滤前的原始数据），按关键字过滤交给 WareScreen */
     private val inventories = mutableStateOf<List<ShoeInventory>>(emptyList())
+    private val settingsRequest = mutableIntStateOf(0)
 
     /** 存量缩略图缓存：路径 -> Bitmap，避免每次回到页面都重新解码 */
     private val pictureCache = LruCache<String, Bitmap>(64)
@@ -48,10 +50,15 @@ class WareFragment : Fragment() {
                     inventories = inventories.value,
                     imageFor = { path -> pictureCache.get(path)?.asImageBitmap() },
                     onBackupClick = drawerPanel::showBackupDialog,
-                    onUpdateClick = drawerPanel::showUpdateDialog
+                    onUpdateClick = drawerPanel::showUpdateDialog,
+                    settingsRequest = settingsRequest.intValue
                 )
             }
         }
+    }
+
+    fun openSettingsDrawer() {
+        settingsRequest.intValue++
     }
 
     /** 每次回到这个页面（包括从出入库界面返回）都重新查一遍存量 */

@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.navigation
+package com.example.myapplication.ui.screens.main
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

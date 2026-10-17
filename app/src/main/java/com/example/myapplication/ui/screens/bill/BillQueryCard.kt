@@ -24,9 +24,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.myapplication.R
 import com.example.myapplication.ui.components.DropdownSelector
+import com.example.myapplication.ui.screens.main.PageTitleHeader
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.ui.theme.AppTypography
 import java.time.LocalDate
@@ -53,19 +53,11 @@ internal fun BillQueryCard(
             .background(AppColors.GrayF5F7F5)
             .padding(horizontal = 16.dp)
     ) {
-        Column(modifier = Modifier.padding(top = 8.dp, bottom = 12.dp)) {
-            Text(
-                text = stringResource(R.string.bills_transaction_history),
-                color = AppColors.Green246B50,
-                style = AppTypography.CaptionEmphasis.copy(letterSpacing = 1.15.sp)
-            )
-            Text(
-                text = stringResource(R.string.bills_title),
-                color = AppColors.Ink19251F,
-                style = AppTypography.Title1,
-                modifier = Modifier.padding(top = 3.dp)
-            )
-        }
+        PageTitleHeader(
+            eyebrow = stringResource(R.string.bills_transaction_history),
+            title = stringResource(R.string.bills_title),
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 12.dp)
+        )
 
         Column(
             modifier = Modifier

@@ -47,8 +47,19 @@
     <string name="stock_minus_button">－</string>
     <string name="row_picture_add">＋</string>
     <string name="row_picture_hint">鞋子图片</string>
-    <string name="total_articleId_num">款式总数</string>
-    <string name="total_inventory_quantity">库存总数</string>
+    <string name="inventory_overview_eyebrow">INVENTORY OVERVIEW</string>
+    <string name="inventory_total_label">当前库存总数</string>
+    <string name="inventory_quantity_unit">双</string>
+    <string name="inventory_total_count_prefix">共</string>
+    <string name="inventory_total_count_suffix">款商品</string>
+    <string name="inventory_purchase_caption">登记新到货品</string>
+    <string name="inventory_selling_caption">记录销售出货</string>
+    <string name="inventory_products_title">库存商品</string>
+    <string name="inventory_product_group_count">按货号分组 · 全部 %1$d 款</string>
+    <string name="inventory_product_color_count">%1$d 个颜色</string>
+    <string name="inventory_product_stock_total">库存 %1$d 双</string>
+    <string name="inventory_size_stock">尺码库存</string>
+    <string name="inventory_color_subtotal">本色小计</string>
 
     <!-- 账单页（历史订单查询） -->
     <string name="bills_title">账单</string>
@@ -62,7 +73,7 @@
     <string name="bills_type">类型</string>
     <string name="bills_total_profit">总计利润</string>
     <string name="bills_order_details">账单明细</string>
-    <string name="bills_order_count">共 %1$d 笔</string>
+    <string name="bills_order_count">按时间排序 · 共 %1$d 笔</string>
     <string name="bills_hint_before_query">请选择条件后，点击查询显示账单明细</string>
     <string name="bills_empty">这段时间没有账单</string>
     <string name="bills_date_error">开始日期不能晚于结束日期</string>

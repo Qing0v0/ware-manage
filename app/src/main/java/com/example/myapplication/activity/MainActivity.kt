@@ -10,7 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
 import com.example.myapplication.R
-import com.example.myapplication.ui.MainScreen
+import com.example.myapplication.ui.screens.main.MainScreen
 
 
 class MainActivity : AppCompatActivity() {
@@ -37,6 +37,12 @@ class MainActivity : AppCompatActivity() {
                         R.id.warehouse -> selectFragment(TAB_WAREHOUSE)
                         R.id.bills -> selectFragment(TAB_BILLS)
                     }
+                },
+                onSettingsClick = {
+                    if (currentTab != TAB_WAREHOUSE) {
+                        selectFragment(TAB_WAREHOUSE)
+                    }
+                    wareFragment.openSettingsDrawer()
                 },
                 onFragmentContainerReady = {
                     if (!isDestroyed) {
