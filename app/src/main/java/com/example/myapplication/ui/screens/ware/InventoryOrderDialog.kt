@@ -366,10 +366,10 @@ private fun OrderDraftCard(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            FormFieldLabel(stringResource(R.string.purchase_order_color))
-            Spacer(modifier = Modifier.width(10.dp))
+            FormFieldLabel(stringResource(R.string.inventory_size_stock))
             if (colorFixed) {
                 Text(
                     text = row.color,
@@ -381,11 +381,11 @@ private fun OrderDraftCard(
                     selectedLabel = row.color,
                     options = colorOptions,
                     onSelect = { onColorChange(colorOptions[it]) },
-                    modifier = Modifier.weight(1f).height(40.dp)
+                    modifier = Modifier.width(112.dp).height(35.dp)
                 )
             }
+            Spacer(modifier = Modifier.weight(1f))
             if (showDelete) {
-                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = stringResource(R.string.delete_order_row),
                     color = AppColors.RedC62828,
@@ -398,8 +398,6 @@ private fun OrderDraftCard(
                 )
             }
         }
-
-        FormFieldLabel(stringResource(R.string.inventory_size_stock))
         row.sizes.chunked(6).forEachIndexed { rowIndex, sizeRow ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -453,6 +451,7 @@ private fun OrderDraftCard(
                 }
             }
         }
+
     }
 }
 
