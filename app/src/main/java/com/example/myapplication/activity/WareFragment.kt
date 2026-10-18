@@ -81,7 +81,8 @@ class WareFragment : Fragment() {
     private fun loadInventory() {
         val context = requireContext().applicationContext
         thread {
-            val rows = InventoryDatabase.getDatabase(context).shoeInventoryDAO().queryAll()
+            val inventoryDAO = InventoryDatabase.getDatabase(context).shoeInventoryDAO()
+            val rows = inventoryDAO.queryAll()
 
             // 缩略图先在后台解码好，界面上直接取缓存
             rows.forEach { inventory ->

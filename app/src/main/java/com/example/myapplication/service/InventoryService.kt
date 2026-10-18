@@ -31,6 +31,12 @@ class InventoryService(private val inventoryDatabase: InventoryDatabase, private
             errors.addAll(check(orderBatches))
             if (errors.isEmpty()) {
                 orderBatches.forEachIndexed { index, orderBatch ->
+                    if (!orderBatch.orderType.increaseStock && orderBatch.dealer.isBlank()) {
+                        orderBatch.dealer = inventoryDAO
+                            .query(orderBatch.articleId, orderBatch.color)
+                            ?.dealer
+                            .orEmpty()
+                    }
                     orderBatchDAO.insert(orderBatch)
                     applyOne(orderBatch, imagePaths.getOrNull(index))
                 }
@@ -82,12 +88,17 @@ class InventoryService(private val inventoryDatabase: InventoryDatabase, private
     }
 
     private fun applyOne(orderBatch: OrderBatch, imagePath: String?) {
+        val articleImagePath = imagePath?.takeIf { it.isNotBlank() }
+            ?: inventoryDAO.queryArticleImagePath(orderBatch.articleId)
         val inventory = inventoryDAO.query(orderBatch.articleId, orderBatch.color)
 
         if (inventory == null) {
             // 没有存量：入库就补一条新的；出库这种情况 [check] 已经拦下，这里不再处理
             if (orderBatch.orderType.increaseStock) {
-                inventoryDAO.insert(buildInventory(orderBatch, imagePath))
+                inventoryDAO.insert(buildInventory(orderBatch, articleImagePath))
+                articleImagePath?.let {
+                    inventoryDAO.updateArticleImagePath(orderBatch.articleId, it)
+                }
             }
             return
         }
@@ -105,12 +116,15 @@ class InventoryService(private val inventoryDatabase: InventoryDatabase, private
         if (orderBatch.dealer.isNotEmpty()) {
             inventory.dealer = orderBatch.dealer
         }
-        // 图片只有入库能改（界面上出库那一格是锁住的），换了就覆盖
-        if (orderBatch.orderType.increaseStock && !imagePath.isNullOrEmpty()) {
-            inventory.imagePath = imagePath
+        // 图片属于货号，入库更新图片后同步到该货号的所有颜色。
+        if (!articleImagePath.isNullOrEmpty()) {
+            inventory.imagePath = articleImagePath
         }
 
         inventoryDAO.update(inventory)
+        articleImagePath?.let {
+            inventoryDAO.updateArticleImagePath(orderBatch.articleId, it)
+        }
     }
 
     /** 用入库单里的数量新建一条存量 */

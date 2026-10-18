@@ -242,7 +242,7 @@ fun InventoryOrderDialog(
                 onValueChange = { articleId = it }
             )
 
-            if (orderType.increaseStock || fixedInventory != null) {
+            if (orderType.increaseStock) {
                 OrderField(
                     label = stringResource(R.string.purchase_order_dealer),
                     value = dealer,

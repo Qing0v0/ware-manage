@@ -38,6 +38,19 @@ abstract class InventoryDatabase: RoomDatabase() {
                 )
 
                 importLegacyOrders(context, database)
+                database.execSQL(
+                    "UPDATE `order` SET dealer = (" +
+                        "SELECT inventory.dealer FROM inventory " +
+                        "WHERE inventory.articleId = `order`.articleId " +
+                        "AND TRIM(inventory.dealer) != '' " +
+                        "ORDER BY inventory.id ASC LIMIT 1" +
+                        ") WHERE TRIM(dealer) = '' " +
+                        "AND EXISTS (" +
+                        "SELECT 1 FROM inventory " +
+                        "WHERE inventory.articleId = `order`.articleId " +
+                        "AND TRIM(inventory.dealer) != ''" +
+                        ")"
+                )
             }
         }
 

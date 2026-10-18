@@ -19,6 +19,19 @@ interface ShoeInventoryDAO {
     @Query("SELECT * FROM inventory ORDER BY articleId ASC, color ASC")
     fun queryAll(): List<ShoeInventory>
 
+    @Query(
+        "SELECT imagePath FROM inventory " +
+            "WHERE articleId = :articleId AND imagePath IS NOT NULL AND imagePath != '' " +
+            "ORDER BY id ASC LIMIT 1"
+    )
+    fun queryArticleImagePath(articleId: String): String?
+
+    @Query(
+        "UPDATE inventory SET imagePath = :imagePath " +
+            "WHERE articleId = :articleId"
+    )
+    fun updateArticleImagePath(articleId: String, imagePath: String)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(inventory: ShoeInventory): Long
 
