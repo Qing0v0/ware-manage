@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,7 +58,7 @@ internal fun InventoryProductList(
     onStockAction: (OrderType, ShoeInventory) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var searchQuery by remember { mutableStateOf("") }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
     val groups = remember(inventories, searchQuery) {
         val keyword = searchQuery.trim()
         inventories
@@ -226,7 +227,7 @@ private fun InventoryProductCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = AppDimensions.Padding.Dp8)
+            .padding(bottom = AppDimensions.Padding.Dp8)
             .clip(shape)
             .background(AppColors.White)
             .border(1.dp, AppColors.Gray100, shape)

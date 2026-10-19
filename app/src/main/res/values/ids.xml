@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <item name="content" type="id" />
+    <item name="main_header" type="id" />
+    <item name="main_navigation" type="id" />
+    <item name="warehouse_compose_view" type="id" />
+    <item name="bills_compose_view" type="id" />
     <item name="warehouse" type="id" />
     <item name="bills" type="id" />
 </resources>

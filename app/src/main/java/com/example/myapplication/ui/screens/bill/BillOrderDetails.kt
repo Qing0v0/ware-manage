@@ -98,7 +98,7 @@ private fun BillOrderCard(bill: OrderBatch) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = AppDimensions.Padding.Dp12)
+            .padding(bottom = AppDimensions.Padding.Dp8)
             .border(1.dp, AppColors.Gray100, AppDimensions.Corner.large)
             .background(AppColors.White, AppDimensions.Corner.large)
             .padding(horizontal = AppDimensions.Padding.Dp12, vertical = AppDimensions.Padding.Dp12)

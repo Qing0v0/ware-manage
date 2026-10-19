@@ -11,6 +11,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.example.myapplication.R
@@ -25,6 +27,10 @@ import kotlinx.coroutines.withContext
 import java.time.LocalDate
 
 private const val DEFAULT_BILL_RANGE_DAYS = 30
+private val localDateSaver = Saver<LocalDate, String>(
+    save = { it.toString() },
+    restore = { LocalDate.parse(it) }
+)
 
 private enum class BillDateTarget {
     Start,
@@ -40,16 +46,17 @@ fun BillsScreen(
     val scope = rememberCoroutineScope()
     val initialDate = remember { LocalDate.now(billZone) }
 
-    var startDate by remember {
+    var startDate by rememberSaveable(stateSaver = localDateSaver) {
         mutableStateOf(initialDate.minusDays((DEFAULT_BILL_RANGE_DAYS - 1).toLong()))
     }
-    var endDate by remember { mutableStateOf(initialDate) }
-    var articleId by remember { mutableStateOf("") }
-    var dealer by remember { mutableStateOf("") }
-    var selectedTypeIndex by remember { mutableIntStateOf(0) }
+    var endDate by rememberSaveable(stateSaver = localDateSaver) { mutableStateOf(initialDate) }
+    var articleId by rememberSaveable { mutableStateOf("") }
+    var dealer by rememberSaveable { mutableStateOf("") }
+    var selectedTypeIndex by rememberSaveable { mutableIntStateOf(0) }
     var bills by remember { mutableStateOf<List<OrderBatch>>(emptyList()) }
-    var hintId by remember { mutableIntStateOf(R.string.bills_hint_before_query) }
-    var datePickerTarget by remember { mutableStateOf<BillDateTarget?>(null) }
+    var hintId by rememberSaveable { mutableIntStateOf(R.string.bills_hint_before_query) }
+    var datePickerTarget by rememberSaveable { mutableStateOf<BillDateTarget?>(null) }
+    var previousResetTick by remember { mutableIntStateOf(resetTick) }
 
     val billTypeFilters = remember(context) {
         buildList {
@@ -66,6 +73,10 @@ fun BillsScreen(
     }
 
     LaunchedEffect(resetTick) {
+        if (resetTick == previousResetTick) {
+            return@LaunchedEffect
+        }
+        previousResetTick = resetTick
         val resetDate = LocalDate.now(billZone)
         startDate = resetDate.minusDays((DEFAULT_BILL_RANGE_DAYS - 1).toLong())
         endDate = resetDate

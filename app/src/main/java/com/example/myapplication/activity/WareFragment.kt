@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
+import com.example.myapplication.R
 import com.example.myapplication.model.ShoeInventory
 import com.example.myapplication.service.InventoryDatabase
 import com.example.myapplication.ui.screens.ware.WareScreen
@@ -45,6 +46,7 @@ class WareFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         return ComposeView(requireContext()).apply {
+            id = R.id.warehouse_compose_view
             setContent {
                 WareScreen(
                     inventories = inventories.value,

@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
+import com.example.myapplication.R
 import com.example.myapplication.ui.screens.bill.BillsScreen
 
 /**
@@ -29,6 +30,7 @@ class BillsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         return ComposeView(requireContext()).apply {
+            id = R.id.bills_compose_view
             setContent { BillsScreen(resetTick = resetTick.intValue) }
         }
     }

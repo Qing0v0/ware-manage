@@ -277,7 +277,10 @@ fun InventoryOrderDialog(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(AppDimensions.Padding.Dp12)
                 ) {
-                    FormFieldLabel(stringResource(R.string.order_pay_type))
+                    FormFieldLabel(
+                        stringResource(R.string.order_pay_type),
+                        Modifier.width(58.dp)
+                    )
                     DropdownSelector(
                         selectedLabel = selectedPaymentType.displayName,
                         options = OrderType.soldTypes.map { it.displayName },

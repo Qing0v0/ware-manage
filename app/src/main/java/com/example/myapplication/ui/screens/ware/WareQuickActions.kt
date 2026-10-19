@@ -33,7 +33,7 @@ internal fun WareQuickActions(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = AppDimensions.Padding.Dp16, end = AppDimensions.Padding.Dp16, bottom = AppDimensions.Padding.Dp12),
+            .padding(start = AppDimensions.Padding.Dp16, end = AppDimensions.Padding.Dp16),
         horizontalArrangement = Arrangement.spacedBy(AppDimensions.Padding.Dp8)
     ) {
         WareQuickAction(

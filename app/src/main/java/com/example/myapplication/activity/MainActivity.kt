@@ -1,68 +1,91 @@
 package com.example.myapplication.activity
 
 import android.os.Bundle
-import androidx.activity.compose.setContent
+import android.view.View
+import android.view.ViewGroup
+import android.widget.LinearLayout
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.ComposeView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.FragmentTransaction
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.example.myapplication.R
 import com.example.myapplication.ui.screens.main.MainScreen
+import com.example.myapplication.ui.screens.main.MainScreenSection
 
 
 class MainActivity : AppCompatActivity() {
     private lateinit var wareFragment: WareFragment
     private lateinit var billsFragment: BillsFragment
-
-    /** 当前显示的是哪一页，Activity 重建后用它复原（和底部导航的选中项保持一致） */
-    private var currentTab by mutableIntStateOf(TAB_WAREHOUSE)
+    private lateinit var mainViewModel: MainViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val (root, header, content, navigation) = createMainLayout()
+        setContentView(root)
+        applySystemBarInsets(root)
 
+        mainViewModel = ViewModelProvider(this)[MainViewModel::class.java]
+        savedInstanceState?.let {
+            mainViewModel.selectTab(it.getInt(KEY_TAB, TAB_WAREHOUSE))
+        }
         wareFragment = supportFragmentManager.findFragmentByTag(TAG_WAREHOUSE) as? WareFragment ?: WareFragment()
         billsFragment = supportFragmentManager.findFragmentByTag(TAG_BILLS) as? BillsFragment ?: BillsFragment()
         removeStaleFragments()
 
-        currentTab = savedInstanceState?.getInt(KEY_TAB, TAB_WAREHOUSE) ?: TAB_WAREHOUSE
-        setContent {
+        header.setContent {
             MainScreen(
-                selectedItemId = if (currentTab == TAB_BILLS) R.id.bills else R.id.warehouse,
-                onItemSelected = { itemId ->
-                    when (itemId) {
-                        R.id.warehouse -> selectFragment(TAB_WAREHOUSE)
-                        R.id.bills -> selectFragment(TAB_BILLS)
+                MainScreenSection.Header(
+                    onSettingsClick = {
+                        if (mainViewModel.selectedTab != TAB_WAREHOUSE) {
+                            selectFragment(TAB_WAREHOUSE)
+                        }
+                        wareFragment.openMoreMenu()
                     }
-                },
-                onSettingsClick = {
-                    if (currentTab != TAB_WAREHOUSE) {
-                        selectFragment(TAB_WAREHOUSE)
-                    }
-                    wareFragment.openMoreMenu()
-                },
-                onFragmentContainerReady = {
-                    if (!isDestroyed) {
-                        selectFragment(currentTab)
-                    }
-                }
+                )
             )
+        }
+        navigation.setContent {
+            MainScreen(
+                MainScreenSection.BottomNavigation(
+                    selectedItemId =
+                        if (mainViewModel.selectedTab == TAB_BILLS) R.id.bills else R.id.warehouse,
+                    onItemSelected = { itemId ->
+                        when (itemId) {
+                            R.id.warehouse -> selectFragment(TAB_WAREHOUSE)
+                            R.id.bills -> selectFragment(TAB_BILLS)
+                        }
+                    }
+                )
+            )
+        }
+
+        content.post {
+            if (!isDestroyed && !supportFragmentManager.isStateSaved) {
+                selectFragment(mainViewModel.selectedTab, resetBills = false)
+            }
         }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putInt(KEY_TAB, currentTab)
+        outState.putInt(KEY_TAB, mainViewModel.selectedTab)
     }
 
     /**
      * 切页：hide 掉另一页、show 出这一页，容器里始终只有这两页，不会叠。
      */
-    private fun selectFragment(tab: Int) {
-        currentTab = tab
+    private fun selectFragment(tab: Int, resetBills: Boolean = true) {
+        mainViewModel.selectTab(tab)
         val fragmentTransaction: FragmentTransaction = supportFragmentManager.beginTransaction()
         if (tab == TAB_BILLS) {
             fragmentTransaction.hide(wareFragment)
@@ -79,9 +102,59 @@ class MainActivity : AppCompatActivity() {
         }
         fragmentTransaction.commitNow()
 
-        if (tab == TAB_BILLS) {
+        if (tab == TAB_BILLS && resetBills) {
             billsFragment.resetPage()
         }
+    }
+
+    private fun applySystemBarInsets(view: View) {
+        ViewCompat.setOnApplyWindowInsetsListener(view) { target, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            target.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
+        ViewCompat.requestApplyInsets(view)
+    }
+
+    private fun createMainLayout(): MainLayout {
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(0xFFF5F7F5.toInt())
+        }
+        val header = ComposeView(this).apply {
+            id = R.id.main_header
+        }
+        val content = FragmentContainerView(this).apply {
+            id = R.id.content
+        }
+        val navigation = ComposeView(this).apply {
+            id = R.id.main_navigation
+        }
+        val navigationHeight = (BOTTOM_NAVIGATION_HEIGHT_DP * resources.displayMetrics.density).toInt()
+
+        root.addView(
+            header,
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        )
+        root.addView(
+            content,
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                0,
+                1f
+            )
+        )
+        root.addView(
+            navigation,
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                navigationHeight
+            )
+        )
+        return MainLayout(root, header, content, navigation)
     }
 
     /**
@@ -107,5 +180,22 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_TAB = "current_tab"
         private const val TAB_WAREHOUSE = 0
         private const val TAB_BILLS = 1
+        private const val BOTTOM_NAVIGATION_HEIGHT_DP = 70
+    }
+
+    private data class MainLayout(
+        val root: LinearLayout,
+        val header: ComposeView,
+        val content: FragmentContainerView,
+        val navigation: ComposeView
+    )
+}
+
+class MainViewModel : ViewModel() {
+    var selectedTab by mutableIntStateOf(0)
+        private set
+
+    fun selectTab(tab: Int) {
+        selectedTab = tab
     }
 }
