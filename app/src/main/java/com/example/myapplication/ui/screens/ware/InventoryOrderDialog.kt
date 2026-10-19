@@ -8,7 +8,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,7 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -38,9 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -64,7 +61,6 @@ import com.example.myapplication.ui.theme.AppTypography
 import com.example.myapplication.utils.ImageUtils
 import com.example.myapplication.utils.OrderBatchUtils
 import com.example.myapplication.utils.SizeUtils
-import java.util.UUID
 import kotlin.concurrent.thread
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -86,12 +82,12 @@ fun InventoryOrderDialog(
     var selectedPaymentType by remember { mutableStateOf(OrderType.soldTypes.first()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isSaving by remember { mutableStateOf(false) }
-    var pendingImageRowId by remember { mutableStateOf<String?>(null) }
+    var productImageUri by remember { mutableStateOf<Uri?>(null) }
+    val productImagePath = fixedInventory?.imagePath
     val rows = remember {
         mutableStateListOf(
             OrderDraftRow(
-                color = fixedInventory?.color?.displayName ?: colorOptions.first(),
-                imagePath = fixedInventory?.imagePath
+                color = fixedInventory?.color?.displayName ?: colorOptions.first()
             )
         )
     }
@@ -99,11 +95,8 @@ fun InventoryOrderDialog(
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
-        val rowId = pendingImageRowId
-        pendingImageRowId = null
-        val row = rows.firstOrNull { it.id == rowId }
-        if (uri != null && row != null) {
-            row.imageUri = uri
+        if (uri != null) {
+            productImageUri = uri
             errorMessage = null
         }
     }
@@ -151,11 +144,10 @@ fun InventoryOrderDialog(
                             if (orderType.increaseStock) OrderType.ARTICLE_PURCHASE
                             else selectedPaymentType
                         val orderRows = rows.map { draft ->
-                            OrderRowData(draft.color, draft.imagePath).also { row ->
+                            OrderRowData(draft.color).also { row ->
                                 draft.sizes.forEachIndexed { index, value ->
                                     row.sizes[index] = value
                                 }
-                                row.imageUri = draft.imageUri
                             }
                         }
                         if (orderRows.isEmpty()) {
@@ -191,20 +183,28 @@ fun InventoryOrderDialog(
                         isSaving = true
                         errorMessage = null
                         val appContext = context.applicationContext
+                        val imageUriToSave = productImageUri
+                        val existingImagePath = productImagePath
                         thread {
-                            val imagePaths = orderRows.map { row ->
-                                if (orderType.increaseStock && row.imageUri != null) {
-                                    ImageUtils.saveToAppStorage(appContext, row.imageUri!!)
-                                        ?: row.imagePath
-                                } else {
-                                    row.imagePath
-                                }
+                            val imagePath = if (orderType.increaseStock && imageUriToSave != null) {
+                                ImageUtils.saveToAppStorage(appContext, imageUriToSave)
+                                    ?: run {
+                                        Handler(Looper.getMainLooper()).post {
+                                            isSaving = false
+                                            errorMessage = appContext.getString(R.string.order_image_save_failed)
+                                        }
+                                        return@thread
+                                    }
+                            } else if (orderType.increaseStock) {
+                                existingImagePath
+                            } else {
+                                null
                             }
                             val errors = try {
                                 InventoryService(
                                     InventoryDatabase.getDatabase(appContext),
                                     appContext
-                                ).apply(batches, imagePaths)
+                                ).apply(batches, imagePath)
                             } catch (_: Exception) {
                                 listOf(appContext.getString(R.string.order_save_failed))
                             }
@@ -271,6 +271,19 @@ fun InventoryOrderDialog(
                 onValueChange = { price = it }
             )
 
+            if (orderType.increaseStock || !productImagePath.isNullOrEmpty()) {
+                ProductImagePicker(
+                    imageUri = productImageUri,
+                    imagePath = productImagePath,
+                    editable = orderType.increaseStock && !isSaving,
+                    onPickImage = {
+                        imagePicker.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    }
+                )
+            }
+
             if (!orderType.increaseStock) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -295,18 +308,11 @@ fun InventoryOrderDialog(
                     row = row,
                     colorOptions = colorOptions,
                     colorFixed = fixedInventory != null,
-                    imageEditable = orderType.increaseStock,
                     showDelete = fixedInventory == null && rows.size > 1,
                     onColorChange = { row.color = it },
                     onDelete = {
                         rows.remove(row)
                         errorMessage = null
-                    },
-                    onPickImage = {
-                        pendingImageRowId = row.id
-                        imagePicker.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                        )
                     }
                 )
             }
@@ -351,11 +357,9 @@ private fun OrderDraftCard(
     row: OrderDraftRow,
     colorOptions: List<String>,
     colorFixed: Boolean,
-    imageEditable: Boolean,
     showDelete: Boolean,
     onColorChange: (String) -> Unit,
-    onDelete: () -> Unit,
-    onPickImage: () -> Unit
+    onDelete: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -444,12 +448,8 @@ private fun OrderDraftCard(
                         )
                     }
                 }
-                if (rowIndex == 1 && (imageEditable || !row.imagePath.isNullOrEmpty() || row.imageUri != null)) {
-                    OrderImageCell(
-                        row = row,
-                        editable = imageEditable,
-                        onClick = onPickImage
-                    )
+                if (rowIndex == 1 && sizeRow.size < 6) {
+                    Spacer(modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -458,59 +458,94 @@ private fun OrderDraftCard(
 }
 
 @Composable
-private fun RowScope.OrderImageCell(
-    row: OrderDraftRow,
+private fun ProductImagePicker(
+    imageUri: Uri?,
+    imagePath: String?,
     editable: Boolean,
-    onClick: () -> Unit
+    onPickImage: () -> Unit
 ) {
     val context = LocalContext.current
     val bitmap by produceState<androidx.compose.ui.graphics.ImageBitmap?>(
         initialValue = null,
-        row.imageUri,
-        row.imagePath
+        imageUri,
+        imagePath
     ) {
         value = withContext(Dispatchers.IO) {
             when {
-                row.imageUri != null ->
-                    ImageUtils.decodeFromUri(context, row.imageUri!!, ImageUtils.MAX_SHOW_SIZE)
-                !row.imagePath.isNullOrEmpty() ->
-                    ImageUtils.decodeFromPath(row.imagePath!!, ImageUtils.MAX_SHOW_SIZE)
+                imageUri != null ->
+                    ImageUtils.decodeFromUri(context, imageUri, ImageUtils.MAX_SHOW_SIZE)
+                !imagePath.isNullOrEmpty() ->
+                    ImageUtils.decodeFromPath(imagePath, ImageUtils.MAX_SHOW_SIZE)
                 else -> null
             }?.asImageBitmap()
         }
     }
-    val shape = AppDimensions.Corner.small
-    Box(
+    Row(
         modifier = Modifier
-            .weight(1f)
-            .height(AppDimensions.Size.Dp56)
-            .clip(shape)
-            .clickable(enabled = editable, onClick = onClick),
-        contentAlignment = Alignment.Center
+            .fillMaxWidth()
+            .clip(AppDimensions.Corner.large)
+            .background(AppColors.White)
+            .border(1.dp, AppColors.Gray100, AppDimensions.Corner.large)
+            .padding(AppDimensions.Padding.Dp12),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(AppDimensions.Padding.Dp12)
     ) {
         if (bitmap != null) {
             Image(
                 bitmap = bitmap!!,
-                contentDescription = stringResource(R.string.row_picture_hint),
+                contentDescription = stringResource(R.string.order_product_image),
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize().clip(shape)
+                modifier = Modifier
+                    .size(54.dp)
+                    .clip(AppDimensions.Corner.small)
             )
         } else {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                drawRoundRect(
-                    color = AppColors.Green500,
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(9.dp.toPx()),
-                    style = Stroke(
-                        width = 1.dp.toPx(),
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(5.dp.toPx(), 4.dp.toPx()))
-                    )
+            Box(
+                modifier = Modifier
+                    .size(54.dp)
+                    .clip(AppDimensions.Corner.small)
+                    .background(AppColors.Green50)
+                    .border(1.dp, AppColors.Green200, AppDimensions.Corner.small)
+                    .clickable(enabled = editable, onClick = onPickImage),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "+",
+                    color = AppColors.Green800,
+                    style = AppTypography.Size24.copy(fontWeight = FontWeight.Light)
                 )
             }
+        }
+        Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "+",
-                color = AppColors.Gray500,
-                style = AppTypography.Size24.copy(fontWeight = FontWeight.Light)
+                text = stringResource(R.string.order_product_image),
+                color = AppColors.Gray900,
+                style = AppTypography.Size12.copy(fontWeight = FontWeight.SemiBold)
             )
+            Text(
+                text = stringResource(R.string.order_product_image_shared),
+                color = AppColors.Gray500,
+                style = AppTypography.Size10,
+                modifier = Modifier.padding(top = AppDimensions.Padding.Dp4)
+            )
+        }
+        if (editable) {
+            Box(
+                modifier = Modifier
+                    .clip(AppDimensions.Corner.small)
+                    .background(AppColors.Green800)
+                    .clickable(onClick = onPickImage)
+                    .padding(horizontal = AppDimensions.Padding.Dp12, vertical = AppDimensions.Padding.Dp8),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(
+                        if (bitmap == null) R.string.order_choose_image else R.string.order_change_image
+                    ),
+                    color = AppColors.White,
+                    style = AppTypography.Size10.copy(fontWeight = FontWeight.Bold)
+                )
+            }
         }
     }
 }
@@ -608,14 +643,10 @@ private fun OrderDialogButton(
 }
 
 private class OrderDraftRow(
-    color: String,
-    imagePath: String? = null
+    color: String
 ) {
-    val id: String = UUID.randomUUID().toString()
     var color by mutableStateOf(color)
     val sizes = mutableStateListOf<String>().apply {
         repeat(SizeUtils.SIZE_AMOUNT) { add("") }
     }
-    var imagePath: String? = imagePath
-    var imageUri by mutableStateOf<Uri?>(null)
 }

@@ -23,10 +23,15 @@
     <string name="order_editor_subtitle">填写商品信息和各尺码数量</string>
     <string name="order_editor_fixed_subtitle">%1$s · %2$s</string>
     <string name="order_add_color">＋ 添加颜色</string>
+    <string name="order_product_image">商品图片</string>
+    <string name="order_product_image_shared">该货号所有颜色共用一张图片</string>
+    <string name="order_choose_image">选择图片</string>
+    <string name="order_change_image">更换图片</string>
     <string name="order_row_empty">请至少添加一行</string>
     <string name="order_row_error">第 %1$d 行：%2$s</string>
     <string name="order_saved">已保存 %1$d 条记录</string>
     <string name="order_save_failed">保存失败，订单和存量均未更改，请重试</string>
+    <string name="order_image_save_failed">商品图片保存失败，存量未更改，请重试</string>
     <string name="article_id_hint">请输入货号</string>
     <string name="dealer_hint">请输入经销商</string>
     <string name="purchase_price_hint">请输入进价</string>

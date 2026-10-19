@@ -24,13 +24,13 @@ class InventoryService(private val inventoryDatabase: InventoryDatabase, private
      * 校验库存并同时写订单流水和存量。任意写入失败时，整个事务回滚。
      * 同一批里相同货号 + 颜色的行会先合并校验，避免合计出库超库存。
      */
-    fun apply(orderBatches: List<OrderBatch>, imagePaths: List<String?> = emptyList()): List<String> {
+    fun apply(orderBatches: List<OrderBatch>, imagePath: String? = null): List<String> {
         val errors = ArrayList<String>()
 
         inventoryDatabase.runInTransaction {
             errors.addAll(check(orderBatches))
             if (errors.isEmpty()) {
-                orderBatches.forEachIndexed { index, orderBatch ->
+                orderBatches.forEach { orderBatch ->
                     if (!orderBatch.orderType.increaseStock && orderBatch.dealer.isBlank()) {
                         orderBatch.dealer = inventoryDAO
                             .query(orderBatch.articleId, orderBatch.color)
@@ -38,7 +38,7 @@ class InventoryService(private val inventoryDatabase: InventoryDatabase, private
                             .orEmpty()
                     }
                     orderBatchDAO.insert(orderBatch)
-                    applyOne(orderBatch, imagePaths.getOrNull(index))
+                    applyOne(orderBatch, imagePath)
                 }
             }
         }
