@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -295,12 +296,20 @@ private fun ProductThumbnail(
         contentAlignment = Alignment.Center
     ) {
         val bitmap = inventory.imagePath?.let(imageFor)
+        val imageModifier = Modifier.fillMaxSize().padding(AppDimensions.Padding.Dp4)
         if (bitmap != null) {
             Image(
                 bitmap = bitmap,
                 contentDescription = inventory.articleId,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
+                modifier = imageModifier
+            )
+        } else {
+            Image(
+                painter = painterResource(R.drawable.ic_shoe_placeholder),
+                contentDescription = inventory.articleId,
+                contentScale = ContentScale.Fit,
+                modifier = imageModifier
             )
         }
     }
