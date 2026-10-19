@@ -20,6 +20,9 @@
     <string name="cancel">取消</string>
     <string name="order_editor_title_purchase">入库</string>
     <string name="order_editor_title_selling">出库</string>
+    <string name="order_editor_subtitle">填写商品信息和各尺码数量</string>
+    <string name="order_editor_fixed_subtitle">%1$s · %2$s</string>
+    <string name="order_add_color">＋ 添加颜色</string>
     <string name="order_row_empty">请至少添加一行</string>
     <string name="order_row_error">第 %1$d 行：%2$s</string>
     <string name="order_saved">已保存 %1$d 条记录</string>
@@ -47,19 +50,35 @@
     <string name="stock_minus_button">－</string>
     <string name="row_picture_add">＋</string>
     <string name="row_picture_hint">鞋子图片</string>
-    <string name="total_articleId_num">款式总数</string>
-    <string name="total_inventory_quantity">库存总数</string>
+    <string name="inventory_overview_eyebrow">INVENTORY OVERVIEW</string>
+    <string name="inventory_total_label">当前库存总数</string>
+    <string name="inventory_quantity_unit">双</string>
+    <string name="inventory_total_count_prefix">共</string>
+    <string name="inventory_total_count_suffix">款商品</string>
+    <string name="inventory_purchase_caption">登记新到货品</string>
+    <string name="inventory_selling_caption">记录销售出货</string>
+    <string name="inventory_products_title">库存商品</string>
+    <string name="inventory_product_group_count">按货号分组 · 全部 %1$d 款</string>
+    <string name="inventory_product_color_count">%1$d 个颜色</string>
+    <string name="inventory_product_stock_total">库存 %1$d 双</string>
+    <string name="inventory_size_stock">尺码库存</string>
+    <string name="inventory_color_subtotal">本色小计</string>
 
     <!-- 账单页（历史订单查询） -->
-    <string name="bills_title">账单历史查询</string>
+    <string name="bills_title">账单</string>
+    <string name="bills_transaction_history">TRANSACTION HISTORY</string>
+    <string name="bills_query_orders">查询账单</string>
+    <string name="bills_type_all">账单类型</string>
     <string name="bills_query">查询</string>
-    <string name="bills_date_separator">~</string>
+    <string name="bills_date_separator">至</string>
     <string name="bills_total_price">总价</string>
     <string name="bills_time">时间</string>
     <string name="bills_type">类型</string>
     <string name="bills_total_profit">总计利润</string>
-    <string name="bills_hint_before_query">选好日期范围，点「查询」看账单</string>
-    <string name="bills_empty">这段时间没有订单</string>
+    <string name="bills_order_details">账单明细</string>
+    <string name="bills_order_count">按时间排序 · 共 %1$d 笔</string>
+    <string name="bills_hint_before_query">请选择条件后，点击查询显示账单明细</string>
+    <string name="bills_empty">这段时间没有账单</string>
     <string name="bills_date_error">开始日期不能晚于结束日期</string>
 
     <!-- 搜索 / 支付方式 -->
@@ -67,8 +86,8 @@
     <string name="order_pay_type">支付方式</string>
     <string name="bill_type_all">全部</string>
 
-    <!-- 设置侧边栏 / 数据备份恢复 -->
-    <string name="settings_title">设置</string>
+    <!-- 更多菜单 / 数据备份恢复 -->
+    <string name="more_options">更多</string>
     <string name="settings_backup">数据备份 / 恢复</string>
     <string name="settings_backup_export">导出数据</string>
     <string name="settings_backup_import">导入数据</string>
@@ -78,7 +97,7 @@
     <string name="backup_import_failed">导入失败：请确认选的是本应用导出的备份文件</string>
     <string name="backup_import_confirm">导入会覆盖当前所有存量、账单和图片，确定继续吗？</string>
 
-    <!-- 设置侧边栏 / 版本更新 -->
+    <!-- 更多菜单 / 版本更新 -->
     <string name="settings_update">版本更新</string>
     <string name="update_latest">当前已经是最新版本</string>
     <string name="update_has_new">是否下载最近版本</string>
