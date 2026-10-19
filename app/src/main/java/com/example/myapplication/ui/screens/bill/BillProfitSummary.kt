@@ -18,10 +18,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.myapplication.R
 import com.example.myapplication.model.OrderBatch
+import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
+import com.example.myapplication.ui.theme.AppDimensions
 import com.example.myapplication.ui.theme.AppTypography
 import java.time.LocalDate
 
@@ -44,12 +46,12 @@ internal fun BillProfitSummary(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(AppColors.GrayE9EEEA)
+                .background(AppColors.Gray100)
         )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 18.dp, top = 10.dp, end = 18.dp),
+                .padding(start = AppDimensions.Padding.Dp16, top = AppDimensions.Padding.Dp12, end = AppDimensions.Padding.Dp16),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
@@ -59,54 +61,54 @@ internal fun BillProfitSummary(
             )
             Text(
                 text = stringResource(R.string.bills_total_profit),
-                color = AppColors.Green69756D,
-                style = AppTypography.BodyEmphasis,
-                modifier = Modifier.padding(start = 6.dp)
+                color = AppColors.Gray500,
+                style = AppTypography.Size12.copy(fontWeight = FontWeight.SemiBold),
+                modifier = Modifier.padding(start = AppDimensions.Padding.Dp8)
             )
             Spacer(modifier = Modifier.weight(1f))
             Text(
                 text = "${startDate.format(billSummaryDateFormatter)} — ${endDate.format(billSummaryDateFormatter)}",
-                color = AppColors.Gray939D96,
-                style = AppTypography.Body
+                color = AppColors.Gray500,
+                style = AppTypography.Size12
             )
         }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 18.dp, top = 3.dp, end = 18.dp, bottom = 12.dp),
+                .padding(start = AppDimensions.Padding.Dp16, top = AppDimensions.Padding.Dp4, end = AppDimensions.Padding.Dp16, bottom = AppDimensions.Padding.Dp12),
             verticalAlignment = Alignment.Bottom
         ) {
             Text(
                 text = "${if (profit.signum() < 0) "-" else "+"}¥ ${billAmountText(profit.abs())}",
-                color = if (profit.signum() < 0) AppColors.RedC62828 else AppColors.Green2E7D32,
-                style = AppTypography.Display,
+                color = if (profit.signum() < 0) AppColors.Red700 else AppColors.Green700,
+                style = AppTypography.Size20.copy(fontWeight = FontWeight.Bold),
                 maxLines = 1
             )
             Spacer(modifier = Modifier.weight(1f))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 3.dp)
+                modifier = Modifier.padding(bottom = AppDimensions.Padding.Dp4)
             ) {
                 Text(
                     text = "${stringResource(R.string.selling_button)} ",
-                    color = AppColors.Gray909A93,
-                    style = AppTypography.Body
+                    color = AppColors.Gray500,
+                    style = AppTypography.Size12
                 )
                 Text(
                     text = "¥${billAmountText(totals.income)}",
-                    color = AppColors.Green66736A,
-                    style = AppTypography.BodyEmphasis
+                    color = AppColors.Gray500,
+                    style = AppTypography.Size12.copy(fontWeight = FontWeight.SemiBold)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "${stringResource(R.string.purchase_button)} ",
-                    color = AppColors.Gray909A93,
-                    style = AppTypography.Body
+                    color = AppColors.Gray500,
+                    style = AppTypography.Size12
                 )
                 Text(
                     text = "¥${billAmountText(totals.cost)}",
-                    color = AppColors.Green66736A,
-                    style = AppTypography.BodyEmphasis
+                    color = AppColors.Gray500,
+                    style = AppTypography.Size12.copy(fontWeight = FontWeight.SemiBold)
                 )
             }
         }

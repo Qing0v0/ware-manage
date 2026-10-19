@@ -14,14 +14,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.example.myapplication.R
 import com.example.myapplication.model.OrderType
 import com.example.myapplication.model.ShoeInventory
+import com.example.myapplication.R
 import com.example.myapplication.ui.components.AppAlertDialog
 import com.example.myapplication.ui.components.AppBottomSheetMenu
 import com.example.myapplication.ui.components.AppBottomSheetMenuItem
 import com.example.myapplication.ui.components.AppDialogSpec
 import com.example.myapplication.ui.screens.main.PageTitleHeader
+import com.example.myapplication.ui.theme.AppDimensions
 import com.example.myapplication.utils.SizeUtils
 import java.text.NumberFormat
 
@@ -88,10 +89,10 @@ fun WareScreen(
             eyebrow = stringResource(R.string.inventory_overview_eyebrow),
             title = stringResource(R.string.bottom_warehouse),
             modifier = Modifier.fillMaxWidth().padding(
-                start = 18.dp,
-                top = 4.dp,
-                end = 18.dp,
-                bottom = 12.dp
+                start = AppDimensions.Padding.Dp16,
+                top = AppDimensions.Padding.Dp4,
+                end = AppDimensions.Padding.Dp16,
+                bottom = AppDimensions.Padding.Dp12
             )
         )
 

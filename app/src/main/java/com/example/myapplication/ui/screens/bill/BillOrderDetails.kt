@@ -18,19 +18,20 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.example.myapplication.R
 import com.example.myapplication.model.OrderBatch
+import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
+import com.example.myapplication.ui.theme.AppDimensions
 import com.example.myapplication.ui.theme.AppTypography
 import com.example.myapplication.utils.SizeUtils
 
@@ -43,36 +44,39 @@ internal fun BillOrderDetails(
     LazyColumn(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = AppDimensions.Padding.Dp16)
     ) {
         item {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp, bottom = 6.dp),
+                    .padding(vertical = AppDimensions.Padding.Dp8),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = stringResource(R.string.bills_order_details),
-                    color = AppColors.Ink26352B,
-                    style = AppTypography.Title2
+                    color = AppColors.Gray900,
+                    style = AppTypography.Size16.copy(fontWeight = FontWeight.Bold)
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
                     text = stringResource(R.string.bills_order_count, bills.size),
-                    color = AppColors.Gray87918B,
-                    style = AppTypography.Body
+                    color = AppColors.Gray500,
+                    style = AppTypography.Size10
                 )
             }
             if (hintId != HIDE_BILL_HINT) {
                 Text(
                     text = stringResource(hintId),
-                    color = AppColors.Green69756D,
-                    style = AppTypography.BodyLarge,
+                    color = AppColors.Gray500,
+                    style = AppTypography.Size14,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp, bottom = 16.dp)
+                        .padding(
+                            top = AppDimensions.Padding.Dp8,
+                            bottom = AppDimensions.Padding.Dp16
+                        )
                 )
             }
         }
@@ -86,26 +90,26 @@ internal fun BillOrderDetails(
 private fun BillOrderCard(bill: OrderBatch) {
     val isPurchase = bill.orderType.increaseStock
     val badgeTextColor =
-        if (isPurchase) AppColors.Green2E7D32 else AppColors.RedC62828
+        if (isPurchase) AppColors.Green700 else AppColors.Red700
     val badgeBackground =
-        if (isPurchase) AppColors.GreenD8F2DC else AppColors.RedF9D9D9
+        if (isPurchase) AppColors.Green100 else AppColors.Red100
     val instant = bill.date.toInstant()
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 9.dp)
-            .border(1.dp, AppColors.GrayE9EEEA, RoundedCornerShape(16.dp))
-            .background(AppColors.White, RoundedCornerShape(16.dp))
-            .padding(horizontal = 12.dp, vertical = 11.dp)
+            .padding(bottom = AppDimensions.Padding.Dp12)
+            .border(1.dp, AppColors.Gray100, AppDimensions.Corner.large)
+            .background(AppColors.White, AppDimensions.Corner.large)
+            .padding(horizontal = AppDimensions.Padding.Dp12, vertical = AppDimensions.Padding.Dp12)
     ) {
         Row(verticalAlignment = Alignment.Top) {
             Box(
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(AppDimensions.Size.Dp36)
                     .background(
-                        if (isPurchase) AppColors.GreenD8F2DC else AppColors.RedF9D9D9,
-                        RoundedCornerShape(11.dp)
+                        if (isPurchase) AppColors.Green100 else AppColors.Red100,
+                        AppDimensions.Corner.small
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -122,53 +126,53 @@ private fun BillOrderCard(bill: OrderBatch) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = bill.articleId,
-                        color = AppColors.Ink26352B,
-                        style = AppTypography.Title3,
+                        color = AppColors.Gray900,
+                        style = AppTypography.Size16.copy(fontWeight = FontWeight.Bold),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = bill.orderType.displayName,
                         color = badgeTextColor,
-                        style = AppTypography.LabelEmphasis,
+                        style = AppTypography.Size10.copy(fontWeight = FontWeight.SemiBold),
                         modifier = Modifier
-                            .padding(start = 6.dp)
-                            .background(badgeBackground, RoundedCornerShape(6.dp))
-                            .padding(horizontal = 6.dp, vertical = 3.dp)
+                            .padding(start = AppDimensions.Padding.Dp8)
+                            .background(badgeBackground, AppDimensions.Corner.small)
+                            .padding(horizontal = AppDimensions.Padding.Dp8, vertical = AppDimensions.Padding.Dp4)
                     )
                 }
                 Row(
-                    modifier = Modifier.padding(top = 5.dp),
+                    modifier = Modifier.padding(top = AppDimensions.Padding.Dp8),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
                             .size(8.dp)
                             .background(AppColors.shoeColor(bill.color), CircleShape)
-                            .border(0.5.dp, AppColors.TransparentBlack33, CircleShape)
+                            .border(0.5.dp, AppColors.BlackTransparent, CircleShape)
                     )
                     Text(
                         text = "${bill.color.displayName} · ${bill.dealer}",
-                        color = AppColors.Green7B877F,
-                        style = AppTypography.Label,
+                        color = AppColors.Gray500,
+                        style = AppTypography.Size10,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(start = 5.dp)
+                        modifier = Modifier.padding(start = AppDimensions.Padding.Dp8)
                     )
                 }
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = "¥ ${billAmountText(billOrderTotal(bill))}",
-                    color = AppColors.Ink26352B,
-                    style = AppTypography.Title3,
+                    color = AppColors.Gray900,
+                    style = AppTypography.Size16.copy(fontWeight = FontWeight.Bold),
                     maxLines = 1
                 )
                 Text(
                     text = "¥${billAmountText(bill.price)} / 双",
-                    color = AppColors.Gray8A958D,
-                    style = AppTypography.Caption,
-                    modifier = Modifier.padding(top = 3.dp)
+                    color = AppColors.Gray500,
+                    style = AppTypography.Size10,
+                    modifier = Modifier.padding(top = AppDimensions.Padding.Dp4)
                 )
             }
         }
@@ -176,11 +180,11 @@ private fun BillOrderCard(bill: OrderBatch) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 10.dp, bottom = 9.dp)
-                .background(AppColors.GrayF6F8F6, RoundedCornerShape(10.dp))
+                .padding(top = AppDimensions.Padding.Dp12, bottom = AppDimensions.Padding.Dp12)
+                .background(AppColors.Gray50, AppDimensions.Corner.small)
                 .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 8.dp, vertical = 7.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                .padding(horizontal = AppDimensions.Padding.Dp8, vertical = AppDimensions.Padding.Dp8),
+            horizontalArrangement = Arrangement.spacedBy(AppDimensions.Padding.Dp8)
         ) {
             val sizes = SizeUtils.sizesOf(bill)
             for (index in 0 until SizeUtils.SIZE_AMOUNT) {
@@ -190,18 +194,18 @@ private fun BillOrderCard(bill: OrderBatch) {
                 ) {
                     Text(
                         text = SizeUtils.sizeName(index).toString(),
-                        color = AppColors.Gray919B94,
-                        style = AppTypography.Caption
+                        color = AppColors.Gray500,
+                        style = AppTypography.Size10
                     )
                     Text(
                         text = if (sizes[index] == 0) "—" else sizes[index].toString(),
-                        color = if (sizes[index] == 0) AppColors.GrayC8CFCA else AppColors.Green34443A,
+                        color = if (sizes[index] == 0) AppColors.Gray200 else AppColors.Gray800,
                         style = if (sizes[index] == 0) {
-                            AppTypography.Label
+                            AppTypography.Size10
                         } else {
-                            AppTypography.LabelBold
+                            AppTypography.Size10.copy(fontWeight = FontWeight.Bold)
                         },
-                        modifier = Modifier.padding(top = 3.dp)
+                        modifier = Modifier.padding(top = AppDimensions.Padding.Dp4)
                     )
                 }
             }
@@ -211,16 +215,16 @@ private fun BillOrderCard(bill: OrderBatch) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(AppColors.GrayF0F2F0)
+                .background(AppColors.Gray100)
         )
         Text(
             text = "${billDateLineFormatter.format(instant)}  ${billTimeLineFormatter.format(instant)}",
-            color = AppColors.Gray87918B,
-            style = AppTypography.Caption,
+            color = AppColors.Gray500,
+            style = AppTypography.Size10,
             textAlign = TextAlign.End,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp)
+                .padding(top = AppDimensions.Padding.Dp8)
         )
     }
 }

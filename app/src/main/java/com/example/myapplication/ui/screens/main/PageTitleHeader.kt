@@ -15,8 +15,9 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.myapplication.ui.theme.AppColors
+import com.example.myapplication.ui.theme.AppDimensions
+import com.example.myapplication.ui.theme.AppTypography
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -39,31 +40,26 @@ fun PageTitleHeader(
         Column {
             Text(
                 text = eyebrow,
-                color = AppColors.Green246B50,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.15.sp
+                color = AppColors.Green800,
+                style = AppTypography.Size10.copy(fontWeight = FontWeight.Bold)
             )
             Text(
                 text = title,
-                color = AppColors.Ink19251F,
-                fontSize = 26.sp,
-                lineHeight = 29.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = (-0.8).sp,
-                modifier = Modifier.padding(top = 3.dp)
+                color = AppColors.Gray900,
+                style = AppTypography.Size24.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.padding(top = AppDimensions.Padding.Dp4)
             )
         }
         Row(
-            modifier = Modifier.padding(bottom = 3.dp),
+            modifier = Modifier.padding(bottom = AppDimensions.Padding.Dp4),
             verticalAlignment = Alignment.CenterVertically
         ) {
             CalendarMark()
-            Spacer(modifier = Modifier.size(5.dp))
+            Spacer(modifier = Modifier.size(4.dp))
             Text(
                 text = today,
-                color = AppColors.Green77827B,
-                fontSize = 10.sp
+                color = AppColors.Gray500,
+                style = AppTypography.Size10
             )
         }
     }
@@ -77,7 +73,7 @@ private fun CalendarMark() {
             .drawBehind {
                 val stroke = 1.dp.toPx()
                 drawRoundRect(
-                    color = AppColors.Green77827B,
+                    color = AppColors.Gray500,
                     topLeft = Offset(stroke / 2, stroke * 2),
                     size = androidx.compose.ui.geometry.Size(
                         size.width - stroke,
@@ -87,19 +83,19 @@ private fun CalendarMark() {
                     style = androidx.compose.ui.graphics.drawscope.Stroke(stroke)
                 )
                 drawLine(
-                    color = AppColors.Green77827B,
+                    color = AppColors.Gray500,
                     start = Offset(stroke, size.height * 0.42f),
                     end = Offset(size.width - stroke, size.height * 0.42f),
                     strokeWidth = stroke
                 )
                 drawLine(
-                    color = AppColors.Green77827B,
+                    color = AppColors.Gray500,
                     start = Offset(size.width * 0.32f, 0f),
                     end = Offset(size.width * 0.32f, size.height * 0.28f),
                     strokeWidth = stroke
                 )
                 drawLine(
-                    color = AppColors.Green77827B,
+                    color = AppColors.Gray500,
                     start = Offset(size.width * 0.68f, 0f),
                     end = Offset(size.width * 0.68f, size.height * 0.28f),
                     strokeWidth = stroke

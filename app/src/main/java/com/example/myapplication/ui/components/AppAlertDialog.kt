@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
@@ -27,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.myapplication.ui.theme.AppColors
+import com.example.myapplication.ui.theme.AppDimensions
 import com.example.myapplication.ui.theme.AppTypography
 
 data class AppDialogOption(
@@ -66,23 +66,23 @@ fun AppAlertDialog(
         Column(
             modifier = Modifier
                 .fillMaxWidth(0.92f)
-                .widthIn(max = 420.dp)
-                .clip(RoundedCornerShape(22.dp))
+                .widthIn(max = AppDimensions.Size.Dp560)
+                .clip(AppDimensions.Corner.large)
                 .background(AppColors.White)
-                .padding(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 12.dp)
+                .padding(start = AppDimensions.Padding.Dp20, top = AppDimensions.Padding.Dp20, end = AppDimensions.Padding.Dp20, bottom = AppDimensions.Padding.Dp12)
         ) {
             Text(
                 text = dialog.title,
-                color = AppColors.Ink19251F,
-                style = AppTypography.Title2
+                color = AppColors.Gray900,
+                style = AppTypography.Size16.copy(fontWeight = FontWeight.Bold)
             )
 
             dialog.message?.takeIf(String::isNotBlank)?.let { message ->
                 Text(
                     text = message,
-                    modifier = Modifier.padding(top = 10.dp),
-                    color = AppColors.Green66736A,
-                    style = AppTypography.BodyLarge
+                    modifier = Modifier.padding(top = AppDimensions.Padding.Dp12),
+                    color = AppColors.Gray500,
+                    style = AppTypography.Size12
                 )
             }
 
@@ -90,19 +90,19 @@ fun AppAlertDialog(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 10.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(AppColors.GrayF6F8F6)
+                        .padding(top = AppDimensions.Padding.Dp12)
+                        .clip(AppDimensions.Corner.small)
+                        .background(AppColors.Gray50)
                         .clickable {
                             onDismissRequest()
                             option.onClick()
                         }
-                        .padding(horizontal = 16.dp, vertical = 15.dp)
+                        .padding(horizontal = AppDimensions.Padding.Dp16, vertical = AppDimensions.Padding.Dp16)
                 ) {
                     Text(
                         text = option.label,
-                        color = AppColors.Green36443B,
-                        style = AppTypography.BodyEmphasis
+                        color = AppColors.Gray800,
+                        style = AppTypography.Size12.copy(fontWeight = FontWeight.SemiBold)
                     )
                 }
             }
@@ -110,28 +110,28 @@ fun AppAlertDialog(
             if (dialog.progressMessage != null) {
                 val progressModifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 20.dp)
+                    .padding(top = AppDimensions.Padding.Dp20)
                 if (dialog.progress != null) {
                     LinearProgressIndicator(
                         progress = dialog.progress.coerceIn(0f, 1f),
                         modifier = progressModifier,
-                        color = AppColors.Green246B50,
-                        trackColor = AppColors.GreenE8F2EC
+                        color = AppColors.Green800,
+                        trackColor = AppColors.Green50
                     )
                 } else {
                     LinearProgressIndicator(
                         modifier = progressModifier,
-                        color = AppColors.Green246B50,
-                        trackColor = AppColors.GreenE8F2EC
+                        color = AppColors.Green800,
+                        trackColor = AppColors.Green50
                     )
                 }
                 Text(
                     text = dialog.progressMessage,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    color = AppColors.Gray87918B,
-                    style = AppTypography.Body,
+                        .padding(top = AppDimensions.Padding.Dp8),
+                    color = AppColors.Gray500,
+                    style = AppTypography.Size12,
                     textAlign = TextAlign.End
                 )
             }
@@ -147,10 +147,10 @@ fun AppAlertDialog(
                         TextButton(
                             onClick = onDismissRequest,
                             colors = ButtonDefaults.textButtonColors(
-                                contentColor = AppColors.Green66736A
+                                contentColor = AppColors.Gray500
                             )
                         ) {
-                            Text(text = label, style = AppTypography.BodyEmphasis)
+                            Text(text = label, style = AppTypography.Size12.copy(fontWeight = FontWeight.SemiBold))
                         }
                     }
                     dialog.confirmLabel?.let { label ->
@@ -159,15 +159,15 @@ fun AppAlertDialog(
                                 onDismissRequest()
                                 dialog.onConfirm?.invoke()
                             },
-                            shape = RoundedCornerShape(12.dp),
+                            shape = AppDimensions.Corner.small,
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = AppColors.Green246B50,
+                                containerColor = AppColors.Green800,
                                 contentColor = AppColors.White
                             )
                         ) {
                             Text(
                                 text = label,
-                                style = AppTypography.BodyEmphasis.copy(
+                                style = AppTypography.Size12.copy(
                                     fontWeight = FontWeight.SemiBold
                                 )
                             )

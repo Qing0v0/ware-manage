@@ -103,7 +103,7 @@ fun BillsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(AppColors.GrayF5F7F5)
+            .background(AppColors.Gray50)
     ) {
         BillQueryCard(
             startDate = startDate,

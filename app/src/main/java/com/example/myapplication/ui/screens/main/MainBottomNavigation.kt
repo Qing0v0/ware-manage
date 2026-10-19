@@ -21,9 +21,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
+import com.example.myapplication.ui.theme.AppDimensions
+import com.example.myapplication.ui.theme.AppTypography
 
 private data class MainNavigationItem(
     val id: Int,
@@ -44,11 +45,11 @@ internal fun MainBottomNavigation(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(64.dp)
+            .height(70.dp)
             .background(AppColors.White)
             .drawBehind {
                 drawLine(
-                    color = AppColors.GrayEDF0ED,
+                    color = AppColors.Gray100,
                     start = androidx.compose.ui.geometry.Offset(0f, 0f),
                     end = androidx.compose.ui.geometry.Offset(size.width, 0f),
                     strokeWidth = 1.dp.toPx()
@@ -59,7 +60,7 @@ internal fun MainBottomNavigation(
         navigationItems.forEach { item ->
             val selected = item.id == selectedItemId
             val contentColor =
-                if (selected) AppColors.Green246B50 else AppColors.Gray99A29B
+                if (selected) AppColors.Green800 else AppColors.Gray500
 
             Column(
                 modifier = Modifier
@@ -79,12 +80,13 @@ internal fun MainBottomNavigation(
                     modifier = Modifier.size(20.dp),
                     tint = contentColor
                 )
-                Spacer(modifier = Modifier.height(3.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = stringResource(item.title),
                     color = contentColor,
-                    fontSize = 10.sp,
-                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
+                    style = AppTypography.Size10.copy(
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
+                    )
                 )
             }
         }

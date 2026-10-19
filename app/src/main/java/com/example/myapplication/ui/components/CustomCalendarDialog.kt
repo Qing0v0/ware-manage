@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,17 +23,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
+import com.example.myapplication.ui.theme.AppDimensions
 import com.example.myapplication.ui.theme.AppTypography
 import java.time.LocalDate
 import java.time.ZoneId
@@ -49,39 +46,38 @@ fun CustomCalendarDialog(
     var selectedDate by remember(initialDate) { mutableStateOf(initialDate) }
     var visibleMonth by remember(initialDate) { mutableStateOf(YearMonth.from(initialDate)) }
     val today = remember { LocalDate.now(ZoneId.of("Asia/Shanghai")) }
-    val weekdays = listOf("星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六")
+    val weekdays = listOf("日", "一", "二", "三", "四", "五", "六")
 
     Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
-                .width(300.dp)
-                .shadow(18.dp, RoundedCornerShape(20.dp))
-                .clip(RoundedCornerShape(20.dp))
+                .width(AppDimensions.Size.Dp300)
+                .clip(AppDimensions.Corner.large)
                 .background(AppColors.White)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(AppColors.Green246B50)
-                    .padding(horizontal = 20.dp, vertical = 14.dp)
+                    .background(AppColors.Green800)
+                    .padding(horizontal = AppDimensions.Padding.Dp20, vertical = AppDimensions.Padding.Dp16)
             ) {
                 Text(
                     text = selectedDate.year.toString(),
                     color = AppColors.White.copy(alpha = 0.82f),
-                    style = AppTypography.BodyEmphasis
+                    style = AppTypography.Size12.copy(fontWeight = FontWeight.SemiBold)
                 )
                 Text(
                     text = "${selectedDate.monthValue}月${selectedDate.dayOfMonth}日，${weekdays[selectedDate.dayOfWeek.value % 7]}",
                     color = AppColors.White,
-                    style = AppTypography.Display,
-                    modifier = Modifier.padding(top = 3.dp)
+                    style = AppTypography.Size24.copy(fontWeight = FontWeight.Bold),
+                    modifier = Modifier.padding(top = AppDimensions.Padding.Dp4)
                 )
             }
 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(horizontal = AppDimensions.Padding.Dp16, vertical = AppDimensions.Padding.Dp8)
             ) {
                 Row(
                     modifier = Modifier
@@ -91,8 +87,8 @@ fun CustomCalendarDialog(
                 ) {
                     Text(
                         text = "${visibleMonth.year}年${visibleMonth.monthValue}月",
-                        color = AppColors.Ink26352B,
-                        style = AppTypography.BodyLarge.copy(fontWeight = FontWeight.Bold),
+                        color = AppColors.Gray900,
+                        style = AppTypography.Size14.copy(fontWeight = FontWeight.Bold),
                         modifier = Modifier.weight(1f)
                     )
                     CalendarMonthButton(
@@ -125,8 +121,8 @@ fun CustomCalendarDialog(
                         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                             Text(
                                 text = day,
-                                color = AppColors.Gray87918B,
-                                style = AppTypography.Caption.copy(fontWeight = FontWeight.Medium),
+                                color = AppColors.Gray500,
+                                style = AppTypography.Size10.copy(fontWeight = FontWeight.Medium),
                                 modifier = Modifier.height(26.dp)
                             )
                         }
@@ -139,7 +135,7 @@ fun CustomCalendarDialog(
                 val calendarStart = firstDay.minusDays(leadingDays.toLong())
                 val weekCount = cellCount / 7
 
-                Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(AppDimensions.Padding.Dp4)) {
                     repeat(weekCount) { week ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -167,7 +163,7 @@ fun CustomCalendarDialog(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, top = 2.dp, bottom = 12.dp),
+                    .padding(start = AppDimensions.Padding.Dp16, end = AppDimensions.Padding.Dp16, top = AppDimensions.Padding.Dp4, bottom = AppDimensions.Padding.Dp12),
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -194,7 +190,7 @@ private fun CalendarMonthButton(
 ) {
     Box(
         modifier = Modifier
-            .size(32.dp)
+            .size(AppDimensions.Size.Dp32)
             .clip(CircleShape)
             .semantics { this.contentDescription = contentDescription }
             .clickable(onClick = onClick),
@@ -202,9 +198,9 @@ private fun CalendarMonthButton(
     ) {
         Text(
             text = label,
-            color = AppColors.Green69756D,
-            style = AppTypography.Title2,
-            modifier = Modifier.padding(bottom = 3.dp)
+            color = AppColors.Gray500,
+            style = AppTypography.Size16.copy(fontWeight = FontWeight.Bold),
+            modifier = Modifier.padding(bottom = AppDimensions.Padding.Dp4)
         )
     }
 }
@@ -218,21 +214,21 @@ private fun CalendarDay(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val background = if (isSelected) AppColors.Green246B50 else Color.Transparent
+    val background = if (isSelected) AppColors.Green800 else AppColors.Transparent
     val foreground = when {
         isSelected -> AppColors.White
-        !inVisibleMonth -> AppColors.GrayC8CFCA
-        isToday -> AppColors.Green246B50
-        else -> AppColors.Green34443A
+        !inVisibleMonth -> AppColors.Gray200
+        isToday -> AppColors.Green800
+        else -> AppColors.Gray800
     }
 
     Box(
         modifier = modifier
-            .padding(1.dp)
-            .size(32.dp)
+            .padding(AppDimensions.Padding.Dp4)
+            .size(AppDimensions.Size.Dp32)
             .then(
                 if (isToday && !isSelected) {
-                    Modifier.border(1.dp, AppColors.Sage8BAF96, CircleShape)
+                    Modifier.border(1.dp, AppColors.Green500, CircleShape)
                 } else {
                     Modifier
                 }
@@ -246,9 +242,9 @@ private fun CalendarDay(
             text = date.dayOfMonth.toString(),
             color = foreground,
             style = if (isSelected || isToday) {
-                AppTypography.LabelBold
+                AppTypography.Size10.copy(fontWeight = FontWeight.Bold)
             } else {
-                AppTypography.Label
+                AppTypography.Size10
             }
         )
     }
@@ -262,16 +258,16 @@ private fun CalendarAction(
 ) {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(9.dp))
-            .background(if (primary) AppColors.Green246B50 else Color.Transparent)
+            .clip(AppDimensions.Corner.small)
+            .background(if (primary) AppColors.Green800 else AppColors.Transparent)
             .clickable(onClick = onClick)
-            .padding(horizontal = 15.dp, vertical = 9.dp),
+            .padding(horizontal = AppDimensions.Padding.Dp16, vertical = AppDimensions.Padding.Dp8),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
-            color = if (primary) AppColors.White else AppColors.Green246B50,
-            style = AppTypography.BodyEmphasis
+            color = if (primary) AppColors.White else AppColors.Green800,
+            style = AppTypography.Size12.copy(fontWeight = FontWeight.SemiBold)
         )
     }
 }

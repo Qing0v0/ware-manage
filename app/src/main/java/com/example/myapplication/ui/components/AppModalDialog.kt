@@ -8,19 +8,19 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.myapplication.ui.theme.AppColors
-import com.example.myapplication.ui.theme.AppTypography
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.example.myapplication.ui.theme.AppColors
+import com.example.myapplication.ui.theme.AppDimensions
+import com.example.myapplication.ui.theme.AppTypography
 
 @Composable
 fun AppModalDialog(
@@ -38,9 +38,9 @@ fun AppModalDialog(
             modifier = Modifier
                 .fillMaxWidth(0.94f)
                 .fillMaxHeight(0.9f)
-                .widthIn(max = 560.dp),
-            shape = RoundedCornerShape(24.dp),
-            color = AppColors.GrayF6F8F6,
+                .widthIn(max = AppDimensions.Size.Dp560),
+            shape = AppDimensions.Corner.large,
+            color = AppColors.Gray50,
             shadowElevation = 14.dp
         ) {
             Column {
@@ -48,23 +48,23 @@ fun AppModalDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(AppColors.White)
-                        .padding(start = 20.dp, top = 17.dp, end = 16.dp, bottom = 15.dp),
+                        .padding(start = AppDimensions.Padding.Dp20, top = AppDimensions.Padding.Dp20, end = AppDimensions.Padding.Dp16, bottom = AppDimensions.Padding.Dp16),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = title,
-                            color = AppColors.Ink19251F,
-                            style = AppTypography.Title2.copy(fontSize = 20.sp),
+                            color = AppColors.Gray900,
+                            style = AppTypography.Size20.copy(fontWeight = FontWeight.Bold),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                         if (subtitle.isNotBlank()) {
                             Text(
                                 text = subtitle,
-                                color = AppColors.Gray87918B,
-                                style = AppTypography.Body,
-                                modifier = Modifier.padding(top = 4.dp),
+                                color = AppColors.Gray500,
+                                style = AppTypography.Size12,
+                                modifier = Modifier.padding(top = AppDimensions.Padding.Dp4),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -74,14 +74,14 @@ fun AppModalDialog(
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                        .padding(horizontal = AppDimensions.Padding.Dp16, vertical = AppDimensions.Padding.Dp12),
                     content = content
                 )
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(AppColors.White)
-                        .padding(horizontal = 16.dp, vertical = 13.dp),
+                        .padding(horizontal = AppDimensions.Padding.Dp16, vertical = AppDimensions.Padding.Dp16),
                     content = { footer() }
                 )
             }

@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -49,18 +48,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Text
-import com.example.myapplication.R
 import com.example.myapplication.model.OrderBatch
 import com.example.myapplication.model.OrderRowData
 import com.example.myapplication.model.OrderType
 import com.example.myapplication.model.ShoeInventory
+import com.example.myapplication.R
 import com.example.myapplication.service.InventoryDatabase
 import com.example.myapplication.service.InventoryService
 import com.example.myapplication.ui.components.AppModalDialog
 import com.example.myapplication.ui.components.DropdownSelector
 import com.example.myapplication.ui.theme.AppColors
+import com.example.myapplication.ui.theme.AppDimensions
 import com.example.myapplication.ui.theme.AppTypography
 import com.example.myapplication.utils.ImageUtils
 import com.example.myapplication.utils.OrderBatchUtils
@@ -133,7 +132,7 @@ fun InventoryOrderDialog(
         footer = {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(AppDimensions.Padding.Dp12)
             ) {
                 OrderDialogButton(
                     text = stringResource(R.string.cancel),
@@ -232,7 +231,7 @@ fun InventoryOrderDialog(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(AppDimensions.Padding.Dp12)
         ) {
             OrderField(
                 label = stringResource(R.string.purchase_order_article_id),
@@ -276,14 +275,14 @@ fun InventoryOrderDialog(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(AppDimensions.Padding.Dp12)
                 ) {
                     FormFieldLabel(stringResource(R.string.order_pay_type))
                     DropdownSelector(
                         selectedLabel = selectedPaymentType.displayName,
                         options = OrderType.soldTypes.map { it.displayName },
                         onSelect = { selectedPaymentType = OrderType.soldTypes[it] },
-                        modifier = Modifier.weight(1f).height(44.dp)
+                        modifier = Modifier.weight(1f).height(AppDimensions.Size.Dp40)
                     )
                 }
             }
@@ -331,13 +330,13 @@ fun InventoryOrderDialog(
             errorMessage?.let { message ->
                 Text(
                     text = message,
-                    color = AppColors.RedC62828,
-                    style = AppTypography.Body,
+                    color = AppColors.Red700,
+                    style = AppTypography.Size12,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(AppColors.RedF9D9D9)
-                        .padding(11.dp)
+                        .clip(AppDimensions.Corner.small)
+                        .background(AppColors.Red100)
+                        .padding(AppDimensions.Padding.Dp12)
                 )
             }
         }
@@ -358,23 +357,23 @@ private fun OrderDraftCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(AppDimensions.Corner.large)
             .background(AppColors.White)
-            .border(1.dp, AppColors.GrayE9EEEA, RoundedCornerShape(16.dp))
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+            .border(1.dp, AppColors.Gray100, AppDimensions.Corner.large)
+            .padding(AppDimensions.Padding.Dp12),
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.Padding.Dp12)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(AppDimensions.Padding.Dp12)
         ) {
             FormFieldLabel(stringResource(R.string.inventory_size_stock))
             if (colorFixed) {
                 Text(
                     text = row.color,
-                    color = AppColors.Ink19251F,
-                    style = AppTypography.BodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                    color = AppColors.Gray900,
+                    style = AppTypography.Size12.copy(fontWeight = FontWeight.SemiBold)
                 )
             } else {
                 DropdownSelector(
@@ -388,57 +387,57 @@ private fun OrderDraftCard(
             if (showDelete) {
                 Text(
                     text = stringResource(R.string.delete_order_row),
-                    color = AppColors.RedC62828,
-                    fontSize = 16.sp,
+                    color = AppColors.Red700,
+                    style = AppTypography.Size16,
                     modifier = Modifier
                         .clip(CircleShape)
-                        .background(AppColors.RedF9D9D9)
+                        .background(AppColors.Red100)
                         .clickable(onClick = onDelete)
-                        .padding(horizontal = 11.dp, vertical = 6.dp)
+                        .padding(horizontal = AppDimensions.Padding.Dp12, vertical = AppDimensions.Padding.Dp8)
                 )
             }
         }
         row.sizes.chunked(6).forEachIndexed { rowIndex, sizeRow ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(5.dp)
+                horizontalArrangement = Arrangement.spacedBy(AppDimensions.Padding.Dp8)
             ) {
                 sizeRow.forEachIndexed { columnIndex, count ->
                     val index = rowIndex * 6 + columnIndex
-                    val cellShape = RoundedCornerShape(9.dp)
+                    val cellShape = AppDimensions.Corner.small
                     val hasQuantity = count.isNotBlank()
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .height(54.dp)
+                            .height(AppDimensions.Size.Dp56)
                             .clip(cellShape)
-                            .background(if (hasQuantity) AppColors.GreenE8F2EC else AppColors.White)
+                            .background(if (hasQuantity) AppColors.Green50 else AppColors.White)
                             .border(
                                 1.dp,
-                                if (hasQuantity) AppColors.Sage8BAF96 else AppColors.GrayE9EEEA,
+                                if (hasQuantity) AppColors.Green500 else AppColors.Gray100,
                                 cellShape
                             )
-                            .padding(horizontal = 4.dp, vertical = 5.dp),
+                            .padding(horizontal = AppDimensions.Padding.Dp4, vertical = AppDimensions.Padding.Dp8),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
                             text = SizeUtils.sizeName(index).toString(),
-                            color = AppColors.Gray87918B,
-                            style = AppTypography.Caption
+                            color = AppColors.Gray500,
+                            style = AppTypography.Size10
                         )
                         BasicTextField(
                             value = count,
                             onValueChange = { row.sizes[index] = it },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            textStyle = AppTypography.BodyEmphasis.copy(
-                                color = AppColors.Green246B50,
+                            textStyle = AppTypography.Size12.copy(
+                                color = AppColors.Green800,
                                 textAlign = TextAlign.Center
                             ),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 5.dp)
+                                .padding(top = AppDimensions.Padding.Dp8)
                         )
                     }
                 }
@@ -477,11 +476,11 @@ private fun RowScope.OrderImageCell(
             }?.asImageBitmap()
         }
     }
-    val shape = RoundedCornerShape(9.dp)
+    val shape = AppDimensions.Corner.small
     Box(
         modifier = Modifier
             .weight(1f)
-            .height(54.dp)
+            .height(AppDimensions.Size.Dp56)
             .clip(shape)
             .clickable(enabled = editable, onClick = onClick),
         contentAlignment = Alignment.Center
@@ -496,7 +495,7 @@ private fun RowScope.OrderImageCell(
         } else {
             Canvas(modifier = Modifier.fillMaxSize()) {
                 drawRoundRect(
-                    color = AppColors.Sage8BAF96,
+                    color = AppColors.Green500,
                     cornerRadius = androidx.compose.ui.geometry.CornerRadius(9.dp.toPx()),
                     style = Stroke(
                         width = 1.dp.toPx(),
@@ -506,10 +505,8 @@ private fun RowScope.OrderImageCell(
             }
             Text(
                 text = "+",
-                color = AppColors.Green7B877F,
-                fontSize = 22.sp,
-                lineHeight = 24.sp,
-                fontWeight = FontWeight.Light
+                color = AppColors.Gray500,
+                style = AppTypography.Size24.copy(fontWeight = FontWeight.Light)
             )
         }
     }
@@ -527,25 +524,25 @@ private fun OrderField(
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(AppDimensions.Padding.Dp12)
     ) {
         FormFieldLabel(label, Modifier.width(58.dp))
         Row(
             modifier = Modifier
                 .weight(1f)
-                .height(44.dp)
-                .clip(RoundedCornerShape(11.dp))
-                .background(if (enabled) AppColors.White else AppColors.GrayF6F8F6)
-                .border(1.dp, AppColors.GrayE9EEEA, RoundedCornerShape(11.dp))
-                .padding(horizontal = 12.dp),
+                .height(AppDimensions.Size.Dp40)
+                .clip(AppDimensions.Corner.small)
+                .background(if (enabled) AppColors.White else AppColors.Gray50)
+                .border(1.dp, AppColors.Gray100, AppDimensions.Corner.small)
+                .padding(horizontal = AppDimensions.Padding.Dp12),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(contentAlignment = Alignment.CenterStart) {
                 if (value.isEmpty()) {
                     Text(
                         text = hint,
-                        color = AppColors.GrayA4ACA6,
-                        style = AppTypography.BodyLarge
+                        color = AppColors.Gray450,
+                        style = AppTypography.Size12
                     )
                 }
                 BasicTextField(
@@ -554,7 +551,7 @@ private fun OrderField(
                     enabled = enabled,
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-                    textStyle = AppTypography.BodyLarge.copy(color = AppColors.Ink19251F),
+                    textStyle = AppTypography.Size12.copy(color = AppColors.Gray900),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -566,8 +563,8 @@ private fun OrderField(
 private fun FormFieldLabel(label: String, modifier: Modifier = Modifier) {
     Text(
         text = label,
-        color = AppColors.Green36443B,
-        style = AppTypography.BodyEmphasis,
+        color = AppColors.Gray800,
+        style = AppTypography.Size12.copy(fontWeight = FontWeight.SemiBold),
         modifier = modifier
     )
 }
@@ -580,16 +577,16 @@ private fun OrderDialogButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val shape = RoundedCornerShape(12.dp)
+    val shape = AppDimensions.Corner.small
     Box(
         modifier = modifier
-            .height(44.dp)
+            .height(AppDimensions.Size.Dp40)
             .clip(shape)
             .background(
                 when {
-                    !enabled -> AppColors.GrayE9EEEA
-                    primary -> AppColors.Green276E52
-                    else -> AppColors.GreenE8F2EC
+                    !enabled -> AppColors.Gray100
+                    primary -> AppColors.Green800
+                    else -> AppColors.Green50
                 }
             )
             .clickable(enabled = enabled, onClick = onClick),
@@ -598,11 +595,11 @@ private fun OrderDialogButton(
         Text(
             text = text,
             color = when {
-                !enabled -> AppColors.GrayA4ACA6
+                !enabled -> AppColors.Gray450
                 primary -> AppColors.White
-                else -> AppColors.Green246B50
+                else -> AppColors.Green800
             },
-            style = AppTypography.BodyLarge.copy(fontWeight = FontWeight.Bold)
+            style = AppTypography.Size12.copy(fontWeight = FontWeight.Bold)
         )
     }
 }

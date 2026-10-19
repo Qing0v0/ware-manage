@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,9 +20,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
+import com.example.myapplication.ui.theme.AppDimensions
 import com.example.myapplication.ui.theme.AppTypography
 
 @Composable
@@ -34,8 +33,8 @@ internal fun WareQuickActions(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, bottom = 14.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+            .padding(start = AppDimensions.Padding.Dp16, end = AppDimensions.Padding.Dp16, bottom = AppDimensions.Padding.Dp12),
+        horizontalArrangement = Arrangement.spacedBy(AppDimensions.Padding.Dp8)
     ) {
         WareQuickAction(
             title = stringResource(R.string.purchase_button),
@@ -62,44 +61,42 @@ private fun WareQuickAction(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val shape = RoundedCornerShape(15.dp)
+    val shape = AppDimensions.Corner.large
     Row(
         modifier = modifier
-            .height(58.dp)
+            .height(AppDimensions.Size.Dp56)
             .clip(shape)
             .background(AppColors.White)
-            .border(1.dp, AppColors.GrayE9EEEA, shape)
+            .border(1.dp, AppColors.Gray100, shape)
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 12.dp),
+            .padding(horizontal = AppDimensions.Padding.Dp12),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(9.dp)
+        horizontalArrangement = Arrangement.spacedBy(AppDimensions.Padding.Dp12)
     ) {
         Box(
             modifier = Modifier
-                .size(32.dp)
-                .clip(RoundedCornerShape(11.dp))
-                .background(AppColors.GreenE8F2EC),
+                .size(AppDimensions.Size.Dp32)
+                .clip(AppDimensions.Corner.small)
+                .background(AppColors.Green50),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = symbol,
-                color = AppColors.Green246B50,
-                fontSize = 18.sp,
-                lineHeight = 20.sp,
-                fontWeight = FontWeight.Medium
+                color = AppColors.Green800,
+                style = AppTypography.Size16.copy(fontWeight = FontWeight.Medium)
             )
         }
         Column {
             Text(
                 text = title,
-                color = AppColors.Ink19251F,
-                style = AppTypography.BodyEmphasis
+                color = AppColors.Gray900,
+                style = AppTypography.Size12.copy(fontWeight = FontWeight.SemiBold)
             )
             Text(
                 text = subtitle,
-                color = AppColors.Gray87918B,
-                style = AppTypography.Micro,
-                modifier = Modifier.padding(top = 3.dp)
+                color = AppColors.Gray500,
+                style = AppTypography.Size10,
+                modifier = Modifier.padding(top = AppDimensions.Padding.Dp4)
             )
         }
     }

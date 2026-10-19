@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -22,9 +21,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
+import com.example.myapplication.ui.theme.AppDimensions
+import com.example.myapplication.ui.theme.AppTypography
 
 @Composable
 fun AppBrandHeader(
@@ -41,43 +41,40 @@ fun AppBrandHeader(
                 painter = painterResource(R.drawable.warehouse),
                 contentDescription = null,
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(13.dp))
-                    .background(AppColors.Green246B50)
-                    .padding(9.dp),
+                    .size(AppDimensions.Size.Dp40)
+                    .clip(AppDimensions.Corner.small)
+                    .background(AppColors.Green800)
+                    .padding(AppDimensions.Padding.Dp8),
                 tint = AppColors.White
             )
-            Spacer(modifier = Modifier.size(10.dp))
+            Spacer(modifier = Modifier.size(8.dp))
             Column {
                 Text(
                     text = stringResource(R.string.app_name),
-                    color = AppColors.Ink19251F,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.25.sp
+                    color = AppColors.Gray900,
+                    style = AppTypography.Size14.copy(fontWeight = FontWeight.Bold)
                 )
-                Spacer(modifier = Modifier.height(3.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "WAREHOUSE · INVENTORY",
-                    color = AppColors.Gray87918B,
-                    fontSize = 10.sp,
-                    letterSpacing = 0.2.sp
+                    color = AppColors.Gray500,
+                    style = AppTypography.Size10
                 )
             }
         }
         IconButton(
             onClick = onSettingsClick,
             modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(13.dp))
+                .size(AppDimensions.Size.Dp40)
+                .clip(AppDimensions.Corner.small)
                 .background(AppColors.White)
-                .border(1.dp, AppColors.GrayE9EEEA, RoundedCornerShape(13.dp))
+                .border(1.dp, AppColors.Gray100, AppDimensions.Corner.small)
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_more),
                 contentDescription = stringResource(R.string.more_options),
                 modifier = Modifier.size(18.dp),
-                tint = AppColors.Green77827B
+                tint = AppColors.Gray500
             )
         }
     }

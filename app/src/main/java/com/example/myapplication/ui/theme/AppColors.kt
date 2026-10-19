@@ -4,58 +4,51 @@ import androidx.compose.ui.graphics.Color
 import com.example.myapplication.model.Color as ShoeColor
 
 object AppColors {
-    val TransparentBlack33 = Color(0x33000000)
-    val Ink19251F = Color(0xFF19251F)
-    val Green276E52 = Color(0xFF276E52)
-    val Green246B50 = Color(0xFF246B50)
-    val Ink26352B = Color(0xFF26352B)
-    val Green2E7D32 = Color(0xFF2E7D32)
-    val Green34443A = Color(0xFF34443A)
-    val Green36443B = Color(0xFF36443B)
-    val Charcoal4A4A48 = Color(0xFF4A4A48)
-    val Green66736A = Color(0xFF66736A)
-    val Green69756D = Color(0xFF69756D)
-    val Green77827B = Color(0xFF77827B)
-    val Green7B877F = Color(0xFF7B877F)
-    val Gray87918B = Color(0xFF87918B)
-    val Gray8A958D = Color(0xFF8A958D)
-    val Sage8BAF96 = Color(0xFF8BAF96)
-    val Blue8CAFC4 = Color(0xFF8CAFC4)
-    val Gray8F9992 = Color(0xFF8F9992)
-    val Gray909A93 = Color(0xFF909A93)
-    val Gray919B94 = Color(0xFF919B94)
-    val Gray939D96 = Color(0xFF939D96)
-    val Gray99A29B = Color(0xFF99A29B)
-    val Brown9D8878 = Color(0xFF9D8878)
-    val GrayA4ACA6 = Color(0xFFA4ACA6)
-    val GrayA7AAA8 = Color(0xFFA7AAA8)
-    val BrownA98B78 = Color(0xFFA98B78)
-    val GrayBEC3BF = Color(0xFFBEC3BF)
-    val RedC62828 = Color(0xFFC62828)
-    val GrayC8CFCA = Color(0xFFC8CFCA)
-    val GreenD8F2DC = Color(0xFFD8F2DC)
-    val MintD0E1D8 = Color(0xFFD0E1D8)
-    val Green8DE0AD = Color(0xFF8DE0AD)
-    val SandD9C27A = Color(0xFFD9C27A)
-    val GreenE8F2EC = Color(0xFFE8F2EC)
-    val GrayE9EEEA = Color(0xFFE9EEEA)
-    val GrayEDF0ED = Color(0xFFEDF0ED)
-    val GrayF0F2F0 = Color(0xFFF0F2F0)
-    val GrayF5F7F5 = Color(0xFFF5F7F5)
-    val GrayF6F8F6 = Color(0xFFF6F8F6)
-    val RedF9D9D9 = Color(0xFFF9D9D9)
+    val Transparent = Color.Transparent
+
     val White = Color.White
 
+    val Gray50 = Color(0xFFF5F7F5)
+    val Gray100 = Color(0xFFE9EEEA)
+    val Gray200 = Color(0xFFC8CFCA)
+    val Gray300 = Color(0xFFBEC3BF)
+    val Gray400 = Color(0xFFA7AAA8)
+    val Gray450 = Color(0xFFA4ACA6)
+    val Gray500 = Color(0xFF87918B)
+    val Gray700 = Color(0xFF4A4A48)
+    val Gray800 = Color(0xFF36443B)
+    val Gray900 = Color(0xFF19251F)
+
+    val Green50 = Color(0xFFE8F2EC)
+    val Green100 = Color(0xFFD8F2DC)
+    val Green200 = Color(0xFFD0E1D8)
+    val Green400 = Color(0xFF8DE0AD)
+    val Green500 = Color(0xFF8BAF96)
+    val Green700 = Color(0xFF2E7D32)
+    val Green800 = Color(0xFF246B50)
+
+    val Red100 = Color(0xFFF9D9D9)
+    val Red700 = Color(0xFFC62828)
+
+    val Brown100 = Color(0xFFA98B78)
+    val Brown200 = Color(0xFF9D8878)
+
+    val Blue400 = Color(0xFF8CAFC4)
+
+    val Yellow300 = Color(0xFFD9C27A)
+
+    val BlackTransparent = Color(0x33000000)
+
     fun shoeColor(color: ShoeColor): Color = when (color) {
-        ShoeColor.BLACK -> Charcoal4A4A48
+        ShoeColor.BLACK -> Gray700
         ShoeColor.WHITE -> White
-        ShoeColor.GRAY -> GrayA7AAA8
-        ShoeColor.YELLOW -> SandD9C27A
-        ShoeColor.GREEN -> Sage8BAF96
-        ShoeColor.BLUE -> Blue8CAFC4
-        ShoeColor.RED -> RedF9D9D9
-        ShoeColor.BROWN -> BrownA98B78
-        ShoeColor.COFFEE -> Brown9D8878
-        ShoeColor.OTHER -> GrayBEC3BF
+        ShoeColor.GRAY -> Gray400
+        ShoeColor.YELLOW -> Yellow300
+        ShoeColor.GREEN -> Green500
+        ShoeColor.BLUE -> Blue400
+        ShoeColor.RED -> Red100
+        ShoeColor.BROWN -> Brown100
+        ShoeColor.COFFEE -> Brown200
+        ShoeColor.OTHER -> Gray300
     }
 }

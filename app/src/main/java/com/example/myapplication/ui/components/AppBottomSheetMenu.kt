@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Divider
@@ -18,10 +17,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import com.example.myapplication.ui.theme.AppColors
-import com.example.myapplication.ui.theme.AppTypography
 import kotlinx.coroutines.launch
+import com.example.myapplication.ui.theme.AppColors
+import com.example.myapplication.ui.theme.AppDimensions
+import com.example.myapplication.ui.theme.AppTypography
 
 data class AppBottomSheetMenuItem(
     val label: String,
@@ -44,29 +43,29 @@ fun AppBottomSheetMenu(
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-        containerColor = AppColors.GrayF6F8F6,
-        contentColor = AppColors.Ink19251F,
+        shape = AppDimensions.Corner.largeTop,
+        containerColor = AppColors.Gray50,
+        contentColor = AppColors.Gray900,
         dragHandle = {
-            BottomSheetDefaults.DragHandle(color = AppColors.GrayC8CFCA)
+            BottomSheetDefaults.DragHandle(color = AppColors.Gray200)
         }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp)
+                .padding(bottom = AppDimensions.Padding.Dp16)
         ) {
             Text(
                 text = title,
-                modifier = Modifier.padding(start = 20.dp, top = 4.dp, end = 20.dp, bottom = 12.dp),
-                color = AppColors.Ink19251F,
-                style = AppTypography.Title3
+                modifier = Modifier.padding(start = AppDimensions.Padding.Dp20, top = AppDimensions.Padding.Dp4, end = AppDimensions.Padding.Dp20, bottom = AppDimensions.Padding.Dp12),
+                color = AppColors.Gray900,
+                style = AppTypography.Size16.copy(fontWeight = FontWeight.Bold)
             )
             items.forEachIndexed { index, item ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp)
+                        .height(AppDimensions.Size.Dp56)
                         .clickable {
                             scope.launch {
                                 sheetState.hide()
@@ -74,19 +73,19 @@ fun AppBottomSheetMenu(
                                 item.onClick()
                             }
                         }
-                        .padding(horizontal = 20.dp),
+                        .padding(horizontal = AppDimensions.Padding.Dp20),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = item.label,
-                        color = AppColors.Green36443B,
-                        style = AppTypography.BodyLarge.copy(fontWeight = FontWeight.Medium)
+                        color = AppColors.Gray800,
+                        style = AppTypography.Size12.copy(fontWeight = FontWeight.Medium)
                     )
                 }
                 if (index < items.lastIndex) {
                     Divider(
-                        modifier = Modifier.padding(horizontal = 20.dp),
-                        color = AppColors.GrayE9EEEA
+                        modifier = Modifier.padding(horizontal = AppDimensions.Padding.Dp20),
+                        color = AppColors.Gray100
                     )
                 }
             }

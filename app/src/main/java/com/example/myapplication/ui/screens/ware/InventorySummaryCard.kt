@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -19,9 +18,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
+import com.example.myapplication.ui.theme.AppDimensions
 import com.example.myapplication.ui.theme.AppTypography
 
 @Composable
@@ -29,66 +28,60 @@ internal fun InventorySummaryCard(
     totalQuantity: String,
     styleCount: Int
 ) {
-    val shape = RoundedCornerShape(18.dp)
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clip(shape)
-            .background(AppColors.Green276E52)
-            .padding(horizontal = 16.dp, vertical = 13.dp)
+            .padding(horizontal = AppDimensions.Padding.Dp16, vertical = AppDimensions.Padding.Dp8)
+            .clip(AppDimensions.Corner.large)
+            .background(AppColors.Green800)
+            .padding(horizontal = AppDimensions.Padding.Dp16, vertical = AppDimensions.Padding.Dp12)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(7.dp)
+            horizontalArrangement = Arrangement.spacedBy(AppDimensions.Padding.Dp8)
         ) {
             Box(
                 modifier = Modifier
                     .size(6.dp)
-                    .background(AppColors.Green8DE0AD, CircleShape)
+                    .background(AppColors.Green400, CircleShape)
             )
             Text(
                 text = stringResource(R.string.inventory_total_label),
-                color = AppColors.MintD0E1D8,
-                style = AppTypography.BodyEmphasis
+                color = AppColors.Green200,
+                style = AppTypography.Size12.copy(fontWeight = FontWeight.SemiBold)
             )
         }
         Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = AppDimensions.Padding.Dp8),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = totalQuantity,
                 color = AppColors.White,
-                fontSize = 30.sp,
-                lineHeight = 32.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = (-0.8).sp
+                style = AppTypography.Size30.copy(fontWeight = FontWeight.Bold)
             )
             Text(
                 text = stringResource(R.string.inventory_quantity_unit),
                 color = AppColors.White,
-                style = AppTypography.BodyLarge,
-                modifier = Modifier.padding(start = 3.dp, top = 7.dp)
+                style = AppTypography.Size14,
+                modifier = Modifier.padding(start = AppDimensions.Padding.Dp4, top = AppDimensions.Padding.Dp8)
             )
             Spacer(modifier = Modifier.weight(1f))
             Text(
                 text = stringResource(R.string.inventory_total_count_prefix),
-                color = AppColors.MintD0E1D8,
-                style = AppTypography.Body
+                color = AppColors.Green200,
+                style = AppTypography.Size12
             )
             Text(
                 text = styleCount.toString(),
                 color = AppColors.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 4.dp)
+                style = AppTypography.Size16.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.padding(horizontal = AppDimensions.Padding.Dp4)
             )
             Text(
                 text = stringResource(R.string.inventory_total_count_suffix),
-                color = AppColors.MintD0E1D8,
-                style = AppTypography.Body
+                color = AppColors.Green200,
+                style = AppTypography.Size12
             )
         }
     }

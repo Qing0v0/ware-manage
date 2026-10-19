@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,16 +38,15 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.myapplication.R
 import com.example.myapplication.model.OrderType
 import com.example.myapplication.model.ShoeInventory
+import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
+import com.example.myapplication.ui.theme.AppDimensions
 import com.example.myapplication.ui.theme.AppTypography
 import com.example.myapplication.utils.SizeUtils
 
@@ -91,16 +89,21 @@ internal fun InventoryProductList(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = AppDimensions.Padding.Dp16)
         ) {
             if (groups.isEmpty()) {
                 item(key = "empty_inventory") {
                     Text(
                         text = stringResource(R.string.inventory_empty),
-                        color = AppColors.Ink19251F,
-                        fontSize = 16.sp,
+                        color = AppColors.Gray500,
+                        style = AppTypography.Size14,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth().padding(32.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                top = AppDimensions.Padding.Dp8,
+                                bottom = AppDimensions.Padding.Dp16
+                            )
                     )
                 }
             } else {
@@ -129,19 +132,22 @@ private fun InventorySearchField(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 2.dp, bottom = 9.dp),
+            .padding(
+                horizontal = AppDimensions.Padding.Dp16,
+                vertical = AppDimensions.Padding.Dp8
+            ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = stringResource(R.string.inventory_products_title),
-            color = AppColors.Ink19251F,
-            style = AppTypography.Title3
+            color = AppColors.Gray900,
+            style = AppTypography.Size16.copy(fontWeight = FontWeight.Bold)
         )
         Spacer(modifier = Modifier.weight(1f))
         Text(
             text = stringResource(R.string.inventory_product_group_count, productCount),
-            color = AppColors.Gray87918B,
-            style = AppTypography.Caption
+            color = AppColors.Gray500,
+            style = AppTypography.Size10
         )
     }
 
@@ -149,19 +155,19 @@ private fun InventorySearchField(
         value = query,
         onValueChange = onQueryChange,
         singleLine = true,
-        textStyle = TextStyle(color = AppColors.Ink19251F, fontSize = 14.sp),
+        textStyle = AppTypography.Size14.copy(color = AppColors.Gray900),
         modifier = Modifier
             .fillMaxWidth()
-            .height(44.dp)
-            .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+            .height(AppDimensions.Size.Dp40)
+            .padding(start = AppDimensions.Padding.Dp16, end = AppDimensions.Padding.Dp16, bottom = AppDimensions.Padding.Dp8),
         decorationBox = { innerTextField ->
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(AppDimensions.Corner.large)
                     .background(AppColors.White)
-                    .border(1.dp, AppColors.GrayE9EEEA, RoundedCornerShape(14.dp))
-                    .padding(horizontal = 12.dp),
+                    .border(1.dp, AppColors.Gray100, AppDimensions.Corner.small)
+                    .padding(horizontal = AppDimensions.Padding.Dp12),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 SearchMark()
@@ -173,8 +179,8 @@ private fun InventorySearchField(
                     if (query.isEmpty()) {
                         Text(
                             text = stringResource(R.string.inventory_search_hint),
-                            color = AppColors.Green69756D,
-                            fontSize = 14.sp
+                            color = AppColors.Gray500,
+                            style = AppTypography.Size14
                         )
                     }
                     innerTextField()
@@ -191,13 +197,13 @@ private fun SearchMark() {
         val radius = size.minDimension * 0.31f
         val center = Offset(size.width * 0.42f, size.height * 0.42f)
         drawCircle(
-            color = AppColors.Gray99A29B,
+            color = AppColors.Gray500,
             radius = radius,
             center = center,
             style = Stroke(strokeWidth)
         )
         drawLine(
-            color = AppColors.Gray99A29B,
+            color = AppColors.Gray500,
             start = Offset(center.x + radius * 0.68f, center.y + radius * 0.68f),
             end = Offset(size.width * 0.9f, size.height * 0.9f),
             strokeWidth = strokeWidth,
@@ -213,20 +219,20 @@ private fun InventoryProductCard(
     imageFor: (String) -> ImageBitmap?,
     onStockAction: (OrderType, ShoeInventory) -> Unit
 ) {
-    val shape = RoundedCornerShape(18.dp)
+    val shape = AppDimensions.Corner.large
     val first = rows.first()
     val totalQuantity = rows.sumOf { inventory -> SizeUtils.sizesOf(inventory).sum() }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 5.dp)
+            .padding(vertical = AppDimensions.Padding.Dp8)
             .clip(shape)
             .background(AppColors.White)
-            .border(1.dp, AppColors.GrayE9EEEA, shape)
+            .border(1.dp, AppColors.Gray100, shape)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 11.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = AppDimensions.Padding.Dp16, vertical = AppDimensions.Padding.Dp12),
             verticalAlignment = Alignment.CenterVertically
         ) {
             ProductThumbnail(inventory = first, imageFor = imageFor)
@@ -234,8 +240,8 @@ private fun InventoryProductCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = articleId,
-                    color = AppColors.Ink19251F,
-                    style = AppTypography.BodyLarge.copy(fontWeight = FontWeight.Bold),
+                    color = AppColors.Gray900,
+                    style = AppTypography.Size12.copy(fontWeight = FontWeight.Bold),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -243,9 +249,9 @@ private fun InventoryProductCard(
                     text = "${first.dealer} · ${
                         stringResource(R.string.inventory_product_color_count, rows.size)
                     }",
-                    color = AppColors.Gray87918B,
-                    style = AppTypography.Micro,
-                    modifier = Modifier.padding(top = 4.dp),
+                    color = AppColors.Gray500,
+                    style = AppTypography.Size10,
+                    modifier = Modifier.padding(top = AppDimensions.Padding.Dp4),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -253,12 +259,12 @@ private fun InventoryProductCard(
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = stringResource(R.string.inventory_product_stock_total, totalQuantity),
-                color = AppColors.Green246B50,
-                style = AppTypography.CaptionEmphasis,
+                color = AppColors.Green800,
+                style = AppTypography.Size10.copy(fontWeight = FontWeight.Bold),
                 modifier = Modifier
-                    .clip(RoundedCornerShape(9.dp))
-                    .background(AppColors.GreenE8F2EC)
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                    .clip(AppDimensions.Corner.small)
+                    .background(AppColors.Green50)
+                    .padding(horizontal = AppDimensions.Padding.Dp8, vertical = AppDimensions.Padding.Dp8),
                 maxLines = 1
             )
         }
@@ -279,12 +285,12 @@ private fun ProductThumbnail(
     inventory: ShoeInventory,
     imageFor: (String) -> ImageBitmap?
 ) {
-    val shape = RoundedCornerShape(12.dp)
+    val shape = AppDimensions.Corner.small
     Box(
         modifier = Modifier
-            .size(38.dp)
+            .size(AppDimensions.Size.Dp36)
             .clip(shape)
-            .background(AppColors.GrayF6F8F6),
+            .background(AppColors.Gray50),
         contentAlignment = Alignment.Center
     ) {
         val bitmap = inventory.imagePath?.let(imageFor)
@@ -308,7 +314,7 @@ private fun InventoryColorRow(
     val subtotal = sizes.sum()
 
     Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp)
+        modifier = Modifier.fillMaxWidth().padding(horizontal = AppDimensions.Padding.Dp12, vertical = AppDimensions.Padding.Dp12)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -319,31 +325,31 @@ private fun InventoryColorRow(
                     .size(9.dp)
                     .clip(CircleShape)
                     .background(AppColors.shoeColor(inventory.color))
-                    .border(0.5.dp, AppColors.GrayE9EEEA, CircleShape)
+                    .border(0.5.dp, AppColors.Gray100, CircleShape)
             )
             Text(
                 text = inventory.color.displayName,
-                color = AppColors.Ink19251F,
-                style = AppTypography.LabelEmphasis,
-                modifier = Modifier.padding(start = 7.dp)
+                color = AppColors.Gray900,
+                style = AppTypography.Size10.copy(fontWeight = FontWeight.SemiBold),
+                modifier = Modifier.padding(start = AppDimensions.Padding.Dp8)
             )
             Spacer(modifier = Modifier.weight(1f))
             Text(
                 text = stringResource(R.string.inventory_size_stock),
-                color = AppColors.Gray87918B,
-                style = AppTypography.Micro
+                color = AppColors.Gray500,
+                style = AppTypography.Size10
             )
         }
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(AppColors.GrayF6F8F6)
-                .padding(horizontal = 8.dp, vertical = 7.dp)
+                .padding(top = AppDimensions.Padding.Dp8)
+                .clip(AppDimensions.Corner.small)
+                .background(AppColors.Gray50)
+                .padding(horizontal = AppDimensions.Padding.Dp8, vertical = AppDimensions.Padding.Dp8)
                 .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(AppDimensions.Padding.Dp8)
         ) {
             sizes.forEachIndexed { index, count ->
                 val inStock = count > 0
@@ -354,37 +360,37 @@ private fun InventoryColorRow(
                 ) {
                     Text(
                         text = SizeUtils.sizeName(index).toString(),
-                        color = AppColors.Gray919B94,
-                        style = AppTypography.Micro
+                        color = AppColors.Gray500,
+                        style = AppTypography.Size10
                     )
                     Text(
                         text = if (inStock) count.toString() else "—",
-                        color = if (inStock) AppColors.Green34443A else AppColors.GrayC8CFCA,
+                        color = if (inStock) AppColors.Gray800 else AppColors.Gray200,
                         style = if (inStock) {
-                            AppTypography.Micro.copy(fontWeight = FontWeight.Bold)
+                            AppTypography.Size10.copy(fontWeight = FontWeight.Bold)
                         } else {
-                            AppTypography.Micro
+                            AppTypography.Size10
                         },
-                        modifier = Modifier.padding(top = 3.dp)
+                        modifier = Modifier.padding(top = AppDimensions.Padding.Dp4)
                     )
                 }
             }
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 9.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = AppDimensions.Padding.Dp12),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = stringResource(R.string.inventory_color_subtotal),
-                color = AppColors.Green7B877F,
-                style = AppTypography.Micro
+                color = AppColors.Gray500,
+                style = AppTypography.Size10
             )
             Text(
                 text = stringResource(R.string.inventory_product_stock_total, subtotal),
-                color = AppColors.Ink19251F,
-                style = AppTypography.LabelBold,
-                modifier = Modifier.padding(start = 4.dp)
+                color = AppColors.Gray900,
+                style = AppTypography.Size10.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.padding(start = AppDimensions.Padding.Dp4)
             )
             Spacer(modifier = Modifier.weight(1f))
             StockMiniAction(
@@ -402,17 +408,17 @@ private fun InventoryColorRow(
 
 @Composable
 private fun StockMiniAction(text: String, onClick: () -> Unit) {
-    val shape = RoundedCornerShape(8.dp)
+    val shape = AppDimensions.Corner.small
     Box(
         modifier = Modifier
             .size(width = 27.dp, height = 25.dp)
             .clip(shape)
             .background(AppColors.White)
-            .border(1.dp, AppColors.GrayE9EEEA, shape)
+            .border(1.dp, AppColors.Gray100, shape)
             .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Text(text = text, color = AppColors.Green246B50, fontSize = 14.sp, lineHeight = 16.sp)
+        Text(text = text, color = AppColors.Green800, style = AppTypography.Size14)
     }
 }
 
@@ -421,8 +427,8 @@ private fun InventoryDivider() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp)
+            .padding(horizontal = AppDimensions.Padding.Dp12)
             .height(1.dp)
-            .background(AppColors.GrayF0F2F0)
+            .background(AppColors.Gray100)
     )
 }

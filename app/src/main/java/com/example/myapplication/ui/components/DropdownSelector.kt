@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -29,9 +28,11 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.ui.theme.AppColors
+import com.example.myapplication.ui.theme.AppDimensions
 import com.example.myapplication.ui.theme.AppTypography
 
 @Composable
@@ -42,8 +43,8 @@ fun DropdownSelector(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val selectorShape = RoundedCornerShape(10.dp)
-    val menuShape = RoundedCornerShape(12.dp)
+    val selectorShape = AppDimensions.Corner.small
+    val menuShape = AppDimensions.Corner.small
 
     BoxWithConstraints(modifier = modifier) {
         Box(
@@ -51,24 +52,24 @@ fun DropdownSelector(
                 .fillMaxSize()
                 .clip(selectorShape)
                 .background(AppColors.White)
-                .border(1.dp, AppColors.GrayE9EEEA, selectorShape)
+                .border(1.dp, AppColors.Gray100, selectorShape)
                 .clickable { expanded = true }
                 .semantics { role = Role.Button }
-                .padding(horizontal = 9.dp),
+                .padding(horizontal = AppDimensions.Padding.Dp12),
             contentAlignment = Alignment.CenterStart
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = selectedLabel,
-                    color = AppColors.Green36443B,
-                    style = AppTypography.Body,
+                    color = AppColors.Gray800,
+                    style = AppTypography.Size12,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
                 DropdownChevron(
                     modifier = Modifier
-                        .padding(start = 4.dp)
+                        .padding(start = AppDimensions.Padding.Dp4)
                         .size(width = 10.dp, height = 6.dp)
                 )
             }
@@ -89,7 +90,7 @@ fun DropdownSelector(
                     .heightIn(max = 400.dp)
                     .clip(menuShape)
                     .background(AppColors.White)
-                    .border(1.dp, AppColors.GrayE9EEEA, menuShape)
+                    .border(1.dp, AppColors.Gray100, menuShape)
             ) {
                 options.forEachIndexed { index, label ->
                     val selected = label == selectedLabel
@@ -97,15 +98,15 @@ fun DropdownSelector(
                         text = {
                             Text(
                                 text = label,
-                                color = if (selected) AppColors.Green246B50 else AppColors.Ink26352B,
-                                style = if (selected) AppTypography.BodyEmphasis else AppTypography.Body
+                                color = if (selected) AppColors.Green800 else AppColors.Gray900,
+                                style = if (selected) AppTypography.Size12.copy(fontWeight = FontWeight.SemiBold) else AppTypography.Size12
                             )
                         },
                         modifier = Modifier
-                            .padding(horizontal = 6.dp)
-                            .clip(RoundedCornerShape(8.dp))
+                            .padding(horizontal = AppDimensions.Padding.Dp8)
+                            .clip(AppDimensions.Corner.small)
                             .background(
-                                if (selected) AppColors.GreenE8F2EC else AppColors.White
+                                if (selected) AppColors.Green50 else AppColors.White
                             ),
                         onClick = {
                             onSelect(index)
@@ -123,14 +124,14 @@ private fun DropdownChevron(modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
         val lineWidth = 1.5.dp.toPx()
         drawLine(
-            color = AppColors.Gray87918B,
+            color = AppColors.Gray500,
             start = androidx.compose.ui.geometry.Offset(0f, 0f),
             end = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height),
             strokeWidth = lineWidth,
             cap = StrokeCap.Round
         )
         drawLine(
-            color = AppColors.Gray87918B,
+            color = AppColors.Gray500,
             start = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height),
             end = androidx.compose.ui.geometry.Offset(size.width, 0f),
             strokeWidth = lineWidth,
