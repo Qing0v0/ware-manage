@@ -167,12 +167,12 @@ fun CustomCalendarDialog(
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                CalendarAction(
+                AppButton(
                     text = stringResource(R.string.cancel),
                     onClick = onDismiss
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                CalendarAction(
+                AppButton(
                     text = stringResource(R.string.confirm),
                     primary = true,
                     onClick = { onDateSelected(selectedDate) }
@@ -246,28 +246,6 @@ private fun CalendarDay(
             } else {
                 AppTypography.Size10
             }
-        )
-    }
-}
-
-@Composable
-private fun CalendarAction(
-    text: String,
-    primary: Boolean = false,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .clip(AppDimensions.Corner.small)
-            .background(if (primary) AppColors.Green800 else AppColors.Transparent)
-            .clickable(onClick = onClick)
-            .padding(horizontal = AppDimensions.Padding.Dp16, vertical = AppDimensions.Padding.Dp8),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            color = if (primary) AppColors.White else AppColors.Green800,
-            style = AppTypography.Size12.copy(fontWeight = FontWeight.SemiBold)
         )
     }
 }

@@ -31,7 +31,7 @@ internal fun InventorySummaryCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = AppDimensions.Padding.Dp16, vertical = AppDimensions.Padding.Dp8)
+            .padding(start = AppDimensions.Padding.Dp16, end = AppDimensions.Padding.Dp16, bottom = AppDimensions.Padding.Dp8)
             .clip(AppDimensions.Corner.large)
             .background(AppColors.Green800)
             .padding(horizontal = AppDimensions.Padding.Dp16, vertical = AppDimensions.Padding.Dp12)

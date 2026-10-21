@@ -35,6 +35,7 @@ import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.ui.theme.AppDimensions
 import com.example.myapplication.ui.theme.AppTypography
 
+/** 下拉框 */
 @Composable
 fun DropdownSelector(
     selectedLabel: String,
@@ -136,6 +137,30 @@ private fun DropdownChevron(modifier: Modifier = Modifier) {
             end = androidx.compose.ui.geometry.Offset(size.width, 0f),
             strokeWidth = lineWidth,
             cap = StrokeCap.Round
+        )
+    }
+}
+
+/** 按钮 */
+@Composable
+fun AppButton(
+    modifier: Modifier = Modifier,
+    text: String,
+    primary: Boolean = false,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .clip(AppDimensions.Corner.small)
+            .background(if (primary) AppColors.Green800 else AppColors.Transparent)
+            .clickable(onClick = onClick)
+            .padding(horizontal = AppDimensions.Padding.Dp16, vertical = AppDimensions.Padding.Dp8),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = if (primary) AppColors.White else AppColors.Green800,
+            style = AppTypography.Size12.copy(fontWeight = FontWeight.SemiBold)
         )
     }
 }

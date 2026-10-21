@@ -5,11 +5,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -69,7 +72,12 @@ fun AppAlertDialog(
                 .widthIn(max = AppDimensions.Size.Dp560)
                 .clip(AppDimensions.Corner.large)
                 .background(AppColors.White)
-                .padding(start = AppDimensions.Padding.Dp20, top = AppDimensions.Padding.Dp20, end = AppDimensions.Padding.Dp20, bottom = AppDimensions.Padding.Dp12)
+                .padding(
+                    start = AppDimensions.Padding.Dp20,
+                    top = AppDimensions.Padding.Dp20,
+                    end = AppDimensions.Padding.Dp20,
+                    bottom = AppDimensions.Padding.Dp12
+                )
         ) {
             Text(
                 text = dialog.title,
@@ -97,7 +105,10 @@ fun AppAlertDialog(
                             onDismissRequest()
                             option.onClick()
                         }
-                        .padding(horizontal = AppDimensions.Padding.Dp16, vertical = AppDimensions.Padding.Dp16)
+                        .padding(
+                            horizontal = AppDimensions.Padding.Dp16,
+                            vertical = AppDimensions.Padding.Dp16
+                        )
                 ) {
                     Text(
                         text = option.label,
@@ -144,34 +155,22 @@ fun AppAlertDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     dialog.dismissLabel?.let { label ->
-                        TextButton(
-                            onClick = onDismissRequest,
-                            colors = ButtonDefaults.textButtonColors(
-                                contentColor = AppColors.Gray500
-                            )
-                        ) {
-                            Text(text = label, style = AppTypography.Size12.copy(fontWeight = FontWeight.SemiBold))
-                        }
+                        AppButton(
+                            text = label,
+                            primary = false,
+                            onClick = onDismissRequest
+                        )
                     }
+                    Spacer(modifier = Modifier.width(6.dp))
                     dialog.confirmLabel?.let { label ->
-                        Button(
+                        AppButton(
+                            text = label,
+                            primary = true,
                             onClick = {
-                                onDismissRequest()
                                 dialog.onConfirm?.invoke()
-                            },
-                            shape = AppDimensions.Corner.small,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = AppColors.Green800,
-                                contentColor = AppColors.White
-                            )
-                        ) {
-                            Text(
-                                text = label,
-                                style = AppTypography.Size12.copy(
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            )
-                        }
+                                onDismissRequest()
+                            }
+                        )
                     }
                 }
             }
