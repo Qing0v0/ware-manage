@@ -15,11 +15,13 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import com.example.myapplication.R
 import com.example.myapplication.model.OrderBatch
 import com.example.myapplication.model.OrderType
 import com.example.myapplication.service.InventoryDatabase
 import com.example.myapplication.ui.components.CustomCalendarDialog
+import com.example.myapplication.ui.screens.main.PageTitleHeader
 import com.example.myapplication.ui.theme.AppColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -116,6 +118,10 @@ fun BillsScreen(
             .fillMaxSize()
             .background(AppColors.Gray50)
     ) {
+        PageTitleHeader(
+            eyebrow = stringResource(R.string.bills_transaction_history),
+            title = stringResource(R.string.bills_title)
+        )
         BillQueryCard(
             startDate = startDate,
             endDate = endDate,

@@ -60,7 +60,7 @@ fun AppBrandHeader(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "WAREHOUSE · INVENTORY",
+                    text = stringResource(R.string.app_english_name),
                     color = AppColors.Gray500,
                     style = AppTypography.Size10
                 )

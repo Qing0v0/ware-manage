@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
@@ -28,12 +29,16 @@ private val PageDateFormatter = DateTimeFormatter.ofPattern("yyyy年M月d日", L
 fun PageTitleHeader(
     eyebrow: String,
     title: String,
-    modifier: Modifier = Modifier
 ) {
     val today = remember { LocalDate.now().format(PageDateFormatter) }
 
     Row(
-        modifier = modifier,
+        modifier = Modifier.fillMaxWidth().padding(
+            start = AppDimensions.Padding.Dp16,
+            top = AppDimensions.Padding.Dp4,
+            end = AppDimensions.Padding.Dp16,
+            bottom = AppDimensions.Padding.Dp12
+        ),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Bottom
     ) {

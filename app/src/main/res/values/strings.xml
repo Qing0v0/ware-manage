@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">鞋仓管理</string>
+    <string name="app_english_name">WAREHOUSE · INVENTORY</string>>
     <string name="bottom_warehouse">仓库</string>
     <string name="bottom_bills">账单</string>
 
@@ -49,7 +50,7 @@
     <string name="inventory_price">价格</string>
     <string name="inventory_amount">数量</string>
     <string name="inventory_subtotal">小计</string>
-    <string name="inventory_empty">还没有存量，点右上角的「入库」开始记吧</string>
+    <string name="inventory_empty">还没有存量，点击右上角的入库开始记录</string>
     <string name="inventory_no_price">—</string>
     <string name="stock_add_button">＋</string>
     <string name="stock_minus_button">－</string>

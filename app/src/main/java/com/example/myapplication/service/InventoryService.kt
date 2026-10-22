@@ -116,6 +116,10 @@ class InventoryService(private val inventoryDatabase: InventoryDatabase, private
         if (orderBatch.dealer.isNotEmpty()) {
             inventory.dealer = orderBatch.dealer
         }
+        // 入库时把最新进价写入存量；已存在的记录按最新入库单价显示。
+        if (orderBatch.orderType.increaseStock) {
+            inventory.purchasePrice = orderBatch.price
+        }
         // 图片属于货号，入库更新图片后同步到该货号的所有颜色。
         if (!articleImagePath.isNullOrEmpty()) {
             inventory.imagePath = articleImagePath
@@ -133,7 +137,8 @@ class InventoryService(private val inventoryDatabase: InventoryDatabase, private
             articleId = orderBatch.articleId,
             dealer = orderBatch.dealer,
             color = orderBatch.color,
-            imagePath = imagePath
+            imagePath = imagePath,
+            purchasePrice = orderBatch.price
         )
         SizeUtils.applySizes(inventory, SizeUtils.sizesOf(orderBatch))
         return inventory

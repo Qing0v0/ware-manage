@@ -54,12 +54,6 @@ internal fun BillQueryCard(
             .background(AppColors.Gray50)
             .padding(horizontal = AppDimensions.Padding.Dp16)
     ) {
-        PageTitleHeader(
-            eyebrow = stringResource(R.string.bills_transaction_history),
-            title = stringResource(R.string.bills_title),
-            modifier = Modifier.fillMaxWidth().padding(top = AppDimensions.Padding.Dp8, bottom = AppDimensions.Padding.Dp12)
-        )
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()

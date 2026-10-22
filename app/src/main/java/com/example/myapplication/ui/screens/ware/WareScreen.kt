@@ -2,8 +2,6 @@ package com.example.myapplication.ui.screens.ware
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -13,7 +11,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.example.myapplication.model.OrderType
 import com.example.myapplication.model.ShoeInventory
 import com.example.myapplication.R
@@ -22,7 +19,6 @@ import com.example.myapplication.ui.components.AppBottomSheetMenu
 import com.example.myapplication.ui.components.AppBottomSheetMenuItem
 import com.example.myapplication.ui.components.AppDialogSpec
 import com.example.myapplication.ui.screens.main.PageTitleHeader
-import com.example.myapplication.ui.theme.AppDimensions
 import com.example.myapplication.utils.SizeUtils
 import java.text.NumberFormat
 
@@ -87,13 +83,7 @@ fun WareScreen(
     Column(modifier = modifier.fillMaxSize()) {
         PageTitleHeader(
             eyebrow = stringResource(R.string.inventory_overview_eyebrow),
-            title = stringResource(R.string.bottom_warehouse),
-            modifier = Modifier.fillMaxWidth().padding(
-                start = AppDimensions.Padding.Dp16,
-                top = AppDimensions.Padding.Dp4,
-                end = AppDimensions.Padding.Dp16,
-                bottom = AppDimensions.Padding.Dp12
-            )
+            title = stringResource(R.string.bottom_warehouse)
         )
 
         InventorySummaryCard(
