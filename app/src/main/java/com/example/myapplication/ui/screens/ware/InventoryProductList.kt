@@ -250,6 +250,10 @@ private fun InventoryProductCard(
                 Text(
                     text = "${first.dealer} · ${
                         stringResource(R.string.inventory_product_color_count, rows.size)
+                    } · ${
+                        stringResource(R.string.inventory_product_purchase_price,
+                            first.purchasePrice.toString()
+                        )
                     }",
                     color = AppColors.Gray500,
                     style = AppTypography.Size10,

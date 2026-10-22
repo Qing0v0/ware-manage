@@ -65,6 +65,7 @@
     <string name="inventory_products_title">库存商品</string>
     <string name="inventory_product_group_count">按货号分组 · 全部 %1$d 款</string>
     <string name="inventory_product_color_count">%1$d 个颜色</string>
+    <string name="inventory_product_purchase_price">¥ %1$s / 双</string>
     <string name="inventory_product_stock_total">库存 %1$d 双</string>
     <string name="inventory_size_stock">尺码库存</string>
     <string name="inventory_color_subtotal">本色小计</string>

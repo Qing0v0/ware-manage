@@ -12,7 +12,7 @@ import androidx.sqlite.db.SupportSQLiteStatement
 import com.example.myapplication.model.OrderBatch
 import com.example.myapplication.model.ShoeInventory
 
-@Database(entities = [OrderBatch::class, ShoeInventory::class], version = 2)
+@Database(entities = [OrderBatch::class, ShoeInventory::class], version = 3)
 abstract class InventoryDatabase: RoomDatabase() {
     abstract fun orderBatchDAO(): OrderBatchDAO
     abstract fun shoeInventoryDAO(): ShoeInventoryDAO
@@ -49,6 +49,29 @@ abstract class InventoryDatabase: RoomDatabase() {
                         "SELECT 1 FROM inventory " +
                         "WHERE inventory.articleId = `order`.articleId " +
                         "AND TRIM(inventory.dealer) != ''" +
+                        ")"
+                )
+            }
+        }
+
+        /** v2 to v3: add purchase_price column to inventory,
+         * and fill purchase price from order (bill) table by articleId. */
+        private val migrationFromV2 = object : Migration(2, 3) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // 1. 增加进价列（以文本存储，和 order.price 一致）
+                database.execSQL("ALTER TABLE inventory ADD COLUMN purchase_price TEXT")
+
+                // 2. 从 order 表中查该货号最近的一条入库（ARTICLE_PURCHASE）记录的进价，补全到 inventory
+                database.execSQL(
+                    "UPDATE inventory SET purchase_price = (" +
+                        "SELECT `order`.price FROM `order` " +
+                        "WHERE `order`.articleId = inventory.articleId " +
+                        "AND `order`.orderType = 'ARTICLE_PURCHASE' " +
+                        "ORDER BY `order`.date DESC LIMIT 1" +
+                        ") WHERE EXISTS (" +
+                        "SELECT 1 FROM `order` " +
+                        "WHERE `order`.articleId = inventory.articleId " +
+                        "AND `order`.orderType = 'ARTICLE_PURCHASE'" +
                         ")"
                 )
             }
@@ -127,7 +150,7 @@ abstract class InventoryDatabase: RoomDatabase() {
                     InventoryDatabase::class.java,
                     "inventory_database"
                 )
-                    .addMigrations(migrationFromV1(context.applicationContext))
+                    .addMigrations(migrationFromV1(context.applicationContext), migrationFromV2)
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             importLegacyOrders(context.applicationContext, db)

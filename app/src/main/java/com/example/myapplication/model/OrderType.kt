@@ -26,10 +26,10 @@ enum class OrderType(val displayName: String, val increaseStock: Boolean) {
     companion object {
         /** 出库页面能选的四项：三个收款方式 + 退货 */
         val soldTypes: List<OrderType> = listOf(
-            ARTICLE_SOLD_ALIPAY,
             ARTICLE_SOLD_WX,
             ARTICLE_SOLD_CASH,
-            ARTICLE_RETURN
+            ARTICLE_RETURN,
+            ARTICLE_SOLD_ALIPAY,
         )
 
         /** 下拉框里拿到的是界面文字，这里按文字找回枚举 */
