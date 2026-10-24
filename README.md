@@ -1,23 +1,23 @@
 鞋仓管理安卓APP练习
 
-# MainActivity
-主界面包括导航(menu\navigation_bottom.xml)，以及切换页面功能(layout\fragment_xxx.xml)
-/manifests/AndroidManifest.xml 中 `android:name=".activity.MainActivity"`定义程序主入口位置
+# UI预览（待细节修改）
+<img width="216" height="430" alt="a76bead5bf88863452ee7c702dd9886e" src="https://github.com/user-attachments/assets/c1533483-4fd9-4368-9eff-9c40e00f4a6e" />
+<img width="216" height="430" alt="f09c43f25f6e1748035fd7337b5b0dc7" src="https://github.com/user-attachments/assets/f7940c59-80ef-40ec-84c4-7d2666886f85" />
+<img width="216" height="430" alt="64ee61f197bd3fed489455bf142534b8" src="https://github.com/user-attachments/assets/b786ffbd-f182-4926-baf7-8f20305f922c" />
 
-```Kotlin
-// 程序入口
-override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    setContentView(R.layout.activity_main) // 主界面布局 res\layout\activity_main.xml
-    ...
-}
-```
+# 库存页面
+- 显示库存总量、总款式数量信息。
+- 提供入/出库功能，通过货号、经销商、34 - 44码鞋数量出入库。
+- 按货号不同颜色显示库存， 库存旁+ / -图标方便该颜色出入库。
 
-# 库存页面 WareFragment
-提供入/出库功能，显示当前商品存量
+# 订单页面
+- 按条件查询历史出/入库订单，按时间排序。
 
-## 侧边栏
-### 远程更新
+# 更多
+## 数据恢复 / 备份
+将数据从本地恢复 / 备份。
+
+## 远程更新
 1. 获取base64格式签名上传到github Repository secrets。
     ```
     1. 生成jks文件，Build -> Generate Signed App Bundle / APK
@@ -30,10 +30,3 @@ override fun onCreate(savedInstanceState: Bundle?) {
     git push origin v1.1.2
     ```
 3. app对比本地版本和github上.../release/latest中版本，下载安装。
-
-
-
-# 订单页面 BillsFragment
-按条件查询历史出/入库订单
-
-
