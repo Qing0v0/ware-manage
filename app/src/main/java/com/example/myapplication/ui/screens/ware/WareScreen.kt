@@ -74,14 +74,6 @@ fun WareScreen(
 
     var searchQuery by rememberSaveable { mutableStateOf("") }
 
-    val productCount = remember(inventories) {
-        inventories
-            .filter { inventory -> SizeUtils.sizesOf(inventory).any { count -> count > 0 } }
-            .map { it.articleId }
-            .distinct()
-            .size
-    }
-
     Column(modifier = modifier.fillMaxSize()) {
         PageTitleHeader(
             eyebrow = stringResource(R.string.inventory_overview_eyebrow),
@@ -121,7 +113,9 @@ fun WareScreen(
                 ) {
                     InventorySearchField(
                         query = searchQuery,
-                        productCount = productCount,
+                        productCount = remember(inventories, searchQuery) {
+                            inventoryProductGroups(inventories, searchQuery).size
+                        },
                         onQueryChange = { searchQuery = it }
                     )
                 }

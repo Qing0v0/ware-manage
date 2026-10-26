@@ -52,6 +52,23 @@ import com.example.myapplication.ui.theme.AppDimensions
 import com.example.myapplication.ui.theme.AppTypography
 import com.example.myapplication.utils.SizeUtils
 
+internal fun inventoryProductGroups(
+    inventories: List<ShoeInventory>,
+    searchQuery: String
+): List<Map.Entry<String, List<ShoeInventory>>> {
+    val keyword = searchQuery.trim()
+    return inventories
+        .filter { inventory ->
+            (keyword.isEmpty() ||
+                inventory.articleId.contains(keyword, ignoreCase = true) ||
+                inventory.dealer.contains(keyword, ignoreCase = true)) &&
+                SizeUtils.sizesOf(inventory).any { count -> count > 0 }
+        }
+        .groupBy { it.articleId }
+        .entries
+        .toList()
+}
+
 @Composable
 internal fun InventoryProductList(
     inventories: List<ShoeInventory>,
@@ -61,17 +78,7 @@ internal fun InventoryProductList(
     modifier: Modifier = Modifier
 ) {
     val groups = remember(inventories, searchQuery) {
-        val keyword = searchQuery.trim()
-        inventories
-            .filter { inventory ->
-                (keyword.isEmpty() ||
-                    inventory.articleId.contains(keyword, ignoreCase = true) ||
-                    inventory.dealer.contains(keyword, ignoreCase = true)) &&
-                    SizeUtils.sizesOf(inventory).any { count -> count > 0 }
-            }
-            .groupBy { it.articleId }
-            .entries
-            .toList()
+        inventoryProductGroups(inventories, searchQuery)
     }
 
     Column(modifier = modifier.fillMaxWidth().padding(horizontal = AppDimensions.Padding.Dp16)) {
