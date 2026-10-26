@@ -17,18 +17,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,16 +64,11 @@ internal fun inventoryProductGroups(
 
 @Composable
 internal fun InventoryProductList(
-    inventories: List<ShoeInventory>,
+    groups: List<Map.Entry<String, List<ShoeInventory>>>,
     imageFor: (String) -> ImageBitmap?,
-    searchQuery: String,
     onStockAction: (OrderType, ShoeInventory) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val groups = remember(inventories, searchQuery) {
-        inventoryProductGroups(inventories, searchQuery)
-    }
-
     Column(modifier = modifier.fillMaxWidth().padding(horizontal = AppDimensions.Padding.Dp16)) {
         if (groups.isEmpty()) {
             Text(

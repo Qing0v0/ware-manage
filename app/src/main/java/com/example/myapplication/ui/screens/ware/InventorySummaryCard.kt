@@ -40,11 +40,6 @@ internal fun InventorySummaryCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(AppDimensions.Padding.Dp8)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(6.dp)
-                    .background(AppColors.Green400, CircleShape)
-            )
             Text(
                 text = stringResource(R.string.inventory_total_label),
                 color = AppColors.Green200,
