@@ -191,7 +191,7 @@ private fun SearchMark() {
 }
 
 @Composable
-internal fun InventoryProductCard(
+private fun InventoryProductCard(
     articleId: String,
     rows: List<ShoeInventory>,
     imageFor: (String) -> ImageBitmap?,

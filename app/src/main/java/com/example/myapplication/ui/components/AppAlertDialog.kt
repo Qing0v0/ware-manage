@@ -73,10 +73,8 @@ fun AppAlertDialog(
                 .clip(AppDimensions.Corner.large)
                 .background(AppColors.White)
                 .padding(
-                    start = AppDimensions.Padding.Dp20,
-                    top = AppDimensions.Padding.Dp20,
-                    end = AppDimensions.Padding.Dp20,
-                    bottom = AppDimensions.Padding.Dp12
+                    horizontal = AppDimensions.Padding.Dp20,
+                    vertical = AppDimensions.Padding.Dp20
                 )
         ) {
             Text(
@@ -106,8 +104,8 @@ fun AppAlertDialog(
                             option.onClick()
                         }
                         .padding(
-                            horizontal = AppDimensions.Padding.Dp16,
-                            vertical = AppDimensions.Padding.Dp16
+                            horizontal = AppDimensions.Padding.Dp12,
+                            vertical = AppDimensions.Padding.Dp12
                         )
                 ) {
                     Text(
