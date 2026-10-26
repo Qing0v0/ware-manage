@@ -56,10 +56,10 @@ import com.example.myapplication.utils.SizeUtils
 internal fun InventoryProductList(
     inventories: List<ShoeInventory>,
     imageFor: (String) -> ImageBitmap?,
+    searchQuery: String,
     onStockAction: (OrderType, ShoeInventory) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var searchQuery by rememberSaveable { mutableStateOf("") }
     val groups = remember(inventories, searchQuery) {
         val keyword = searchQuery.trim()
         inventories
@@ -73,60 +73,36 @@ internal fun InventoryProductList(
             .entries
             .toList()
     }
-    val productCount = remember(inventories) {
-        inventories
-            .filter { inventory -> SizeUtils.sizesOf(inventory).any { count -> count > 0 } }
-            .map { it.articleId }
-            .distinct()
-            .size
-    }
 
-    Column(modifier = modifier.fillMaxWidth()) {
-        InventorySearchField(
-            query = searchQuery,
-            productCount = productCount,
-            onQueryChange = { searchQuery = it }
-        )
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(horizontal = AppDimensions.Padding.Dp16)
-        ) {
-            if (groups.isEmpty()) {
-                item(key = "empty_inventory") {
-                    Text(
-                        text = stringResource(R.string.inventory_empty),
-                        color = AppColors.Gray500,
-                        style = AppTypography.Size14,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                top = AppDimensions.Padding.Dp8,
-                                bottom = AppDimensions.Padding.Dp16
-                            )
+    Column(modifier = modifier.fillMaxWidth().padding(horizontal = AppDimensions.Padding.Dp16)) {
+        if (groups.isEmpty()) {
+            Text(
+                text = stringResource(R.string.inventory_empty),
+                color = AppColors.Gray500,
+                style = AppTypography.Size14,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        top = AppDimensions.Padding.Dp8,
+                        bottom = AppDimensions.Padding.Dp16
                     )
-                }
-            } else {
-                items(
-                    items = groups,
-                    key = { it.key }
-                ) { (articleId, rows) ->
-                    InventoryProductCard(
-                        articleId = articleId,
-                        rows = rows,
-                        imageFor = imageFor,
-                        onStockAction = onStockAction
-                    )
-                }
+            )
+        } else {
+            groups.forEach { (articleId, rows) ->
+                InventoryProductCard(
+                    articleId = articleId,
+                    rows = rows,
+                    imageFor = imageFor,
+                    onStockAction = onStockAction
+                )
             }
         }
     }
 }
 
 @Composable
-private fun InventorySearchField(
+internal fun InventorySearchField(
     query: String,
     productCount: Int,
     onQueryChange: (String) -> Unit
@@ -215,7 +191,7 @@ private fun SearchMark() {
 }
 
 @Composable
-private fun InventoryProductCard(
+internal fun InventoryProductCard(
     articleId: String,
     rows: List<ShoeInventory>,
     imageFor: (String) -> ImageBitmap?,
