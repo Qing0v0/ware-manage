@@ -46,10 +46,11 @@ class MainActivity : AppCompatActivity() {
             MainScreen(
                 MainScreenSection.Header(
                     onSettingsClick = {
-                        if (mainViewModel.selectedTab != TAB_WAREHOUSE) {
-                            selectFragment(TAB_WAREHOUSE)
+                        if (mainViewModel.selectedTab == TAB_BILLS) {
+                            billsFragment.openMoreMenu()
+                        } else {
+                            wareFragment.openMoreMenu()
                         }
-                        wareFragment.openMoreMenu()
                     }
                 )
             )

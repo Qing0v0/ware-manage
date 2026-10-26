@@ -79,7 +79,7 @@ fun AppBottomSheetMenu(
                     Text(
                         text = item.label,
                         color = AppColors.Gray800,
-                        style = AppTypography.Size12.copy(fontWeight = FontWeight.Medium)
+                        style = AppTypography.Size14.copy(fontWeight = FontWeight.Medium)
                     )
                 }
                 if (index < items.lastIndex) {
