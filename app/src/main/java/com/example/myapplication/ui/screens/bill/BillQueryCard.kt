@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+
 package com.example.myapplication.ui.screens.bill
 
 import androidx.compose.foundation.background
@@ -26,6 +28,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.R
 import com.example.myapplication.ui.components.DropdownSelector
+import com.example.myapplication.ui.components.hideKeyboard
+import com.example.myapplication.ui.components.hideKeyboardOnTap
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.example.myapplication.ui.screens.main.PageTitleHeader
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.ui.theme.AppDimensions
@@ -48,11 +54,14 @@ internal fun BillQueryCard(
     onQuery: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     Column(
         modifier = modifier
             .fillMaxWidth()
             .background(AppColors.Gray50)
             .padding(horizontal = AppDimensions.Padding.Dp16)
+            .hideKeyboardOnTap()
     ) {
         Column(
             modifier = Modifier
@@ -114,7 +123,10 @@ internal fun BillQueryCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(
-                    onClick = onQuery,
+                    onClick = {
+                        hideKeyboard(focusManager, keyboardController)
+                        onQuery()
+                    },
                     modifier = Modifier.height(AppDimensions.Size.Dp36),
                     shape = AppDimensions.Corner.small,
                     colors = ButtonDefaults.buttonColors(

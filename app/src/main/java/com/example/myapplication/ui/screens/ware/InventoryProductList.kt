@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+
 package com.example.myapplication.ui.screens.ware
 
 import androidx.compose.foundation.Canvas
@@ -43,6 +45,7 @@ import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.ui.theme.AppDimensions
 import com.example.myapplication.ui.theme.AppTypography
+import com.example.myapplication.ui.components.hideKeyboardOnTap
 import com.example.myapplication.utils.SizeUtils
 
 internal fun inventoryProductGroups(
@@ -69,7 +72,7 @@ internal fun InventoryProductList(
     onStockAction: (OrderType, ShoeInventory) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxWidth().padding(horizontal = AppDimensions.Padding.Dp16)) {
+    Column(modifier = modifier.fillMaxWidth().padding(horizontal = AppDimensions.Padding.Dp16).hideKeyboardOnTap()) {
         if (groups.isEmpty()) {
             Text(
                 text = stringResource(R.string.inventory_empty),

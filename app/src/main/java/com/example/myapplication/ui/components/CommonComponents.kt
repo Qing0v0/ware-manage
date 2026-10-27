@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+
 package com.example.myapplication.ui.components
 
 import androidx.compose.foundation.Canvas
@@ -23,6 +25,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.semantics.Role
@@ -34,6 +39,14 @@ import androidx.compose.ui.unit.dp
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.ui.theme.AppDimensions
 import com.example.myapplication.ui.theme.AppTypography
+
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.SoftwareKeyboardController
 
 /** 下拉框 */
 @Composable
@@ -162,5 +175,68 @@ fun AppButton(
             color = if (primary) AppColors.White else AppColors.Green800,
             style = AppTypography.Size12.copy(fontWeight = FontWeight.SemiBold)
         )
+    }
+}
+
+/** 任意位置按下时收起键盘 */
+@Composable
+fun Modifier.hideKeyboardOnAnyPress(): Modifier {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    return this.pointerInput(Unit) {
+        awaitPointerEventScope {
+            while (true) {
+                val event = awaitPointerEvent(PointerEventPass.Final)
+                if (event.type == PointerEventType.Press && event.changes.none { it.isConsumed }) {
+                    hideKeyboard(focusManager, keyboardController)
+                }
+            }
+        }
+    }
+}
+
+/** 弹出键盘 */
+fun showKeyboard(
+    focusRequester: FocusRequester,
+    keyboardController: SoftwareKeyboardController? = null
+) {
+    focusRequester.requestFocus()
+    keyboardController?.show()
+}
+
+/** 收起键盘 */
+fun hideKeyboard(
+    focusManager: FocusManager? = null,
+    keyboardController: SoftwareKeyboardController? = null
+) {
+    focusManager?.clearFocus(force = true)
+    keyboardController?.hide()
+}
+
+/** 点击时收起键盘 */
+@Composable
+fun Modifier.hideKeyboardOnTap(): Modifier {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    val interactionSource = remember { MutableInteractionSource() }
+    return this.clickable(
+        interactionSource = interactionSource,
+        indication = null
+    ) {
+        hideKeyboard(focusManager, keyboardController)
+    }
+}
+
+/** 滚动时收起键盘 */
+@Composable
+fun HideKeyboardOnScroll(
+    isScrolling: Boolean,
+    keyboardController: SoftwareKeyboardController? = LocalSoftwareKeyboardController.current,
+    focusManager: FocusManager = LocalFocusManager.current
+) {
+    LaunchedEffect(isScrolling) {
+        if (isScrolling) {
+            hideKeyboard(focusManager, keyboardController)
+        }
     }
 }

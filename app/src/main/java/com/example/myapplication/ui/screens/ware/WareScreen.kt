@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+
 package com.example.myapplication.ui.screens.ware
 
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -6,6 +8,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.example.myapplication.ui.components.HideKeyboardOnScroll
+import com.example.myapplication.ui.components.hideKeyboardOnAnyPress
+import com.example.myapplication.ui.components.hideKeyboardOnTap
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -74,17 +80,21 @@ fun WareScreen(
 
     var searchQuery by rememberSaveable { mutableStateOf("") }
 
+    val listState = rememberLazyListState()
+    HideKeyboardOnScroll(listState.isScrollInProgress)
+
     val productGroups = remember(inventories, searchQuery) {
         inventoryProductGroups(inventories, searchQuery)
     }
 
-    Column(modifier = modifier.fillMaxSize()) {
+    Column(modifier = modifier.fillMaxSize().hideKeyboardOnAnyPress()) {
         PageTitleHeader(
             eyebrow = stringResource(R.string.inventory_overview_eyebrow),
             title = stringResource(R.string.bottom_warehouse)
         )
 
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
@@ -114,6 +124,7 @@ fun WareScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(AppColors.Gray50)
+                        .hideKeyboardOnTap()
                 ) {
                     InventorySearchField(
                         query = searchQuery,

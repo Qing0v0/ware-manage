@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+
 package com.example.myapplication.ui.screens.bill
 
 import androidx.compose.foundation.background
@@ -25,6 +27,7 @@ import com.example.myapplication.ui.components.AppBottomSheetMenu
 import com.example.myapplication.ui.components.CustomCalendarDialog
 import com.example.myapplication.ui.components.AppBottomSheetMenuItem
 import com.example.myapplication.ui.components.AppDialogSpec
+import com.example.myapplication.ui.components.hideKeyboardOnAnyPress
 import com.example.myapplication.ui.screens.main.PageTitleHeader
 import com.example.myapplication.ui.theme.AppColors
 import kotlinx.coroutines.Dispatchers
@@ -133,6 +136,7 @@ fun BillsScreen(
         modifier = modifier
             .fillMaxSize()
             .background(AppColors.Gray50)
+            .hideKeyboardOnAnyPress()
     ) {
         PageTitleHeader(
             eyebrow = stringResource(R.string.bills_transaction_history),

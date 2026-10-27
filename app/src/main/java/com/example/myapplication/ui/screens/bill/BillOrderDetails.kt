@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+
 package com.example.myapplication.ui.screens.bill
 
 import androidx.compose.foundation.Image
@@ -15,6 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.example.myapplication.ui.components.HideKeyboardOnScroll
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -41,7 +45,10 @@ internal fun BillOrderDetails(
     hintId: Int,
     modifier: Modifier = Modifier
 ) {
+    val listState = rememberLazyListState()
+    HideKeyboardOnScroll(listState.isScrollInProgress)
     LazyColumn(
+        state = listState,
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = AppDimensions.Padding.Dp16)
