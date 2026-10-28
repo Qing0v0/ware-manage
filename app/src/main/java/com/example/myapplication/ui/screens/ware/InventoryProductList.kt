@@ -274,7 +274,7 @@ private fun ProductThumbnail(
         contentAlignment = Alignment.Center
     ) {
         val bitmap = inventory.imagePath?.let(imageFor)
-        val imageModifier = Modifier.fillMaxSize().padding(AppDimensions.Padding.Dp4)
+        val imageModifier = Modifier.fillMaxSize()
         if (bitmap != null) {
             Image(
                 bitmap = bitmap,
