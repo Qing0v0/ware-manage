@@ -165,8 +165,8 @@ fun AppAlertDialog(
                             text = label,
                             primary = true,
                             onClick = {
-                                dialog.onConfirm?.invoke()
                                 onDismissRequest()
+                                dialog.onConfirm?.invoke()
                             }
                         )
                     }
