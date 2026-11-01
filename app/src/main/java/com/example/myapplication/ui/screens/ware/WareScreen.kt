@@ -4,6 +4,7 @@ package com.example.myapplication.ui.screens.ware
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,6 +30,7 @@ import com.example.myapplication.ui.components.AppAlertDialog
 import com.example.myapplication.ui.components.AppBottomSheetMenu
 import com.example.myapplication.ui.components.AppBottomSheetMenuItem
 import com.example.myapplication.ui.components.AppDialogSpec
+import com.example.myapplication.ui.components.AppToast
 import com.example.myapplication.ui.screens.main.PageTitleHeader
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.utils.SizeUtils
@@ -58,6 +60,8 @@ fun WareScreen(
     var showMoreMenu by remember { mutableStateOf(false) }
     var selectedOrderType by remember { mutableStateOf<OrderType?>(null) }
     var selectedInventory by remember { mutableStateOf<ShoeInventory?>(null) }
+    var toastMessage by remember { mutableStateOf<String?>(null) }
+    var toastMessageId by remember { mutableStateOf(0) }
 
     LaunchedEffect(moreMenuRequest) {
         if (moreMenuRequest > 0) {
@@ -87,100 +91,110 @@ fun WareScreen(
         inventoryProductGroups(inventories, searchQuery)
     }
 
-    Column(modifier = modifier.fillMaxSize().hideKeyboardOnAnyPress()) {
-        PageTitleHeader(
-            eyebrow = stringResource(R.string.inventory_overview_eyebrow),
-            title = stringResource(R.string.bottom_warehouse)
-        )
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = modifier.fillMaxSize().hideKeyboardOnAnyPress()) {
+            PageTitleHeader(
+                eyebrow = stringResource(R.string.inventory_overview_eyebrow),
+                title = stringResource(R.string.bottom_warehouse)
+            )
 
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-        ) {
-            item(key = "inventory_summary") {
-                InventorySummaryCard(
-                    totalQuantity = formattedTotalQuantity,
-                    styleCount = inventoryGroups.size
-                )
-            }
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                item(key = "inventory_summary") {
+                    InventorySummaryCard(
+                        totalQuantity = formattedTotalQuantity,
+                        styleCount = inventoryGroups.size
+                    )
+                }
 
-            item(key = "ware_quick_actions") {
-                WareQuickActions(
-                    onPurchase = {
-                        selectedInventory = null
-                        selectedOrderType = OrderType.ARTICLE_PURCHASE
-                    },
-                    onSelling = {
-                        selectedInventory = null
-                        selectedOrderType = OrderType.ARTICLE_SOLD_CASH
+                item(key = "ware_quick_actions") {
+                    WareQuickActions(
+                        onPurchase = {
+                            selectedInventory = null
+                            selectedOrderType = OrderType.ARTICLE_PURCHASE
+                        },
+                        onSelling = {
+                            selectedInventory = null
+                            selectedOrderType = OrderType.ARTICLE_SOLD_CASH
+                        }
+                    )
+                }
+
+                stickyHeader(key = "inventory_search") {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(AppColors.Gray50)
+                            .hideKeyboardOnTap()
+                    ) {
+                        InventorySearchField(
+                            query = searchQuery,
+                            productCount = productGroups.size,
+                            onQueryChange = { searchQuery = it }
+                        )
                     }
-                )
-            }
+                }
 
-            stickyHeader(key = "inventory_search") {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(AppColors.Gray50)
-                        .hideKeyboardOnTap()
-                ) {
-                    InventorySearchField(
-                        query = searchQuery,
-                        productCount = productGroups.size,
-                        onQueryChange = { searchQuery = it }
+                item(key = "inventory_products") {
+                    InventoryProductList(
+                        groups = productGroups,
+                        imageFor = imageFor,
+                        onStockAction = { orderType, inventory ->
+                            selectedInventory = inventory
+                            selectedOrderType = orderType
+                        }
                     )
                 }
             }
 
-            item(key = "inventory_products") {
-                InventoryProductList(
-                    groups = productGroups,
-                    imageFor = imageFor,
-                    onStockAction = { orderType, inventory ->
-                        selectedInventory = inventory
-                        selectedOrderType = orderType
+            selectedOrderType?.let { orderType ->
+                InventoryOrderDialog(
+                    orderType = orderType,
+                    fixedInventory = selectedInventory,
+                    onDismiss = {
+                        selectedOrderType = null
+                        selectedInventory = null
+                    },
+                    onSaved = { message ->
+                        selectedOrderType = null
+                        selectedInventory = null
+                        toastMessage = message
+                        toastMessageId++
+                        onInventoryChanged()
                     }
                 )
             }
         }
 
-        selectedOrderType?.let { orderType ->
-            InventoryOrderDialog(
-                orderType = orderType,
-                fixedInventory = selectedInventory,
-                onDismiss = {
-                    selectedOrderType = null
-                    selectedInventory = null
-                },
-                onSaved = {
-                    selectedOrderType = null
-                    selectedInventory = null
-                    onInventoryChanged()
-                }
-            )
-        }
-    }
-
-    AppBottomSheetMenu(
-        visible = showMoreMenu,
-        title = stringResource(R.string.more_options),
-        items = listOf(
-            AppBottomSheetMenuItem(
-                label = stringResource(R.string.settings_backup),
-                onClick = onBackupClick
+        AppBottomSheetMenu(
+            visible = showMoreMenu,
+            title = stringResource(R.string.more_options),
+            items = listOf(
+                AppBottomSheetMenuItem(
+                    label = stringResource(R.string.settings_backup),
+                    onClick = onBackupClick
+                ),
+                AppBottomSheetMenuItem(
+                    label = stringResource(R.string.settings_update),
+                    onClick = onUpdateClick
+                )
             ),
-            AppBottomSheetMenuItem(
-                label = stringResource(R.string.settings_update),
-                onClick = onUpdateClick
-            )
-        ),
-        onDismissRequest = { showMoreMenu = false }
-    )
+            onDismissRequest = { showMoreMenu = false }
+        )
 
-    AppAlertDialog(
-        dialog = dialog,
-        onDismissRequest = onDialogDismiss
-    )
+        AppAlertDialog(
+            dialog = dialog,
+            onDismissRequest = onDialogDismiss
+        )
+
+        AppToast(
+            message = toastMessage,
+            messageId = toastMessageId,
+            onDismissRequest = { toastMessage = null }
+        )
+    }
 }

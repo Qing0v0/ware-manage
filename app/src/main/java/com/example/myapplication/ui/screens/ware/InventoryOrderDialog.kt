@@ -3,7 +3,6 @@ package com.example.myapplication.ui.screens.ware
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -70,7 +69,7 @@ fun InventoryOrderDialog(
     orderType: OrderType,
     fixedInventory: ShoeInventory?,
     onDismiss: () -> Unit,
-    onSaved: () -> Unit
+    onSaved: (String) -> Unit
 ) {
     val context = LocalContext.current
     val colorOptions = remember {
@@ -213,12 +212,7 @@ fun InventoryOrderDialog(
                                 if (errors.isNotEmpty()) {
                                     errorMessage = errors.joinToString("\n")
                                 } else {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.order_saved, batches.size),
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    onSaved()
+                                    onSaved(context.getString(R.string.order_saved, batches.size))
                                 }
                             }
                         }
