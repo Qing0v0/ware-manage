@@ -44,7 +44,7 @@ fun AppToast(
             text = message,
             modifier = Modifier
                 .clip(RoundedCornerShape(24.dp))
-                .background(AppColors.Gray900)
+                .background(AppColors.Gray700)
                 .padding(
                     horizontal = AppDimensions.Padding.Dp12,
                     vertical = AppDimensions.Padding.Dp8

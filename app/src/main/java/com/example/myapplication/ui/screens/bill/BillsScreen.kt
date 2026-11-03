@@ -27,10 +27,12 @@ import com.example.myapplication.ui.components.AppBottomSheetMenu
 import com.example.myapplication.ui.components.CustomCalendarDialog
 import com.example.myapplication.ui.components.AppBottomSheetMenuItem
 import com.example.myapplication.ui.components.AppDialogSpec
+import com.example.myapplication.ui.components.AppLoadingDialog
 import com.example.myapplication.ui.components.hideKeyboardOnAnyPress
 import com.example.myapplication.ui.screens.main.PageTitleHeader
 import com.example.myapplication.ui.theme.AppColors
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
@@ -72,6 +74,7 @@ fun BillsScreen(
     var datePickerTarget by rememberSaveable { mutableStateOf<BillDateTarget?>(null) }
     var previousResetTick by remember { mutableIntStateOf(resetTick) }
     var showMoreMenu by remember { mutableStateOf(false) }
+    var isQuerying by remember { mutableStateOf(false) }
 
     LaunchedEffect(moreMenuRequest) {
         if (moreMenuRequest > 0) {
@@ -110,6 +113,8 @@ fun BillsScreen(
     }
 
     fun queryBills() {
+        if (isQuerying) return
+
         if (startDate.isAfter(endDate)) {
             hintId = R.string.bills_date_error
             return
@@ -122,13 +127,19 @@ fun BillsScreen(
         val orderTypes = billTypeFilters[selectedTypeIndex].second
         val appContext = context.applicationContext
 
+        isQuerying = true
         scope.launch {
-            val result = withContext(Dispatchers.IO) {
-                InventoryDatabase.getDatabase(appContext).orderBatchDAO()
-                    .queryOrders(startTime, endTime, articleIdLike, dealerLike, orderTypes)
+            try {
+//                delay(2000) // 调试查看loading样式
+                val result = withContext(Dispatchers.IO) {
+                    InventoryDatabase.getDatabase(appContext).orderBatchDAO()
+                        .queryOrders(startTime, endTime, articleIdLike, dealerLike, orderTypes)
+                }
+                bills = result
+                hintId = if (result.isEmpty()) R.string.bills_empty else HIDE_BILL_HINT
+            } finally {
+                isQuerying = false
             }
-            bills = result
-            hintId = if (result.isEmpty()) R.string.bills_empty else HIDE_BILL_HINT
         }
     }
 
@@ -201,5 +212,10 @@ fun BillsScreen(
     AppAlertDialog(
         dialog = dialog,
         onDismissRequest = onDialogDismiss
+    )
+
+    AppLoadingDialog(
+        visible = isQuerying,
+        message = stringResource(R.string.bills_query_loading)
     )
 }

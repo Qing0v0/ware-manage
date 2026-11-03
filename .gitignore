@@ -7,6 +7,6 @@
 /captures
 .externalNativeBuild
 .cxx
-local.properties
 /app/release
 .log
+.github/

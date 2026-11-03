@@ -77,6 +77,7 @@
     <string name="bills_query_orders">查询账单</string>
     <string name="bills_type_all">账单类型</string>
     <string name="bills_query">查询</string>
+    <string name="bills_query_loading">正在查询</string>
     <string name="bills_date_separator">至</string>
     <string name="bills_total_price">总价</string>
     <string name="bills_time">时间</string>
