@@ -57,7 +57,7 @@ class WareDrawerPanel(
             title = fragment.getString(R.string.settings_backup),
             options = listOf(
                 AppDialogOption(fragment.getString(R.string.settings_backup_export)) {
-                    exportBackupLauncher.launch(BackupService.suggestedFileName())
+                    exportBackupLauncher.launch(BackupService.suggestedFileName(fragment.requireContext()))
                 },
                 AppDialogOption(fragment.getString(R.string.settings_backup_import)) {
                     confirmImport()
