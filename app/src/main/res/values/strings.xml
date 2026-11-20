@@ -102,7 +102,7 @@
     <string name="backup_export_success">导出成功</string>
     <string name="backup_export_failed">导出失败，请重试</string>
     <string name="backup_import_success">导入成功，数据已恢复</string>
-    <string name="backup_import_failed">导入失败：请确认选的是本应用导出的备份文件</string>
+    <string name="backup_import_failed">导入失败：备份文件无效或不完整，请确认文件后重试</string>
     <string name="backup_import_confirm">导入会覆盖当前所有存量、账单和图片，确定继续吗？</string>
 
     <!-- 更多菜单 / 版本更新 -->

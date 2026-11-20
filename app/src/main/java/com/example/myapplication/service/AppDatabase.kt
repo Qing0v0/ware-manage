@@ -12,7 +12,11 @@ import androidx.sqlite.db.SupportSQLiteStatement
 import com.example.myapplication.model.OrderBatch
 import com.example.myapplication.model.ShoeInventory
 
-@Database(entities = [OrderBatch::class, ShoeInventory::class], version = 3)
+internal const val INVENTORY_DATABASE_VERSION = 3
+@Database(
+    entities = [OrderBatch::class, ShoeInventory::class],
+    version = INVENTORY_DATABASE_VERSION
+)
 abstract class InventoryDatabase: RoomDatabase() {
     abstract fun orderBatchDAO(): OrderBatchDAO
     abstract fun shoeInventoryDAO(): ShoeInventoryDAO
@@ -156,7 +160,6 @@ abstract class InventoryDatabase: RoomDatabase() {
                             importLegacyOrders(context.applicationContext, db)
                         }
                     })
-                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance

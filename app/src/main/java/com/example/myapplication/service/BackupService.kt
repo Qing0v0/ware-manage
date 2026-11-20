@@ -1,7 +1,11 @@
 package com.example.myapplication.service
 
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
+import android.util.Log
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.text.SimpleDateFormat
@@ -23,7 +27,7 @@ import java.util.zip.ZipOutputStream
  *     images/img_xxx.jpg              存量图片
  *
  * 导出走系统文件选择器，存到用户自己挑的位置（不需要存储权限）；导入是"整体覆盖"：
- * 先解到临时目录校验标记文件，再关掉数据库连接、清掉旧数据，最后搬过去。
+ * 先解压并校验备份，再备份当前文件；替换或数据库迁移失败时恢复原文件。
  */
 class BackupService(private val context: Context) {
 
@@ -61,63 +65,242 @@ class BackupService(private val context: Context) {
 
     /** 用备份文件覆盖当前数据 */
     fun restoreFrom(input: InputStream): Boolean {
+        val tempDir = File(context.cacheDir, TEMP_DIR)
         return try {
-            val tempDir = File(context.cacheDir, TEMP_DIR).apply {
-                deleteRecursively()
-                mkdirs()
+            if (tempDir.exists() && !tempDir.deleteRecursively()) {
+                throw IOException("无法清理恢复暂存目录")
+            }
+            if (!tempDir.mkdirs()) {
+                throw IOException("无法创建恢复暂存目录")
             }
 
-            // 1. 先解到临时目录，同时确认这是本应用导出的备份（带标记文件）
-            var hasBackupInfo = false
+            // 1. 先解到临时目录，并检查备份格式和数据库完整性
+            var backupInfo: String? = null
+            val extractedEntries = HashSet<String>()
             ZipInputStream(input).use { zip ->
                 var entry = zip.nextEntry
                 while (entry != null) {
                     val name = entry.name
-                    if (name == BACKUP_INFO) {
-                        hasBackupInfo = true
+                    if (!entry.isDirectory && name == BACKUP_INFO) {
+                        if (backupInfo != null) {
+                            throw IOException("备份包含重复的标记文件")
+                        }
+                        backupInfo = readBackupInfo(zip)
                     } else if (!entry.isDirectory && isWantedEntry(name)) {
+                        if (!extractedEntries.add(name)) {
+                            throw IOException("备份包含重复的文件：$name")
+                        }
                         val target = File(tempDir, name)
-                        target.parentFile?.mkdirs()
+                        val parent = target.parentFile
+                            ?: throw IOException("备份文件路径无效：$name")
+                        if (!parent.exists() && !parent.mkdirs()) {
+                            throw IOException("无法创建恢复暂存目录")
+                        }
                         target.outputStream().use { outputStream -> zip.copyTo(outputStream) }
                     }
                     zip.closeEntry()
                     entry = zip.nextEntry
                 }
             }
-            if (!hasBackupInfo) {
-                tempDir.deleteRecursively()
-                return false
-            }
-
-            // 2. 关掉数据库连接，清掉旧数据（-wal / -shm 也要删，否则可能被旧的日志污染）
-            InventoryDatabase.closeDatabase()
+            validateBackup(tempDir, backupInfo)
 
             val databaseDir = context.getDatabasePath(DATABASE_NAMES[0]).parentFile
-            DATABASE_NAMES.forEach { name ->
-                File(databaseDir, name).delete()
-                File(databaseDir, "$name-wal").delete()
-                File(databaseDir, "$name-shm").delete()
-            }
-            imageDir().deleteRecursively()
-            imageDir().mkdirs()
+                ?: throw IOException("数据库目录无效")
+            val previousDir = File(tempDir, PREVIOUS_DIR)
+            InventoryDatabase.closeDatabase()
+            snapshotCurrentData(databaseDir, previousDir)
 
-            // 3. 把临时目录里的东西搬到正式位置
-            if (databaseDir != null) {
-                File(tempDir, DATABASE_DIR).listFiles()?.forEach { file ->
-                    file.copyTo(File(databaseDir, file.name), overwrite = true)
+            try {
+                replaceCurrentData(tempDir, databaseDir)
+                validateInstalledDatabase()
+                fixImagePaths()
+            } catch (restoreError: Exception) {
+                try {
+                    InventoryDatabase.closeDatabase()
+                    restoreSnapshot(previousDir, databaseDir)
+                } catch (rollbackError: Exception) {
+                    Log.e(LOG_TAG, "恢复备份失败，且无法完整回滚原数据", rollbackError)
+                    restoreError.addSuppressed(rollbackError)
                 }
+                throw restoreError
             }
-            File(tempDir, IMAGE_DIR).listFiles()?.forEach { file ->
-                file.copyTo(File(imageDir(), file.name), overwrite = true)
-            }
-            tempDir.deleteRecursively()
 
-            // 4. 图片存的是绝对路径，换了设备 / 包名就失效，这里按文件名找回来
-            fixImagePaths()
             true
         } catch (e: Exception) {
+            Log.e(LOG_TAG, "恢复备份失败", e)
             false
+        } finally {
+            if (tempDir.exists() && !tempDir.deleteRecursively()) {
+                Log.w(LOG_TAG, "无法清理恢复暂存目录")
+            }
         }
+    }
+
+    private fun readBackupInfo(zip: ZipInputStream): String {
+        val output = ByteArrayOutputStream()
+        val buffer = ByteArray(256)
+        while (true) {
+            val count = zip.read(buffer)
+            if (count < 0) break
+            if (output.size() + count > MAX_BACKUP_INFO_BYTES) {
+                throw IOException("备份标记文件过大")
+            }
+            output.write(buffer, 0, count)
+        }
+        return output.toString(Charsets.UTF_8.name())
+    }
+
+    private fun validateBackup(tempDir: File, backupInfo: String?) {
+        val infoLines = backupInfo?.lineSequence()?.toList().orEmpty()
+        if (infoLines.firstOrNull() != BACKUP_SIGNATURE) {
+            throw IOException("备份标记文件无效")
+        }
+        val formatVersion = infoLines
+            .firstOrNull { it.startsWith("formatVersion=") }
+            ?.substringAfter("=")
+            ?.toIntOrNull()
+        if (formatVersion != FORMAT_VERSION) {
+            throw IOException("不支持的备份格式版本：$formatVersion")
+        }
+
+        val databaseDir = File(tempDir, DATABASE_DIR)
+        val inventoryFile = File(databaseDir, "inventory_database")
+        val legacyOrdersFile = File(databaseDir, "app_database")
+        if (!inventoryFile.isFile && !legacyOrdersFile.isFile) {
+            throw IOException("备份中没有数据库文件")
+        }
+        if (inventoryFile.isFile) {
+            validateInventoryDatabase(inventoryFile)
+        }
+        if (legacyOrdersFile.isFile) {
+            validateLegacyOrdersDatabase(legacyOrdersFile)
+        }
+    }
+
+    private fun validateInventoryDatabase(file: File) {
+        SQLiteDatabase.openDatabase(
+            file.absolutePath,
+            null,
+            SQLiteDatabase.OPEN_READONLY
+        ).use { database ->
+            requireIntegrityCheck(database)
+            val version = database.version
+            if (version !in MIN_SUPPORTED_DATABASE_VERSION..INVENTORY_DATABASE_VERSION) {
+                throw IOException("不支持的数据库版本：$version")
+            }
+            if (!hasTable(database, "inventory")) {
+                throw IOException("备份数据库缺少库存表")
+            }
+            if (version >= 2 && !hasTable(database, "order")) {
+                throw IOException("备份数据库缺少订单表")
+            }
+        }
+    }
+
+    private fun validateLegacyOrdersDatabase(file: File) {
+        SQLiteDatabase.openDatabase(
+            file.absolutePath,
+            null,
+            SQLiteDatabase.OPEN_READONLY
+        ).use { database ->
+            requireIntegrityCheck(database)
+            if (!hasTable(database, "order")) {
+                throw IOException("旧版备份数据库缺少订单表")
+            }
+        }
+    }
+
+    private fun requireIntegrityCheck(database: SQLiteDatabase) {
+        database.rawQuery("PRAGMA integrity_check", null).use { cursor ->
+            if (!cursor.moveToFirst() || cursor.getString(0) != "ok" || cursor.moveToNext()) {
+                throw IOException("备份数据库完整性检查失败")
+            }
+        }
+    }
+
+    private fun hasTable(database: SQLiteDatabase, tableName: String): Boolean {
+        return database.rawQuery(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+            arrayOf(tableName)
+        ).use { it.moveToFirst() }
+    }
+
+    private fun snapshotCurrentData(databaseDir: File, snapshotDir: File) {
+        val snapshotDatabaseDir = File(snapshotDir, DATABASE_DIR)
+        if (!snapshotDatabaseDir.mkdirs()) {
+            throw IOException("无法创建原数据备份目录")
+        }
+        databaseFileNames().forEach { name ->
+            val current = File(databaseDir, name)
+            if (current.isFile) {
+                current.copyTo(File(snapshotDatabaseDir, name), overwrite = true)
+            }
+        }
+
+        val currentImages = imageDir()
+        if (currentImages.exists() &&
+            !currentImages.copyRecursively(File(snapshotDir, IMAGE_DIR), overwrite = true)
+        ) {
+            throw IOException("无法暂存现有图片")
+        }
+    }
+
+    private fun replaceCurrentData(tempDir: File, databaseDir: File) {
+        if (!databaseDir.exists() && !databaseDir.mkdirs()) {
+            throw IOException("无法创建数据库目录")
+        }
+        clearDatabaseFiles(databaseDir)
+
+        val stagedDatabaseDir = File(tempDir, DATABASE_DIR)
+        stagedDatabaseDir.listFiles()?.forEach { stagedFile ->
+            stagedFile.copyTo(File(databaseDir, stagedFile.name), overwrite = true)
+        }
+
+        replaceImageDirectory(File(tempDir, IMAGE_DIR))
+    }
+
+    private fun restoreSnapshot(snapshotDir: File, databaseDir: File) {
+        if (!databaseDir.exists() && !databaseDir.mkdirs()) {
+            throw IOException("无法恢复数据库目录")
+        }
+        clearDatabaseFiles(databaseDir)
+
+        File(snapshotDir, DATABASE_DIR).listFiles()?.forEach { previousFile ->
+            previousFile.copyTo(File(databaseDir, previousFile.name), overwrite = true)
+        }
+
+        replaceImageDirectory(File(snapshotDir, IMAGE_DIR))
+    }
+
+    private fun clearDatabaseFiles(databaseDir: File) {
+        databaseFileNames().forEach { name ->
+            val file = File(databaseDir, name)
+            if (file.exists() && !file.delete()) {
+                throw IOException("无法替换数据库文件：$name")
+            }
+        }
+    }
+
+    private fun replaceImageDirectory(source: File) {
+        val target = imageDir()
+        if (target.exists() && !target.deleteRecursively()) {
+            throw IOException("无法替换图片目录")
+        }
+        if (!target.mkdirs()) {
+            throw IOException("无法创建图片目录")
+        }
+        if (source.isDirectory &&
+            !source.copyRecursively(target, overwrite = true)
+        ) {
+            throw IOException("无法复制备份图片")
+        }
+    }
+
+    private fun validateInstalledDatabase() {
+        val database = InventoryDatabase.getDatabase(context)
+        database.openHelper.writableDatabase
+        database.shoeInventoryDAO().queryAll()
+        database.orderBatchDAO().query()
     }
 
     /** PRAGMA wal_checkpoint(FULL)：把 WAL 里没落盘的数据合并进主库文件 */
@@ -142,8 +325,23 @@ class BackupService(private val context: Context) {
     }
 
     private fun isWantedEntry(name: String): Boolean {
-        return name.startsWith("$DATABASE_DIR/") || name.startsWith("$IMAGE_DIR/")
+        if (name.startsWith("$DATABASE_DIR/")) {
+            return name.substringAfter("$DATABASE_DIR/") in databaseFileNames()
+        }
+        if (!name.startsWith("$IMAGE_DIR/")) {
+            return false
+        }
+        val imageName = name.substringAfter("$IMAGE_DIR/")
+        return imageName.isNotBlank() &&
+            imageName != "." &&
+            imageName != ".." &&
+            '/' !in imageName &&
+            '\\' !in imageName
     }
+
+    private fun databaseFileNames(): Set<String> = DATABASE_NAMES.flatMap { name ->
+        listOf(name, "$name-wal", "$name-shm", "$name-journal")
+    }.toSet()
 
     private fun addFileIfExists(zip: ZipOutputStream, file: File, entryName: String) {
         if (!file.exists() || !file.isFile) {
@@ -168,11 +366,16 @@ class BackupService(private val context: Context) {
     private fun imageDir(): File = File(context.filesDir, IMAGE_DIR_NAME)
 
     companion object {
+        private const val LOG_TAG = "BackupService"
         private const val BACKUP_INFO = "backup_info.txt"
+        private const val BACKUP_SIGNATURE = "shoe_warehouse_backup"
         private const val DATABASE_DIR = "databases"
         private const val IMAGE_DIR = "images"
         private const val TEMP_DIR = "restore_temp"
+        private const val PREVIOUS_DIR = "previous"
         private const val FORMAT_VERSION = 1
+        private const val MAX_BACKUP_INFO_BYTES = 4096
+        private const val MIN_SUPPORTED_DATABASE_VERSION = 1
 
         /** 图片目录名，和 ImageUtils 里保持一致 */
         private const val IMAGE_DIR_NAME = "inventory_images"
