@@ -16,9 +16,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * 运行测试文件，在 /storage/emulated/0/Download/WareManageTestDebug 路劲下生成测试备份文件
+ * 运行测试文件，在 /storage/emulated/0/Download/WareManageTestDebug 路径下生成测试备份文件
  * 测试文件包括 version 1 / 2 版本数据库备份文件、非法备份文件
- * Android Studio查看文件目录 Views/Tool Windows/Device Explorer
+ * Android Studio查看文件目录 Views -> Tool Windows -> Device Explorer
 */
 @RunWith(AndroidJUnit4::class)
 class BackupFixtureGeneratorTest {

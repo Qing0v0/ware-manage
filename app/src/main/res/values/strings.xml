@@ -104,6 +104,33 @@
     <string name="backup_import_success">导入成功，数据已恢复</string>
     <string name="backup_import_failed">导入失败：备份文件无效或不完整，请确认文件后重试</string>
     <string name="backup_import_confirm">导入会覆盖当前所有存量、账单和图片，确定继续吗？</string>
+    <string name="backup_suggested_file_name">鞋子仓库备份_%1$s.zip</string>
+    <string name="backup_error_temp_cleanup">无法清理恢复暂存目录</string>
+    <string name="backup_error_temp_create">无法创建恢复暂存目录</string>
+    <string name="backup_error_duplicate_info">备份包含重复的标记文件</string>
+    <string name="backup_error_duplicate_file">备份包含重复的文件：%1$s</string>
+    <string name="backup_error_invalid_file_path">备份文件路径无效：%1$s</string>
+    <string name="backup_error_database_dir_invalid">数据库目录无效</string>
+    <string name="backup_error_restore_rollback">恢复备份失败，且无法完整回滚原数据</string>
+    <string name="backup_error_restore">恢复备份失败</string>
+    <string name="backup_error_marker_too_large">备份标记文件过大</string>
+    <string name="backup_error_marker_invalid">备份标记文件无效</string>
+    <string name="backup_error_unknown_version">未知</string>
+    <string name="backup_error_unsupported_format_version">不支持的备份格式版本：%1$s</string>
+    <string name="backup_error_missing_database_files">备份中没有数据库文件</string>
+    <string name="backup_error_unsupported_database_version">不支持的数据库版本：%1$d</string>
+    <string name="backup_error_missing_inventory_table">备份数据库缺少库存表</string>
+    <string name="backup_error_missing_order_table">备份数据库缺少订单表</string>
+    <string name="backup_error_missing_legacy_order_table">旧版备份数据库缺少订单表</string>
+    <string name="backup_error_integrity_check">备份数据库完整性检查失败</string>
+    <string name="backup_error_snapshot_dir_create">无法创建原数据备份目录</string>
+    <string name="backup_error_snapshot_images">无法暂存现有图片</string>
+    <string name="backup_error_database_dir_create">无法创建数据库目录</string>
+    <string name="backup_error_database_dir_restore">无法恢复数据库目录</string>
+    <string name="backup_error_database_file_replace">无法替换数据库文件：%1$s</string>
+    <string name="backup_error_image_dir_replace">无法替换图片目录</string>
+    <string name="backup_error_image_dir_create">无法创建图片目录</string>
+    <string name="backup_error_images_copy">无法复制备份图片</string>
 
     <!-- 更多菜单 / 版本更新 -->
     <string name="settings_update">版本更新</string>

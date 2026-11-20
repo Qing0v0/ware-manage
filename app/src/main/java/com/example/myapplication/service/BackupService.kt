@@ -3,6 +3,7 @@ package com.example.myapplication.service
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
+import com.example.myapplication.R
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
@@ -68,10 +69,10 @@ class BackupService(private val context: Context) {
         val tempDir = File(context.cacheDir, TEMP_DIR)
         return try {
             if (tempDir.exists() && !tempDir.deleteRecursively()) {
-                throw IOException("无法清理恢复暂存目录")
+                throw IOException(context.getString(R.string.backup_error_temp_cleanup))
             }
             if (!tempDir.mkdirs()) {
-                throw IOException("无法创建恢复暂存目录")
+                throw IOException(context.getString(R.string.backup_error_temp_create))
             }
 
             // 1. 先解到临时目录，并检查备份格式和数据库完整性
@@ -83,18 +84,20 @@ class BackupService(private val context: Context) {
                     val name = entry.name
                     if (!entry.isDirectory && name == BACKUP_INFO) {
                         if (backupInfo != null) {
-                            throw IOException("备份包含重复的标记文件")
+                            throw IOException(context.getString(R.string.backup_error_duplicate_info))
                         }
                         backupInfo = readBackupInfo(zip)
                     } else if (!entry.isDirectory && isWantedEntry(name)) {
                         if (!extractedEntries.add(name)) {
-                            throw IOException("备份包含重复的文件：$name")
+                            throw IOException(context.getString(R.string.backup_error_duplicate_file, name))
                         }
                         val target = File(tempDir, name)
                         val parent = target.parentFile
-                            ?: throw IOException("备份文件路径无效：$name")
+                            ?: throw IOException(
+                                context.getString(R.string.backup_error_invalid_file_path, name)
+                            )
                         if (!parent.exists() && !parent.mkdirs()) {
-                            throw IOException("无法创建恢复暂存目录")
+                            throw IOException(context.getString(R.string.backup_error_temp_create))
                         }
                         target.outputStream().use { outputStream -> zip.copyTo(outputStream) }
                     }
@@ -105,7 +108,7 @@ class BackupService(private val context: Context) {
             validateBackup(tempDir, backupInfo)
 
             val databaseDir = context.getDatabasePath(DATABASE_NAMES[0]).parentFile
-                ?: throw IOException("数据库目录无效")
+                ?: throw IOException(context.getString(R.string.backup_error_database_dir_invalid))
             val previousDir = File(tempDir, PREVIOUS_DIR)
             InventoryDatabase.closeDatabase()
             snapshotCurrentData(databaseDir, previousDir)
@@ -119,7 +122,11 @@ class BackupService(private val context: Context) {
                     InventoryDatabase.closeDatabase()
                     restoreSnapshot(previousDir, databaseDir)
                 } catch (rollbackError: Exception) {
-                    Log.e(LOG_TAG, "恢复备份失败，且无法完整回滚原数据", rollbackError)
+                    Log.e(
+                        LOG_TAG,
+                        context.getString(R.string.backup_error_restore_rollback),
+                        rollbackError
+                    )
                     restoreError.addSuppressed(rollbackError)
                 }
                 throw restoreError
@@ -127,11 +134,11 @@ class BackupService(private val context: Context) {
 
             true
         } catch (e: Exception) {
-            Log.e(LOG_TAG, "恢复备份失败", e)
+            Log.e(LOG_TAG, context.getString(R.string.backup_error_restore), e)
             false
         } finally {
             if (tempDir.exists() && !tempDir.deleteRecursively()) {
-                Log.w(LOG_TAG, "无法清理恢复暂存目录")
+                Log.w(LOG_TAG, context.getString(R.string.backup_error_temp_cleanup))
             }
         }
     }
@@ -143,7 +150,7 @@ class BackupService(private val context: Context) {
             val count = zip.read(buffer)
             if (count < 0) break
             if (output.size() + count > MAX_BACKUP_INFO_BYTES) {
-                throw IOException("备份标记文件过大")
+                throw IOException(context.getString(R.string.backup_error_marker_too_large))
             }
             output.write(buffer, 0, count)
         }
@@ -153,21 +160,27 @@ class BackupService(private val context: Context) {
     private fun validateBackup(tempDir: File, backupInfo: String?) {
         val infoLines = backupInfo?.lineSequence()?.toList().orEmpty()
         if (infoLines.firstOrNull() != BACKUP_SIGNATURE) {
-            throw IOException("备份标记文件无效")
+            throw IOException(context.getString(R.string.backup_error_marker_invalid))
         }
         val formatVersion = infoLines
             .firstOrNull { it.startsWith("formatVersion=") }
             ?.substringAfter("=")
             ?.toIntOrNull()
         if (formatVersion != FORMAT_VERSION) {
-            throw IOException("不支持的备份格式版本：$formatVersion")
+            throw IOException(
+                context.getString(
+                    R.string.backup_error_unsupported_format_version,
+                    formatVersion?.toString()
+                        ?: context.getString(R.string.backup_error_unknown_version)
+                )
+            )
         }
 
         val databaseDir = File(tempDir, DATABASE_DIR)
         val inventoryFile = File(databaseDir, "inventory_database")
         val legacyOrdersFile = File(databaseDir, "app_database")
         if (!inventoryFile.isFile && !legacyOrdersFile.isFile) {
-            throw IOException("备份中没有数据库文件")
+            throw IOException(context.getString(R.string.backup_error_missing_database_files))
         }
         if (inventoryFile.isFile) {
             validateInventoryDatabase(inventoryFile)
@@ -186,13 +199,15 @@ class BackupService(private val context: Context) {
             requireIntegrityCheck(database)
             val version = database.version
             if (version !in MIN_SUPPORTED_DATABASE_VERSION..INVENTORY_DATABASE_VERSION) {
-                throw IOException("不支持的数据库版本：$version")
+                throw IOException(
+                    context.getString(R.string.backup_error_unsupported_database_version, version)
+                )
             }
             if (!hasTable(database, "inventory")) {
-                throw IOException("备份数据库缺少库存表")
+                throw IOException(context.getString(R.string.backup_error_missing_inventory_table))
             }
             if (version >= 2 && !hasTable(database, "order")) {
-                throw IOException("备份数据库缺少订单表")
+                throw IOException(context.getString(R.string.backup_error_missing_order_table))
             }
         }
     }
@@ -205,7 +220,9 @@ class BackupService(private val context: Context) {
         ).use { database ->
             requireIntegrityCheck(database)
             if (!hasTable(database, "order")) {
-                throw IOException("旧版备份数据库缺少订单表")
+                throw IOException(
+                    context.getString(R.string.backup_error_missing_legacy_order_table)
+                )
             }
         }
     }
@@ -213,7 +230,7 @@ class BackupService(private val context: Context) {
     private fun requireIntegrityCheck(database: SQLiteDatabase) {
         database.rawQuery("PRAGMA integrity_check", null).use { cursor ->
             if (!cursor.moveToFirst() || cursor.getString(0) != "ok" || cursor.moveToNext()) {
-                throw IOException("备份数据库完整性检查失败")
+                throw IOException(context.getString(R.string.backup_error_integrity_check))
             }
         }
     }
@@ -228,7 +245,7 @@ class BackupService(private val context: Context) {
     private fun snapshotCurrentData(databaseDir: File, snapshotDir: File) {
         val snapshotDatabaseDir = File(snapshotDir, DATABASE_DIR)
         if (!snapshotDatabaseDir.mkdirs()) {
-            throw IOException("无法创建原数据备份目录")
+            throw IOException(context.getString(R.string.backup_error_snapshot_dir_create))
         }
         databaseFileNames().forEach { name ->
             val current = File(databaseDir, name)
@@ -241,13 +258,13 @@ class BackupService(private val context: Context) {
         if (currentImages.exists() &&
             !currentImages.copyRecursively(File(snapshotDir, IMAGE_DIR), overwrite = true)
         ) {
-            throw IOException("无法暂存现有图片")
+            throw IOException(context.getString(R.string.backup_error_snapshot_images))
         }
     }
 
     private fun replaceCurrentData(tempDir: File, databaseDir: File) {
         if (!databaseDir.exists() && !databaseDir.mkdirs()) {
-            throw IOException("无法创建数据库目录")
+            throw IOException(context.getString(R.string.backup_error_database_dir_create))
         }
         clearDatabaseFiles(databaseDir)
 
@@ -261,7 +278,7 @@ class BackupService(private val context: Context) {
 
     private fun restoreSnapshot(snapshotDir: File, databaseDir: File) {
         if (!databaseDir.exists() && !databaseDir.mkdirs()) {
-            throw IOException("无法恢复数据库目录")
+            throw IOException(context.getString(R.string.backup_error_database_dir_restore))
         }
         clearDatabaseFiles(databaseDir)
 
@@ -276,7 +293,7 @@ class BackupService(private val context: Context) {
         databaseFileNames().forEach { name ->
             val file = File(databaseDir, name)
             if (file.exists() && !file.delete()) {
-                throw IOException("无法替换数据库文件：$name")
+                throw IOException(context.getString(R.string.backup_error_database_file_replace, name))
             }
         }
     }
@@ -284,15 +301,15 @@ class BackupService(private val context: Context) {
     private fun replaceImageDirectory(source: File) {
         val target = imageDir()
         if (target.exists() && !target.deleteRecursively()) {
-            throw IOException("无法替换图片目录")
+            throw IOException(context.getString(R.string.backup_error_image_dir_replace))
         }
         if (!target.mkdirs()) {
-            throw IOException("无法创建图片目录")
+            throw IOException(context.getString(R.string.backup_error_image_dir_create))
         }
         if (source.isDirectory &&
             !source.copyRecursively(target, overwrite = true)
         ) {
-            throw IOException("无法复制备份图片")
+            throw IOException(context.getString(R.string.backup_error_images_copy))
         }
     }
 
@@ -384,9 +401,9 @@ class BackupService(private val context: Context) {
         private val DATABASE_NAMES = arrayOf("app_database", "inventory_database")
 
         /** 默认的备份文件名，比如 鞋子仓库备份_2026-09-22.zip */
-        fun suggestedFileName(): String {
+        fun suggestedFileName(context: Context): String {
             val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-            return "鞋子仓库备份_$date.zip"
+            return context.getString(R.string.backup_suggested_file_name, date)
         }
     }
 }
