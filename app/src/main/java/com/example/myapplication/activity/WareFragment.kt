@@ -83,16 +83,19 @@ class WareFragment : Fragment() {
     private fun loadInventory() {
         val context = requireContext().applicationContext
         thread {
-            val inventoryDAO = InventoryDatabase.getDatabase(context).shoeInventoryDAO()
-            val rows = inventoryDAO.queryAll()
+            val rows = InventoryDatabase.withDatabaseAccess(context) { database ->
+                val inventoryDAO = database.shoeInventoryDAO()
+                val inventoryRows = inventoryDAO.queryAll()
 
-            // 缩略图先在后台解码好，界面上直接取缓存
-            rows.forEach { inventory ->
-                val path = inventory.imagePath
-                if (!path.isNullOrEmpty() && pictureCache.get(path) == null) {
-                    ImageUtils.decodeFromPath(path, ImageUtils.MAX_SHOW_SIZE)
-                        ?.let { pictureCache.put(path, it) }
+                // 缩略图先在后台解码好，界面上直接取缓存
+                inventoryRows.forEach { inventory ->
+                    val path = inventory.imagePath
+                    if (!path.isNullOrEmpty() && pictureCache.get(path) == null) {
+                        ImageUtils.decodeFromPath(path, ImageUtils.MAX_SHOW_SIZE)
+                            ?.let { pictureCache.put(path, it) }
+                    }
                 }
+                inventoryRows
             }
 
             activity?.runOnUiThread {

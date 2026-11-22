@@ -15,38 +15,41 @@ import com.example.myapplication.utils.SizeUtils
  * - 出库 / 破损 / 退给经销商：先查存量，某个尺码减完小于 0 就报错；
  * - 订单流水和存量写在同一个数据库事务里；库存校验也在该事务中进行。
  */
-class InventoryService(private val inventoryDatabase: InventoryDatabase, private val context: Context) {
-
-    private val inventoryDAO = inventoryDatabase.shoeInventoryDAO()
-    private val orderBatchDAO = inventoryDatabase.orderBatchDAO()
+class InventoryService(private val context: Context) {
 
     /**
      * 校验库存并同时写订单流水和存量。任意写入失败时，整个事务回滚。
      * 同一批里相同货号 + 颜色的行会先合并校验，避免合计出库超库存。
      */
-    fun apply(orderBatches: List<OrderBatch>, imagePath: String? = null): List<String> {
-        val errors = ArrayList<String>()
+    fun apply(orderBatches: List<OrderBatch>, imagePath: String? = null): List<String> =
+        InventoryDatabase.withDatabaseAccess(context) { inventoryDatabase ->
+            val inventoryDAO = inventoryDatabase.shoeInventoryDAO()
+            val orderBatchDAO = inventoryDatabase.orderBatchDAO()
+            val errors = ArrayList<String>()
 
-        inventoryDatabase.runInTransaction {
-            errors.addAll(check(orderBatches))
-            if (errors.isEmpty()) {
-                orderBatches.forEach { orderBatch ->
-                    if (!orderBatch.orderType.increaseStock && orderBatch.dealer.isBlank()) {
-                        orderBatch.dealer = inventoryDAO
-                            .query(orderBatch.articleId, orderBatch.color)
-                            ?.dealer
-                            .orEmpty()
+            inventoryDatabase.runInTransaction {
+                errors.addAll(check(orderBatches, inventoryDAO))
+                if (errors.isEmpty()) {
+                    orderBatches.forEach { orderBatch ->
+                        if (!orderBatch.orderType.increaseStock && orderBatch.dealer.isBlank()) {
+                            orderBatch.dealer = inventoryDAO
+                                .query(orderBatch.articleId, orderBatch.color)
+                                ?.dealer
+                                .orEmpty()
+                        }
+                        orderBatchDAO.insert(orderBatch)
+                        applyOne(orderBatch, imagePath, inventoryDAO)
                     }
-                    orderBatchDAO.insert(orderBatch)
-                    applyOne(orderBatch, imagePath)
                 }
             }
+
+            errors
         }
 
-        return errors
-    }
-
-    private fun check(orderBatches: List<OrderBatch>): List<String> {
+    private fun check(
+        orderBatches: List<OrderBatch>,
+        inventoryDAO: ShoeInventoryDAO
+    ): List<String> {
         val errors = ArrayList<String>()
 
         for ((articleColor, batches) in orderBatches.groupBy { it.articleId to it.color }) {
@@ -87,7 +90,11 @@ class InventoryService(private val inventoryDatabase: InventoryDatabase, private
         return errors
     }
 
-    private fun applyOne(orderBatch: OrderBatch, imagePath: String?) {
+    private fun applyOne(
+        orderBatch: OrderBatch,
+        imagePath: String?,
+        inventoryDAO: ShoeInventoryDAO
+    ) {
         val articleImagePath = imagePath?.takeIf { it.isNotBlank() }
             ?: inventoryDAO.queryArticleImagePath(orderBatch.articleId)
         val inventory = inventoryDAO.query(orderBatch.articleId, orderBatch.color)

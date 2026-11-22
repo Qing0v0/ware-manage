@@ -185,25 +185,22 @@ fun InventoryOrderDialog(
                         val imageUriToSave = productImageUri
                         val existingImagePath = productImagePath
                         thread {
-                            val imagePath = if (orderType.increaseStock && imageUriToSave != null) {
-                                ImageUtils.saveToAppStorage(appContext, imageUriToSave)
-                                    ?: run {
-                                        Handler(Looper.getMainLooper()).post {
-                                            isSaving = false
-                                            errorMessage = appContext.getString(R.string.order_image_save_failed)
-                                        }
-                                        return@thread
-                                    }
-                            } else if (orderType.increaseStock) {
-                                existingImagePath
-                            } else {
-                                null
-                            }
                             val errors = try {
-                                InventoryService(
-                                    InventoryDatabase.getDatabase(appContext),
-                                    appContext
-                                ).apply(batches, imagePath)
+                                InventoryDatabase.withDatabaseAccess {
+                                    val imagePath = if (
+                                        orderType.increaseStock && imageUriToSave != null
+                                    ) {
+                                        ImageUtils.saveToAppStorage(appContext, imageUriToSave)
+                                            ?: return@withDatabaseAccess listOf(
+                                                appContext.getString(R.string.order_image_save_failed)
+                                            )
+                                    } else if (orderType.increaseStock) {
+                                        existingImagePath
+                                    } else {
+                                        null
+                                    }
+                                    InventoryService(appContext).apply(batches, imagePath)
+                                }
                             } catch (_: Exception) {
                                 listOf(appContext.getString(R.string.order_save_failed))
                             }

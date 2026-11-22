@@ -34,47 +34,62 @@ class BackupService(private val context: Context) {
 
     /** 导出到外面给的输出流（一般是用户在文件选择器里选的备份文件） */
     fun exportTo(output: OutputStream): Boolean {
+        val snapshotDir = try {
+            createTempDirectory(EXPORT_TEMP_DIR)
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, context.getString(R.string.backup_error_export), e)
+            return false
+        }
+
         return try {
-            // 先把 WAL 里还没落盘的数据合并进主库文件，拷出来才完整
-            checkpoint()
+            InventoryDatabase.withDatabaseMaintenance {
+                checkpoint()
+                InventoryDatabase.closeDatabase()
+                val databaseDir = context.getDatabasePath(DATABASE_NAMES[0]).parentFile
+                    ?: throw IOException(context.getString(R.string.backup_error_database_dir_invalid))
+                snapshotCurrentData(databaseDir, snapshotDir)
+            }
 
             ZipOutputStream(output).use { zip ->
                 writeTextEntry(zip, BACKUP_INFO, buildBackupInfo())
 
                 DATABASE_NAMES.forEach { name ->
-                    val databaseFile = context.getDatabasePath(name)
+                    val databaseFile = File(snapshotDir, "$DATABASE_DIR/$name")
                     addFileIfExists(zip, databaseFile, "$DATABASE_DIR/${databaseFile.name}")
                     addFileIfExists(
-                        zip, File("${databaseFile.path}-wal"),
+                        zip, File(snapshotDir, "$DATABASE_DIR/$name-wal"),
                         "$DATABASE_DIR/${databaseFile.name}-wal"
                     )
                     addFileIfExists(
-                        zip, File("${databaseFile.path}-shm"),
+                        zip, File(snapshotDir, "$DATABASE_DIR/$name-shm"),
                         "$DATABASE_DIR/${databaseFile.name}-shm"
                     )
                 }
 
-                imageDir().listFiles()?.forEach { image ->
+                File(snapshotDir, IMAGE_DIR).listFiles()?.forEach { image ->
                     addFileIfExists(zip, image, "$IMAGE_DIR/${image.name}")
                 }
             }
             true
         } catch (e: Exception) {
+            Log.e(LOG_TAG, context.getString(R.string.backup_error_export), e)
             false
+        } finally {
+            if (snapshotDir.exists() && !snapshotDir.deleteRecursively()) {
+                Log.w(LOG_TAG, context.getString(R.string.backup_error_temp_cleanup))
+            }
         }
     }
 
     /** 用备份文件覆盖当前数据 */
     fun restoreFrom(input: InputStream): Boolean {
-        val tempDir = File(context.cacheDir, TEMP_DIR)
+        val tempDir = try {
+            createTempDirectory(TEMP_DIR)
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, context.getString(R.string.backup_error_restore), e)
+            return false
+        }
         return try {
-            if (tempDir.exists() && !tempDir.deleteRecursively()) {
-                throw IOException(context.getString(R.string.backup_error_temp_cleanup))
-            }
-            if (!tempDir.mkdirs()) {
-                throw IOException(context.getString(R.string.backup_error_temp_create))
-            }
-
             // 1. 先解到临时目录，并检查备份格式和数据库完整性
             var backupInfo: String? = null
             val extractedEntries = HashSet<String>()
@@ -107,29 +122,32 @@ class BackupService(private val context: Context) {
             }
             validateBackup(tempDir, backupInfo)
 
-            val databaseDir = context.getDatabasePath(DATABASE_NAMES[0]).parentFile
-                ?: throw IOException(context.getString(R.string.backup_error_database_dir_invalid))
-            val previousDir = File(tempDir, PREVIOUS_DIR)
-            InventoryDatabase.closeDatabase()
-            snapshotCurrentData(databaseDir, previousDir)
+            InventoryDatabase.withDatabaseMaintenance {
+                val databaseDir = context.getDatabasePath(DATABASE_NAMES[0]).parentFile
+                    ?: throw IOException(context.getString(R.string.backup_error_database_dir_invalid))
+                val previousDir = File(tempDir, PREVIOUS_DIR)
+                checkpoint()
+                InventoryDatabase.closeDatabase()
+                snapshotCurrentData(databaseDir, previousDir)
 
-            try {
-                replaceCurrentData(tempDir, databaseDir)
-                validateInstalledDatabase()
-                fixImagePaths()
-            } catch (restoreError: Exception) {
                 try {
-                    InventoryDatabase.closeDatabase()
-                    restoreSnapshot(previousDir, databaseDir)
-                } catch (rollbackError: Exception) {
-                    Log.e(
-                        LOG_TAG,
-                        context.getString(R.string.backup_error_restore_rollback),
-                        rollbackError
-                    )
-                    restoreError.addSuppressed(rollbackError)
+                    replaceCurrentData(tempDir, databaseDir)
+                    validateInstalledDatabase()
+                    fixImagePaths()
+                } catch (restoreError: Exception) {
+                    try {
+                        InventoryDatabase.closeDatabase()
+                        restoreSnapshot(previousDir, databaseDir)
+                    } catch (rollbackError: Exception) {
+                        Log.e(
+                            LOG_TAG,
+                            context.getString(R.string.backup_error_restore_rollback),
+                            rollbackError
+                        )
+                        restoreError.addSuppressed(rollbackError)
+                    }
+                    throw restoreError
                 }
-                throw restoreError
             }
 
             true
@@ -314,29 +332,53 @@ class BackupService(private val context: Context) {
     }
 
     private fun validateInstalledDatabase() {
-        val database = InventoryDatabase.getDatabase(context)
-        database.openHelper.writableDatabase
-        database.shoeInventoryDAO().queryAll()
-        database.orderBatchDAO().query()
+        InventoryDatabase.withDatabaseAccess(context) { database ->
+            database.openHelper.writableDatabase
+            database.shoeInventoryDAO().queryAll()
+            database.orderBatchDAO().query()
+        }
     }
 
     /** PRAGMA wal_checkpoint(FULL)：把 WAL 里没落盘的数据合并进主库文件 */
     private fun checkpoint() {
-        InventoryDatabase.getDatabase(context).query("PRAGMA wal_checkpoint(FULL)", null)?.close()
+        InventoryDatabase.withDatabaseAccess(context) { database ->
+            val cursor = database.query("PRAGMA wal_checkpoint(FULL)", null)
+            cursor.use {
+                if (!it.moveToFirst()) {
+                    throw IOException(context.getString(R.string.backup_error_checkpoint))
+                }
+                val busy = it.getInt(0)
+                val walFrames = it.getInt(1)
+                val checkpointedFrames = it.getInt(2)
+                if (busy != 0 || (walFrames >= 0 && checkpointedFrames < walFrames)) {
+                    throw IOException(context.getString(R.string.backup_error_checkpoint))
+                }
+            }
+        }
+    }
+
+    private fun createTempDirectory(prefix: String): File {
+        val tempFile = File.createTempFile(prefix, ".tmp", context.cacheDir)
+        if (!tempFile.delete() || !tempFile.mkdir()) {
+            throw IOException(context.getString(R.string.backup_error_temp_create))
+        }
+        return tempFile
     }
 
     /** 备份里的图片路径可能是别的设备 / 包名的绝对路径，按文件名在当前机器上找回来 */
     private fun fixImagePaths() {
-        val inventoryDAO = InventoryDatabase.getDatabase(context).shoeInventoryDAO()
-        inventoryDAO.queryAll().forEach { inventory ->
-            val oldPath = inventory.imagePath
-            if (oldPath.isNullOrEmpty() || File(oldPath).exists()) {
-                return@forEach
-            }
-            val restored = File(imageDir(), File(oldPath).name)
-            if (restored.exists()) {
-                inventory.imagePath = restored.absolutePath
-                inventoryDAO.update(inventory)
+        InventoryDatabase.withDatabaseAccess(context) { database ->
+            val inventoryDAO = database.shoeInventoryDAO()
+            inventoryDAO.queryAll().forEach { inventory ->
+                val oldPath = inventory.imagePath
+                if (oldPath.isNullOrEmpty() || File(oldPath).exists()) {
+                    return@forEach
+                }
+                val restored = File(imageDir(), File(oldPath).name)
+                if (restored.exists()) {
+                    inventory.imagePath = restored.absolutePath
+                    inventoryDAO.update(inventory)
+                }
             }
         }
     }
@@ -389,6 +431,7 @@ class BackupService(private val context: Context) {
         private const val DATABASE_DIR = "databases"
         private const val IMAGE_DIR = "images"
         private const val TEMP_DIR = "restore_temp"
+        private const val EXPORT_TEMP_DIR = "backup_export_"
         private const val PREVIOUS_DIR = "previous"
         private const val FORMAT_VERSION = 1
         private const val MAX_BACKUP_INFO_BYTES = 4096

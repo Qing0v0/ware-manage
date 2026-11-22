@@ -11,6 +11,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.sqlite.db.SupportSQLiteStatement
 import com.example.myapplication.model.OrderBatch
 import com.example.myapplication.model.ShoeInventory
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 internal const val INVENTORY_DATABASE_VERSION = 3
 @Database(
@@ -24,6 +27,20 @@ abstract class InventoryDatabase: RoomDatabase() {
     companion object {
         @Volatile
         private var INSTANCE: InventoryDatabase? = null
+        private val databaseAccessLock = ReentrantReadWriteLock(true)
+
+        fun <T> withDatabaseAccess(action: () -> T): T =
+            databaseAccessLock.read(action)
+
+        fun <T> withDatabaseAccess(
+            context: Context,
+            action: (InventoryDatabase) -> T
+        ): T = databaseAccessLock.read {
+            action(getDatabase(context))
+        }
+
+        fun <T> withDatabaseMaintenance(action: () -> T): T =
+            databaseAccessLock.write(action)
 
         /** 迁移旧数据，从两个数据库改为一个数据库两张表 */
         private fun migrationFromV1(context: Context) = object : Migration(1, 2) {
@@ -141,29 +158,32 @@ abstract class InventoryDatabase: RoomDatabase() {
 
         /** 备份 / 恢复数据前先把连接关掉，之后再用会自动重开 */
         fun closeDatabase() {
-            synchronized(this) {
-                INSTANCE?.close()
-                INSTANCE = null
+            withDatabaseMaintenance {
+                synchronized(this) {
+                    INSTANCE?.close()
+                    INSTANCE = null
+                }
             }
         }
 
-        fun getDatabase(context: Context): InventoryDatabase {
-            return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    InventoryDatabase::class.java,
-                    "inventory_database"
-                )
-                    .addMigrations(migrationFromV1(context.applicationContext), migrationFromV2)
-                    .addCallback(object : RoomDatabase.Callback() {
-                        override fun onCreate(db: SupportSQLiteDatabase) {
-                            importLegacyOrders(context.applicationContext, db)
-                        }
-                    })
-                    .build()
-                INSTANCE = instance
-                instance
+        private fun getDatabase(context: Context): InventoryDatabase =
+            withDatabaseAccess {
+                INSTANCE ?: synchronized(this) {
+                    val instance = Room.databaseBuilder(
+                        context.applicationContext,
+                        InventoryDatabase::class.java,
+                        "inventory_database"
+                    )
+                        .addMigrations(migrationFromV1(context.applicationContext), migrationFromV2)
+                        .addCallback(object : RoomDatabase.Callback() {
+                            override fun onCreate(db: SupportSQLiteDatabase) {
+                                importLegacyOrders(context.applicationContext, db)
+                            }
+                        })
+                        .build()
+                    INSTANCE = instance
+                    instance
+                }
             }
-        }
     }
 }

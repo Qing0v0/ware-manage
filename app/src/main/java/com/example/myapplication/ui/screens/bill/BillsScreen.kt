@@ -132,8 +132,10 @@ fun BillsScreen(
             try {
 //                delay(2000) // 调试查看loading样式
                 val result = withContext(Dispatchers.IO) {
-                    InventoryDatabase.getDatabase(appContext).orderBatchDAO()
-                        .queryOrders(startTime, endTime, articleIdLike, dealerLike, orderTypes)
+                    InventoryDatabase.withDatabaseAccess(appContext) { database ->
+                        database.orderBatchDAO()
+                            .queryOrders(startTime, endTime, articleIdLike, dealerLike, orderTypes)
+                    }
                 }
                 bills = result
                 hintId = if (result.isEmpty()) R.string.bills_empty else HIDE_BILL_HINT
