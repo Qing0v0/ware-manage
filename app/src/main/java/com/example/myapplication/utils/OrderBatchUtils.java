@@ -48,7 +48,10 @@ public class OrderBatchUtils {
         }
 
         try {
-            new BigDecimal(price);
+            BigDecimal _price = new BigDecimal(price);
+            if (_price.compareTo(BigDecimal.ZERO) < 0) {
+                return context.getString(R.string.priceNegative);
+            }
         } catch (NumberFormatException e) {
             return context.getString(R.string.priceTypeError);
         }
@@ -59,9 +62,13 @@ public class OrderBatchUtils {
             if ("".equals(sizeArray[i])) {
                 sizeArray[i] = "0";
             }
-            // check type
+
             try {
-                totalNum += Integer.parseInt(sizeArray[i]);
+                int sizeNum = Integer.parseInt(sizeArray[i]);
+                if (sizeNum < 0) {
+                    return context.getString(R.string.sizeNegative);
+                }
+                totalNum += sizeNum;
             } catch (NumberFormatException e) {
                 return context.getString(R.string.sizeTypeError);
             }

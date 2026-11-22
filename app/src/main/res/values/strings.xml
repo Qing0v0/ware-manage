@@ -41,7 +41,9 @@
     <string name="choose_color">选择颜色</string>
     <string name="sizeArrayEmpty">入库鞋子数量为0，请至少填写一个尺寸的入库数量</string>
     <string name="sizeTypeError">输入入库数量不是数字，请重新填写</string>
+    <string name="sizeNegative">输入入库数量为负数，请重新填写</string>
     <string name="priceTypeError">填写价格并非数字，请重新填写</string>
+    <string name="priceNegative">填写价格为负数，请重新填写</string>
     <string name="inventoryNotFound">存量里找不到 %1$s（%2$s），不能出库，请先入库</string>
     <string name="inventoryNotEnough">%1$s（%2$s）的 %3$d 码：存量 %4$d 双，本次需要 %5$d 双，存量不足</string>
 
