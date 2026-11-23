@@ -74,8 +74,8 @@ fun WareScreen(
         inventoryProductGroups(inventories, searchQuery)
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = modifier.fillMaxSize().hideKeyboardOnAnyPress()) {
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().hideKeyboardOnAnyPress()) {
             PageTitleHeader(
                 eyebrow = stringResource(R.string.inventory_overview_eyebrow),
                 title = stringResource(R.string.bottom_warehouse)

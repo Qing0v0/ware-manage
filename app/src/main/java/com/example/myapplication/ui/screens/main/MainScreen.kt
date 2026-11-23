@@ -32,6 +32,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -103,20 +104,30 @@ fun MainScreen(
                     .weight(1f)
                     .fillMaxWidth()
             ) {
-                if (selectedItemId == R.id.warehouse) {
-                    saveableStateHolder.SaveableStateProvider(WAREHOUSE_STATE_KEY) {
-                        WareScreen(
-                            inventories = inventories,
-                            imageCacheVersion = imageCacheVersion,
-                            imageFor = imageFor,
-                            loadImage = loadImage,
-                            onInventoryChanged = onInventoryChanged
-                        )
-                    }
-                } else {
-                    saveableStateHolder.SaveableStateProvider(BILLS_STATE_KEY) {
-                        BillsScreen(resetTick = billsResetTick)
-                    }
+                // Retain both screen trees so switching tabs does not recreate either page.
+                saveableStateHolder.SaveableStateProvider(WAREHOUSE_STATE_KEY) {
+                    WareScreen(
+                        inventories = inventories,
+                        imageCacheVersion = imageCacheVersion,
+                        imageFor = imageFor,
+                        loadImage = loadImage,
+                        onInventoryChanged = onInventoryChanged,
+                        modifier = if (selectedItemId == R.id.warehouse) {
+                            Modifier.fillMaxSize()
+                        } else {
+                            Modifier.size(0.dp).clearAndSetSemantics {}
+                        }
+                    )
+                }
+                saveableStateHolder.SaveableStateProvider(BILLS_STATE_KEY) {
+                    BillsScreen(
+                        resetTick = billsResetTick,
+                        modifier = if (selectedItemId == R.id.bills) {
+                            Modifier.fillMaxSize()
+                        } else {
+                            Modifier.size(0.dp).clearAndSetSemantics {}
+                        }
+                    )
                 }
             }
 
