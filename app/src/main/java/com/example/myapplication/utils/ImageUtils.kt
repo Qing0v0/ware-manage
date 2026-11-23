@@ -86,7 +86,7 @@ object ImageUtils {
         var sample = 1
         var w = width
         var h = height
-        while (w / 2 >= maxSize && h / 2 >= maxSize) {
+        while (maxOf(w, h) / 2 >= maxSize) {
             sample *= 2
             w /= 2
             h /= 2

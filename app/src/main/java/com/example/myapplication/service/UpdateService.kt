@@ -17,7 +17,7 @@ import org.json.JSONObject
 /**
  * 版本更新：问 GitHub 要最新 release、比较版本、下载 apk、拼安装用的 Intent。
  *
- * 只管数据，不弹框（提示框、进度框在 WareDrawerPanel 里）。
+ * 只管数据，不弹框（提示框、进度框在 AppActionsController 里）。
  * release 名字是工作流（.github/workflows/android.yml）拼出来的：
  * 现在发出来的是 "Release 1.1.2"（Release + versionName）；
  * 如果名字里带上 versionCode（形如 "Release 4 v1.1.2"）也认，两种格式都能比。
