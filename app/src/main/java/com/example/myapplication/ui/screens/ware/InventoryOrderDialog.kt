@@ -1,8 +1,6 @@
 package com.example.myapplication.ui.screens.ware
 
 import android.net.Uri
-import android.os.Handler
-import android.os.Looper
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,6 +30,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,8 +59,9 @@ import com.example.myapplication.ui.theme.AppTypography
 import com.example.myapplication.utils.ImageUtils
 import com.example.myapplication.utils.OrderBatchUtils
 import com.example.myapplication.utils.SizeUtils
-import kotlin.concurrent.thread
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -72,6 +72,7 @@ fun InventoryOrderDialog(
     onSaved: (String) -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val colorOptions = remember {
         context.resources.getStringArray(R.array.color_array).toList()
     }
@@ -184,33 +185,35 @@ fun InventoryOrderDialog(
                         val appContext = context.applicationContext
                         val imageUriToSave = productImageUri
                         val existingImagePath = productImagePath
-                        thread {
+                        scope.launch {
                             val errors = try {
-                                InventoryDatabase.withDatabaseAccess {
-                                    val imagePath = if (
-                                        orderType.increaseStock && imageUriToSave != null
-                                    ) {
-                                        ImageUtils.saveToAppStorage(appContext, imageUriToSave)
-                                            ?: return@withDatabaseAccess listOf(
-                                                appContext.getString(R.string.order_image_save_failed)
-                                            )
-                                    } else if (orderType.increaseStock) {
-                                        existingImagePath
-                                    } else {
-                                        null
+                                withContext(Dispatchers.IO) {
+                                    InventoryDatabase.withDatabaseAccess {
+                                        val imagePath = if (
+                                            orderType.increaseStock && imageUriToSave != null
+                                        ) {
+                                            ImageUtils.saveToAppStorage(appContext, imageUriToSave)
+                                                ?: return@withDatabaseAccess listOf(
+                                                    appContext.getString(R.string.order_image_save_failed)
+                                                )
+                                        } else if (orderType.increaseStock) {
+                                            existingImagePath
+                                        } else {
+                                            null
+                                        }
+                                        InventoryService(appContext).apply(batches, imagePath)
                                     }
-                                    InventoryService(appContext).apply(batches, imagePath)
                                 }
+                            } catch (e: CancellationException) {
+                                throw e
                             } catch (_: Exception) {
                                 listOf(appContext.getString(R.string.order_save_failed))
                             }
-                            Handler(Looper.getMainLooper()).post {
-                                isSaving = false
-                                if (errors.isNotEmpty()) {
-                                    errorMessage = errors.joinToString("\n")
-                                } else {
-                                    onSaved(context.getString(R.string.order_saved, batches.size))
-                                }
+                            isSaving = false
+                            if (errors.isNotEmpty()) {
+                                errorMessage = errors.joinToString("\n")
+                            } else {
+                                onSaved(context.getString(R.string.order_saved, batches.size))
                             }
                         }
                     }

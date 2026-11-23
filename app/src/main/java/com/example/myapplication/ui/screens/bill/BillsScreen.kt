@@ -22,17 +22,12 @@ import com.example.myapplication.R
 import com.example.myapplication.model.OrderBatch
 import com.example.myapplication.model.OrderType
 import com.example.myapplication.service.InventoryDatabase
-import com.example.myapplication.ui.components.AppAlertDialog
-import com.example.myapplication.ui.components.AppBottomSheetMenu
 import com.example.myapplication.ui.components.CustomCalendarDialog
-import com.example.myapplication.ui.components.AppBottomSheetMenuItem
-import com.example.myapplication.ui.components.AppDialogSpec
 import com.example.myapplication.ui.components.AppLoadingDialog
 import com.example.myapplication.ui.components.hideKeyboardOnAnyPress
 import com.example.myapplication.ui.screens.main.PageTitleHeader
 import com.example.myapplication.ui.theme.AppColors
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
@@ -51,11 +46,6 @@ private enum class BillDateTarget {
 @Composable
 fun BillsScreen(
     resetTick: Int,
-    moreMenuRequest: Int = 0,
-    onBackupClick: () -> Unit = {},
-    onUpdateClick: () -> Unit = {},
-    dialog: AppDialogSpec? = null,
-    onDialogDismiss: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -73,14 +63,7 @@ fun BillsScreen(
     var hintId by rememberSaveable { mutableIntStateOf(R.string.bills_hint_before_query) }
     var datePickerTarget by rememberSaveable { mutableStateOf<BillDateTarget?>(null) }
     var previousResetTick by remember { mutableIntStateOf(resetTick) }
-    var showMoreMenu by remember { mutableStateOf(false) }
     var isQuerying by remember { mutableStateOf(false) }
-
-    LaunchedEffect(moreMenuRequest) {
-        if (moreMenuRequest > 0) {
-            showMoreMenu = true
-        }
-    }
 
     val billTypeFilters = remember(context) {
         buildList {
@@ -194,27 +177,6 @@ fun BillsScreen(
             }
         )
     }
-
-    AppBottomSheetMenu(
-        visible = showMoreMenu,
-        title = stringResource(R.string.more_options),
-        items = listOf(
-            AppBottomSheetMenuItem(
-                label = stringResource(R.string.settings_backup),
-                onClick = onBackupClick
-            ),
-            AppBottomSheetMenuItem(
-                label = stringResource(R.string.settings_update),
-                onClick = onUpdateClick
-            )
-        ),
-        onDismissRequest = { showMoreMenu = false }
-    )
-
-    AppAlertDialog(
-        dialog = dialog,
-        onDismissRequest = onDialogDismiss
-    )
 
     AppLoadingDialog(
         visible = isQuerying,

@@ -14,7 +14,6 @@ import com.example.myapplication.ui.components.HideKeyboardOnScroll
 import com.example.myapplication.ui.components.hideKeyboardOnAnyPress
 import com.example.myapplication.ui.components.hideKeyboardOnTap
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,10 +25,6 @@ import androidx.compose.ui.res.stringResource
 import com.example.myapplication.model.OrderType
 import com.example.myapplication.model.ShoeInventory
 import com.example.myapplication.R
-import com.example.myapplication.ui.components.AppAlertDialog
-import com.example.myapplication.ui.components.AppBottomSheetMenu
-import com.example.myapplication.ui.components.AppBottomSheetMenuItem
-import com.example.myapplication.ui.components.AppDialogSpec
 import com.example.myapplication.ui.components.AppToast
 import com.example.myapplication.ui.screens.main.PageTitleHeader
 import com.example.myapplication.ui.theme.AppColors
@@ -39,35 +34,23 @@ import java.text.NumberFormat
 /**
  * 仓库页面（见文件头的说明）。
  *
- * @param inventories 查出来的全部存量（搜索过滤前），由 WareFragment 负责查库
- * @param imageFor 按图片路径取解码好的缩略图（WareFragment 的缓存），没图就不会调用
- * @param onBackupClick 数据备份 / 恢复（WareDrawerPanel.showBackupDialog）
- * @param onUpdateClick 版本更新（WareDrawerPanel.showUpdateDialog）
+ * @param inventories 查出来的全部存量（搜索过滤前）
+ * @param imageFor 按图片路径取解码好的缩略图，没图就不会调用
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun WareScreen(
     inventories: List<ShoeInventory>,
+    imageCacheVersion: Int,
     imageFor: (String) -> ImageBitmap?,
-    onBackupClick: () -> Unit,
-    onUpdateClick: () -> Unit,
+    loadImage: suspend (String) -> ImageBitmap?,
     onInventoryChanged: () -> Unit,
-    moreMenuRequest: Int,
-    dialog: AppDialogSpec?,
-    onDialogDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showMoreMenu by remember { mutableStateOf(false) }
     var selectedOrderType by remember { mutableStateOf<OrderType?>(null) }
     var selectedInventory by remember { mutableStateOf<ShoeInventory?>(null) }
     var toastMessage by remember { mutableStateOf<String?>(null) }
     var toastMessageId by remember { mutableStateOf(0) }
-
-    LaunchedEffect(moreMenuRequest) {
-        if (moreMenuRequest > 0) {
-            showMoreMenu = true
-        }
-    }
 
     val inventoryGroups = remember(inventories) {
         inventories
@@ -91,8 +74,8 @@ fun WareScreen(
         inventoryProductGroups(inventories, searchQuery)
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = modifier.fillMaxSize().hideKeyboardOnAnyPress()) {
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().hideKeyboardOnAnyPress()) {
             PageTitleHeader(
                 eyebrow = stringResource(R.string.inventory_overview_eyebrow),
                 title = stringResource(R.string.bottom_warehouse)
@@ -139,16 +122,16 @@ fun WareScreen(
                     }
                 }
 
-                item(key = "inventory_products") {
-                    InventoryProductList(
-                        groups = productGroups,
-                        imageFor = imageFor,
-                        onStockAction = { orderType, inventory ->
-                            selectedInventory = inventory
-                            selectedOrderType = orderType
-                        }
-                    )
-                }
+                inventoryProductItems(
+                    groups = productGroups,
+                    imageCacheVersion = imageCacheVersion,
+                    imageFor = imageFor,
+                    loadImage = loadImage,
+                    onStockAction = { orderType, inventory ->
+                        selectedInventory = inventory
+                        selectedOrderType = orderType
+                    }
+                )
             }
 
             selectedOrderType?.let { orderType ->
@@ -169,27 +152,6 @@ fun WareScreen(
                 )
             }
         }
-
-        AppBottomSheetMenu(
-            visible = showMoreMenu,
-            title = stringResource(R.string.more_options),
-            items = listOf(
-                AppBottomSheetMenuItem(
-                    label = stringResource(R.string.settings_backup),
-                    onClick = onBackupClick
-                ),
-                AppBottomSheetMenuItem(
-                    label = stringResource(R.string.settings_update),
-                    onClick = onUpdateClick
-                )
-            ),
-            onDismissRequest = { showMoreMenu = false }
-        )
-
-        AppAlertDialog(
-            dialog = dialog,
-            onDismissRequest = onDialogDismiss
-        )
 
         AppToast(
             message = toastMessage,

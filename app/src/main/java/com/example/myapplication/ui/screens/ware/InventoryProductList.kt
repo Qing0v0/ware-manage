@@ -19,11 +19,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -65,15 +69,15 @@ internal fun inventoryProductGroups(
         .toList()
 }
 
-@Composable
-internal fun InventoryProductList(
+internal fun LazyListScope.inventoryProductItems(
     groups: List<Map.Entry<String, List<ShoeInventory>>>,
+    imageCacheVersion: Int,
     imageFor: (String) -> ImageBitmap?,
-    onStockAction: (OrderType, ShoeInventory) -> Unit,
-    modifier: Modifier = Modifier
+    loadImage: suspend (String) -> ImageBitmap?,
+    onStockAction: (OrderType, ShoeInventory) -> Unit
 ) {
-    Column(modifier = modifier.fillMaxWidth().padding(horizontal = AppDimensions.Padding.Dp16).hideKeyboardOnTap()) {
-        if (groups.isEmpty()) {
+    if (groups.isEmpty()) {
+        item(key = "inventory_empty") {
             Text(
                 text = stringResource(R.string.inventory_empty),
                 color = AppColors.Gray500,
@@ -82,19 +86,31 @@ internal fun InventoryProductList(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
+                        horizontal = AppDimensions.Padding.Dp16
+                    )
+                    .padding(
                         top = AppDimensions.Padding.Dp8,
                         bottom = AppDimensions.Padding.Dp16
                     )
+                    .hideKeyboardOnTap()
             )
-        } else {
-            groups.forEach { (articleId, rows) ->
-                InventoryProductCard(
-                    articleId = articleId,
-                    rows = rows,
-                    imageFor = imageFor,
-                    onStockAction = onStockAction
-                )
-            }
+        }
+    } else {
+        items(
+            items = groups,
+            key = { group -> "inventory_product_${group.key}" }
+        ) { (articleId, rows) ->
+            InventoryProductCard(
+                articleId = articleId,
+                rows = rows,
+                imageCacheVersion = imageCacheVersion,
+                imageFor = imageFor,
+                loadImage = loadImage,
+                onStockAction = onStockAction,
+                modifier = Modifier
+                    .padding(horizontal = AppDimensions.Padding.Dp16)
+                    .hideKeyboardOnTap()
+            )
         }
     }
 }
@@ -192,15 +208,18 @@ private fun SearchMark() {
 private fun InventoryProductCard(
     articleId: String,
     rows: List<ShoeInventory>,
+    imageCacheVersion: Int,
     imageFor: (String) -> ImageBitmap?,
-    onStockAction: (OrderType, ShoeInventory) -> Unit
+    loadImage: suspend (String) -> ImageBitmap?,
+    onStockAction: (OrderType, ShoeInventory) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val shape = AppDimensions.Corner.large
     val first = rows.first()
     val totalQuantity = rows.sumOf { inventory -> SizeUtils.sizesOf(inventory).sum() }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(bottom = AppDimensions.Padding.Dp8)
             .clip(shape)
@@ -211,7 +230,12 @@ private fun InventoryProductCard(
             modifier = Modifier.fillMaxWidth().padding(horizontal = AppDimensions.Padding.Dp16, vertical = AppDimensions.Padding.Dp12),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ProductThumbnail(inventory = first, imageFor = imageFor)
+            ProductThumbnail(
+                inventory = first,
+                imageCacheVersion = imageCacheVersion,
+                imageFor = imageFor,
+                loadImage = loadImage
+            )
             Spacer(modifier = Modifier.width(9.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -263,7 +287,9 @@ private fun InventoryProductCard(
 @Composable
 private fun ProductThumbnail(
     inventory: ShoeInventory,
-    imageFor: (String) -> ImageBitmap?
+    imageCacheVersion: Int,
+    imageFor: (String) -> ImageBitmap?,
+    loadImage: suspend (String) -> ImageBitmap?
 ) {
     val shape = AppDimensions.Corner.small
     Box(
@@ -273,11 +299,21 @@ private fun ProductThumbnail(
             .background(AppColors.Gray50),
         contentAlignment = Alignment.Center
     ) {
-        val bitmap = inventory.imagePath?.let(imageFor)
+        val path = inventory.imagePath
+        val bitmap by produceState(
+            initialValue = path?.let(imageFor),
+            key1 = path,
+            key2 = imageCacheVersion
+        ) {
+            if (value == null && path != null) {
+                value = loadImage(path)
+            }
+        }
         val imageModifier = Modifier.fillMaxSize()
-        if (bitmap != null) {
+        val loadedBitmap = bitmap
+        if (loadedBitmap != null) {
             Image(
-                bitmap = bitmap,
+                bitmap = loadedBitmap,
                 contentDescription = inventory.articleId,
                 contentScale = ContentScale.Crop,
                 modifier = imageModifier
