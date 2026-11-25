@@ -34,6 +34,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.R
@@ -215,5 +216,24 @@ private fun MainBottomNavigation(
                 )
             }
         }
+
     }
+}
+
+@Preview(showBackground = true, widthDp = 360, heightDp = 800)
+@Composable
+private fun MainScreenPreview() {
+    MainScreen(
+        billsResetTick = 0,
+        inventories = emptyList(),
+        imageCacheVersion = 0,
+        imageFor = { null },
+        loadImage = { null },
+        dialog = null,
+        onTabSelected = {},
+        onInventoryChanged = {},
+        onBackupClick = {},
+        onUpdateClick = {},
+        onDialogDismiss = {}
+    )
 }

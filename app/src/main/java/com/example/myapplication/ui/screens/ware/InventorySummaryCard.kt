@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.ui.theme.AppDimensions
@@ -80,4 +81,11 @@ internal fun InventorySummaryCard(
             )
         }
     }
+
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun InventorySummaryCardPreview() {
+    InventorySummaryCard(totalQuantity = "1,286", styleCount = 12)
 }

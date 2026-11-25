@@ -24,6 +24,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
@@ -66,6 +67,7 @@ fun AppBrandHeader(
                 )
             }
         }
+
         Box(
             modifier = Modifier
                 .size(AppDimensions.Size.Dp40)
@@ -84,4 +86,11 @@ fun AppBrandHeader(
             )
         }
     }
+
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AppBrandHeaderPreview() {
+    AppBrandHeader(onSettingsClick = {})
 }

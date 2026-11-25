@@ -42,6 +42,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Text
 import com.example.myapplication.model.OrderBatch
@@ -344,6 +345,17 @@ fun InventoryOrderDialog(
             }
         }
     }
+}
+
+@Preview(showBackground = true, widthDp = 400, heightDp = 850)
+@Composable
+private fun InventoryOrderDialogPreview() {
+    InventoryOrderDialog(
+        orderType = OrderType.ARTICLE_PURCHASE,
+        fixedInventory = null,
+        onDismiss = {},
+        onSaved = {}
+    )
 }
 
 @Composable

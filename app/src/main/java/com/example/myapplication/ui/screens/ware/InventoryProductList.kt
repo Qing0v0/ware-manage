@@ -42,9 +42,11 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.model.OrderType
 import com.example.myapplication.model.ShoeInventory
+import com.example.myapplication.model.Color
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.ui.theme.AppDimensions
@@ -455,4 +457,32 @@ private fun InventoryDivider() {
             .height(1.dp)
             .background(AppColors.Gray100)
     )
+}
+
+@Preview(showBackground = true, widthDp = 360)
+@Composable
+private fun InventoryProductCardPreview() {
+    Column {
+        InventorySearchField(query = "", productCount = 8, onQueryChange = {})
+
+        InventoryProductCard(
+            articleId = "SH-2026-001",
+            rows = listOf(
+                ShoeInventory(
+                    articleId = "SH-2026-001",
+                    dealer = "示例经销商",
+                    color = Color.BLACK,
+                    purchasePrice = java.math.BigDecimal("199.00"),
+                    size38 = 2,
+                    size39 = 4,
+                    size40 = 3
+                )
+            ),
+            imageCacheVersion = 0,
+            imageFor = { null },
+            loadImage = { null },
+            onStockAction = { _, _ -> },
+            modifier = Modifier.padding(16.dp)
+        )
+    }
 }

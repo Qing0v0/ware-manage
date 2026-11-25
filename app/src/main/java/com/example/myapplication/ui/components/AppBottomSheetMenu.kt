@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.font.FontWeight
 import kotlinx.coroutines.launch
 import com.example.myapplication.ui.theme.AppColors
@@ -73,6 +74,7 @@ fun AppBottomSheetMenu(
                                 item.onClick()
                             }
                         }
+
                         .padding(horizontal = AppDimensions.Padding.Dp20),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -89,6 +91,21 @@ fun AppBottomSheetMenu(
                     )
                 }
             }
+
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AppBottomSheetMenuPreview() {
+    AppBottomSheetMenu(
+        visible = true,
+        title = "更多选项",
+        items = listOf(
+            AppBottomSheetMenuItem("备份数据", {}),
+            AppBottomSheetMenuItem("检查更新", {})
+        ),
+        onDismissRequest = {}
+    )
 }

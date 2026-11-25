@@ -20,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.ui.theme.AppDimensions
@@ -100,4 +101,11 @@ private fun WareQuickAction(
             )
         }
     }
+
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun WareQuickActionsPreview() {
+    WareQuickActions(onPurchase = {}, onSelling = {})
 }

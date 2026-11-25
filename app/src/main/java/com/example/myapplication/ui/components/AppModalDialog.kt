@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.myapplication.ui.theme.AppColors
@@ -69,6 +70,7 @@ fun AppModalDialog(
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
+
                     }
                 }
                 Column(
@@ -86,5 +88,20 @@ fun AppModalDialog(
                 )
             }
         }
+
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AppModalDialogPreview() {
+    AppModalDialog(
+        title = "编辑商品",
+        subtitle = "填写商品信息",
+        onDismiss = {},
+        footer = {
+            AppButton(text = "确认", primary = true, onClick = {}) }
+    ) {
+        Text("预览内容", color = AppColors.Gray800)
     }
 }

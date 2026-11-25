@@ -22,7 +22,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.myapplication.model.OrderType
+import com.example.myapplication.model.Color
 import com.example.myapplication.model.ShoeInventory
 import com.example.myapplication.R
 import com.example.myapplication.ui.components.AppToast
@@ -159,4 +161,26 @@ fun WareScreen(
             onDismissRequest = { toastMessage = null }
         )
     }
+}
+
+@Preview(showBackground = true, widthDp = 360, heightDp = 800)
+@Composable
+private fun WareScreenPreview() {
+    WareScreen(
+        inventories = listOf(
+            ShoeInventory(
+                articleId = "SH-2026-001",
+                dealer = "示例经销商",
+                color = Color.BLACK,
+                purchasePrice = java.math.BigDecimal("199.00"),
+                size38 = 2,
+                size39 = 4,
+                size40 = 3
+            )
+        ),
+        imageCacheVersion = 0,
+        imageFor = { null },
+        loadImage = { null },
+        onInventoryChanged = {}
+    )
 }

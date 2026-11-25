@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.ui.theme.AppDimensions
@@ -68,6 +69,12 @@ fun PageTitleHeader(
             )
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PageTitleHeaderPreview() {
+    PageTitleHeader(eyebrow = "库存总览", title = "仓库")
 }
 
 @Composable

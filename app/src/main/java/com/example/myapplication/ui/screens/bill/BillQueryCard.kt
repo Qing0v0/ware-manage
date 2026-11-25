@@ -32,6 +32,7 @@ import com.example.myapplication.ui.components.hideKeyboard
 import com.example.myapplication.ui.components.hideKeyboardOnTap
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.myapplication.ui.screens.main.PageTitleHeader
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.ui.theme.AppDimensions
@@ -201,4 +202,27 @@ private fun BillDateBox(
             overflow = TextOverflow.Clip
         )
     }
+}
+
+@Preview(showBackground = true, widthDp = 360)
+@Composable
+private fun BillQueryCardPreview() {
+    BillQueryCard(
+        startDate = LocalDate.of(2026, 11, 1),
+        endDate = LocalDate.of(2026, 11, 25),
+        articleId = "",
+        dealer = "",
+        selectedTypeIndex = 0,
+        orderTypeFilters = listOf(
+            "全部类型" to emptyList(),
+            "入库" to emptyList(),
+            "出库" to emptyList()
+        ),
+        onArticleIdChange = {},
+        onDealerChange = {},
+        onTypeSelected = {},
+        onStartDateClick = {},
+        onEndDateClick = {},
+        onQuery = {}
+    )
 }

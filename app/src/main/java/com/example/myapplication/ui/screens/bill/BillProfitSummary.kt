@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.model.OrderBatch
 import com.example.myapplication.R
@@ -113,4 +114,14 @@ internal fun BillProfitSummary(
             }
         }
     }
+}
+
+@Preview(showBackground = true, widthDp = 360)
+@Composable
+private fun BillProfitSummaryPreview() {
+    BillProfitSummary(
+        startDate = LocalDate.of(2026, 11, 1),
+        endDate = LocalDate.of(2026, 11, 25),
+        bills = emptyList()
+    )
 }

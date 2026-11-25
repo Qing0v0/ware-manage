@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.ui.theme.AppDimensions
 import com.example.myapplication.ui.theme.AppTypography
@@ -30,6 +31,7 @@ fun AppToast(
             delay(2_500)
             onDismissRequest()
         }
+
     }
 
     if (message == null) return
@@ -53,4 +55,10 @@ fun AppToast(
             style = AppTypography.Size14.copy(fontWeight = FontWeight.Medium)
         )
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AppToastPreview() {
+    AppToast(message = "保存成功", messageId = 0, onDismissRequest = {})
 }

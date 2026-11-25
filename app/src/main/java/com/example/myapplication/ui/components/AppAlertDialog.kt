@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -174,4 +175,21 @@ fun AppAlertDialog(
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AppAlertDialogPreview() {
+    AppAlertDialog(
+        dialog = AppDialogSpec(
+            title = "确认删除",
+            message = "删除后无法恢复，请确认操作。",
+            dismissLabel = "取消",
+            confirmLabel = "确认",
+            progress = 0.5F,
+            progressMessage = "50%",
+//            options = listOf(AppDialogOption("选项1", {}), AppDialogOption("选项2", {}))
+        ),
+        onDismissRequest = {}
+    )
 }

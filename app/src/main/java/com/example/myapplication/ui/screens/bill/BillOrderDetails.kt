@@ -31,8 +31,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.model.OrderBatch
+import com.example.myapplication.model.Color
+import com.example.myapplication.model.OrderType
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.ui.theme.AppDimensions
@@ -168,6 +171,7 @@ private fun BillOrderCard(bill: OrderBatch) {
                     )
                 }
             }
+
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = "¥ ${billAmountText(billOrderTotal(bill))}",
@@ -234,4 +238,33 @@ private fun BillOrderCard(bill: OrderBatch) {
                 .padding(top = AppDimensions.Padding.Dp8)
         )
     }
+}
+
+@Preview(showBackground = true, widthDp = 360, heightDp = 600)
+@Composable
+private fun BillOrderDetailsPreview() {
+    BillOrderDetails(
+        bills = listOf(
+            OrderBatch(
+                articleId = "SH-2026-001",
+                color = Color.BLACK,
+                size34 = 0,
+                size35 = 0,
+                size36 = 1,
+                size37 = 2,
+                size38 = 3,
+                size39 = 4,
+                size40 = 2,
+                size41 = 0,
+                size42 = 0,
+                size43 = 0,
+                size44 = 0,
+                orderType = OrderType.ARTICLE_PURCHASE,
+                dealer = "示例经销商",
+                price = java.math.BigDecimal("199.00"),
+                date = java.util.Date()
+            )
+        ),
+        hintId = HIDE_BILL_HINT
+    )
 }

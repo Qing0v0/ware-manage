@@ -39,6 +39,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.myapplication.ui.theme.AppColors
@@ -287,4 +288,30 @@ fun HideKeyboardOnScroll(
             hideKeyboard(focusManager, keyboardController)
         }
     }
+}
+
+/** 组件预览 */
+@Preview(showBackground = true)
+@Composable
+private fun AppButtonPreview() {
+    Row(horizontalArrangement = Arrangement.spacedBy(AppDimensions.Padding.Dp8)) {
+        AppButton(text = "取消", onClick = {})
+        AppButton(text = "确认", primary = true, onClick = {})
+    }
+}
+
+@Preview(showBackground = true, widthDp = 180, heightDp = 48)
+@Composable
+private fun DropdownSelectorPreview() {
+    DropdownSelector(
+        selectedLabel = "全部类型",
+        options = listOf("全部类型", "入库", "出库"),
+        onSelect = {}
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AppLoadingDialogPreview() {
+    AppLoadingDialog(visible = true, message = "正在加载…")
 }
